@@ -1,0 +1,62 @@
+:root {
+    --bg: #F7FAFC;
+    --text: #1A202C;
+    --white: #FFFFFF;
+    --accent: #667EEA;
+}
+
+body {
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    margin: 0;
+}
+
+.neo-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+.neo-logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(36px, 7vw, 72px);
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: 6px 6px 0px #FFD1DC;
+    margin-bottom: 10px;
+}
+
+.neo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 35px;
+    margin-top: 50px;
+}
+
+/* Стили карточки */
+.neo-card {
+    background: var(--white);
+    border: 4px solid var(--text);
+    border-radius: 32px;
+    padding: 35px;
+    box-shadow: 8px 8px 0px var(--text);
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.neo-card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 14px 14px 0px var(--text);
+}
+
+.neo-card:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px var(--text);
+}
