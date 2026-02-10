@@ -1,126 +1,92 @@
-/* --- ОСНОВНОЙ КОНТЕЙНЕР --- */
-.qz-wrapper {
-  background: #020205;
-  background-image: 
-    radial-gradient(circle at 20% 30%, rgba(0, 242, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.08) 0%, transparent 50%);
+/* --- BAUHAUS STYLE --- */
+.art-wrapper {
+  background-color: #f4f1ea; /* Цвет яичной скорлупы */
   min-height: 100vh;
-  color: #e0e0e0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding: 20px;
+  color: #1a1a1a;
+  padding: 30px 20px;
   display: flex;
   flex-direction: column;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   box-sizing: border-box;
 }
 
-.qz-exit {
-  background: rgba(255, 0, 85, 0.1);
-  border: 1px solid #ff0055;
-  color: #ff0055;
-  padding: 6px 15px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  cursor: pointer;
-  width: fit-content;
-  margin-bottom: 20px;
-  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+.art-back {
+  background: none; border: none; font-weight: 700; font-size: 14px;
+  margin-bottom: 30px; cursor: pointer; color: #1a1a1a; text-align: left;
 }
 
-/* ПАНЕЛЬ */
-.qz-panel {
-  background: rgba(25, 25, 35, 0.8);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 2px solid #00f2ff;
-  padding: 30px 20px;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 400px;
-  margin: auto;
-  box-sizing: border-box;
-  text-align: center;
+.art-card {
+  background: #fff;
+  border: 3px solid #1a1a1a;
+  padding: 40px 25px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 10px 10px 0px #1a1a1a;
+  margin: auto 0;
 }
 
-.qz-neon-text {
-  font-size: 26px;
-  font-weight: 900;
-  background: linear-gradient(90deg, #00f2ff, #ff00ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 25px;
-  letter-spacing: 2px;
+.art-title {
+  font-size: 42px; font-weight: 900; margin: 0 0 40px 0;
+  letter-spacing: -2px; line-height: 1;
+}
+.art-title span { color: #e63946; }
+
+/* ПОЛЯ ВВОДА */
+.art-field { margin-bottom: 25px; display: flex; flex-direction: column; gap: 8px; }
+.art-field label { font-size: 11px; font-weight: 900; color: #888; text-transform: uppercase; }
+
+.art-field select, .art-players-list input {
+  border: 2px solid #1a1a1a; padding: 15px; font-size: 16px; font-weight: 600;
+  background: #fff; outline: none; border-radius: 0;
 }
 
-/* НАСТРОЙКИ */
-.qz-setup-grid { display: flex; flex-direction: column; gap: 15px; text-align: left; }
-.qz-setup-grid label { font-size: 11px; color: #00f2ff; font-weight: 800; }
+.art-players-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.art-players-list input { flex: 1; min-width: 120px; }
+.art-plus { width: 50px; background: #1a1a1a; color: #fff; border: none; font-size: 24px; }
 
-.qz-setup-grid select, .qz-input-text {
-  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
-  padding: 12px; border-radius: 8px; color: #fff; outline: none;
+/* КНОПКИ */
+.art-btn-black {
+  background: #1a1a1a; color: #fff; border: none; padding: 20px;
+  font-size: 16px; font-weight: 800; text-transform: uppercase;
+  margin-top: 10px; cursor: pointer; transition: 0.2s;
 }
-
-.qz-players-setup { display: flex; flex-wrap: wrap; gap: 8px; }
-.qz-players-setup input { flex: 1; min-width: 100px; font-size: 13px; }
-
-.qz-add-btn {
-  width: 40px; background: #00f2ff; border: none; border-radius: 8px; font-weight: 900;
-}
-
-/* ЭКРАН ПЕРЕДАЧИ */
-.qz-round-badge {
-  background: #ff00ff; color: #fff; padding: 4px 12px;
-  display: inline-block; border-radius: 4px; font-size: 12px; font-weight: 900; margin-bottom: 20px;
-}
-
-.qz-player-highlight {
-  font-size: 32px; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.5);
-  margin: 10px 0 30px;
-}
+.art-btn-black:active { transform: translate(4px, 4px); }
 
 /* ИГРОВОЙ ЭКРАН */
-.qz-play-area { width: 100%; max-width: 450px; margin: auto; }
+.art-play-container { width: 100%; max-width: 500px; margin: auto; }
 
-.qz-info-bar {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 30px; padding: 10px 20px; background: rgba(255,255,255,0.05); border-radius: 50px;
+.art-top-nav { margin-bottom: 50px; }
+.art-timer-line { height: 8px; background: #1a1a1a; transition: width 1s linear; }
+.art-meta { display: flex; justify-content: space-between; font-weight: 900; font-size: 12px; margin-top: 10px; }
+
+.art-q { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 40px; }
+
+.art-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+.art-ans {
+  background: #fff; border: 2px solid #1a1a1a; padding: 20px;
+  text-align: left; font-size: 16px; font-weight: 700; cursor: pointer;
+  transition: 0.2s;
 }
 
-.qz-timer-ring {
-  width: 50px; height: 50px; border: 2px solid #ff00ff; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; font-weight: 900;
-  box-shadow: 0 0 10px #ff00ff; color: #ff00ff;
+/* СОСТОЯНИЯ ОТВЕТОВ */
+.art-ans.art-correct { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.art-ans.art-wrong { background: #e63946; color: #fff; border-color: #e63946; }
+.art-ans.art-dim { opacity: 0.3; }
+
+/* ЛОББИ */
+.art-center { text-align: center; }
+.art-badge { background: #e63946; color: #fff; padding: 5px 15px; align-self: center; font-weight: 900; margin-bottom: 20px; }
+.art-pre { font-size: 12px; font-weight: 700; color: #888; }
+.art-hero-name { font-size: 36px; font-weight: 900; margin: 10px 0 40px; }
+
+/* ИТОГИ */
+.art-results { margin-bottom: 30px; }
+.art-res-row { 
+  display: flex; justify-content: space-between; padding: 15px 0; 
+  border-bottom: 2px solid #1a1a1a; font-weight: 800; 
 }
 
-.qz-q-text { font-size: 22px; text-align: center; margin-bottom: 30px; line-height: 1.3; }
-
-.qz-grid-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-.qz-ans-btn {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  color: #fff; padding: 18px 10px; border-radius: 12px; font-size: 14px;
-  transition: 0.2s; cursor: pointer;
-}
-
-.qz-ans-btn.correct { background: #00ff88 !important; color: #000; border-color: #00ff88; }
-.qz-ans-btn.wrong { background: #ff0055 !important; color: #fff; border-color: #ff0055; }
-
-/* КНОПКА BOOT */
-.qz-btn-main {
-  width: 100%; background: linear-gradient(90deg, #00f2ff, #0072ff);
-  border: none; padding: 18px; border-radius: 12px; color: #fff;
-  font-weight: 900; letter-spacing: 1px; margin-top: 15px; cursor: pointer;
-}
-
-/* РЕЗУЛЬТАТЫ */
-.qz-score-item {
-  display: flex; align-items: center; gap: 15px; padding: 15px;
-  background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; border-left: 3px solid #00f2ff;
-}
-.qz-rank { color: #00f2ff; font-weight: 900; }
-.qz-name { flex-grow: 1; text-align: left; font-weight: 600; }
-
-@media (max-width: 400px) {
-  .qz-grid-answers { grid-template-columns: 1fr; }
+@media (min-width: 600px) {
+  .art-grid { grid-template-columns: 1fr 1fr; }
 }
