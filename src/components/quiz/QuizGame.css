@@ -1,185 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-// Подключаем стили
-import './QuizGame.css';
+/* --- BIOPUNK / ORGANIC THEME --- */
+.bio-container {
+  background: #0a0e14; /* Глубокий темный */
+  min-height: 100vh;
+  color: #c4d9eb;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Syne', sans-serif; /* Потребуется подключить Google Fonts */
+  position: relative;
+  overflow: hidden;
+}
 
-// --- ДАННЫЕ ---
-const QUIZ_CONTENT = {
-  "Мифы": [
-    { q: "Кто похитил огонь у богов?", a: ["Геракл", "Прометей", "Зевс", "Атлант"], c: 1 },
-    { q: "Страж подземного мира?", a: ["Минотавр", "Цербер", "Гидра", "Сфинкс"], c: 1 }
-  ],
-  "Тайны": [
-    { q: "Где находится Бермудский треугольник?", a: ["Атлантика", "Тихий океан", "Индийский", "Северный"], c: 0 },
-    { q: "Какой город искал Шлиман?", a: ["Вавилон", "Троя", "Атлантида", "Помпеи"], c: 1 }
-  ]
-};
+/* Пульсирующий живой фон */
+.bio-blob-bg {
+  position: absolute;
+  top: -10%; left: -10%;
+  width: 120%; height: 120%;
+  background: radial-gradient(circle at 50% 50%, #1a2a44 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, #2d1b4d 0%, transparent 40%);
+  filter: blur(60px);
+  z-index: 0;
+  animation: drift 20s infinite alternate ease-in-out;
+}
 
-export default function QuizGame({ onBack }) {
-  // Настройки
-  const [view, setView] = useState('setup'); // setup, waiting, play, finish
-  const [cfg, setCfg] = useState({ cat: "Мифы", rounds: 3, time: 15 });
-  const [players, setPlayers] = useState(["Alpha", "Beta"]);
-  
-  // Игровой цикл
-  const [scores, setScores] = useState({});
-  const [pIndex, setPIndex] = useState(0);
-  const [round, setRound] = useState(1);
-  const [seconds, setSeconds] = useState(15);
-  const [activeIdx, setActiveIdx] = useState(null);
-  const [locked, setLocked] = useState(false);
+@keyframes drift {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(10deg) scale(1.1); }
+}
 
-  // Живой таймер
-  useEffect(() => {
-    let t;
-    if (view === 'play' && seconds > 0 && !locked) {
-      t = setInterval(() => setSeconds(s => s - 1), 1000);
-    } else if (seconds === 0 && !locked) {
-      handleStep(null);
-    }
-    return () => clearInterval(t);
-  }, [view, seconds, locked]);
+.bio-exit-btn {
+  z-index: 10; background: rgba(255, 255, 255, 0.05); border: 1px solid #4ade80;
+  color: #4ade80; padding: 5px 12px; font-size: 10px; border-radius: 20px;
+  cursor: pointer; width: fit-content; margin-bottom: 20px;
+}
 
-  const init = () => {
-    const s = {};
-    players.forEach(p => s[p] = 0);
-    setScores(s);
-    setPIndex(0);
-    setRound(1);
-    setSeconds(cfg.time);
-    setView('waiting');
-  };
+/* КАРТОЧКА ИЗ "СТЕКЛА" */
+.bio-card {
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 40px;
+  padding: 40px 25px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  margin: auto 0;
+  width: 100%; max-width: 400px; align-self: center;
+}
 
-  const handleStep = (idx) => {
-    if (locked) return;
-    setLocked(true);
-    setActiveIdx(idx);
+.bio-header {
+  font-size: 32px; font-weight: 800; text-align: center; margin-bottom: 30px;
+  background: linear-gradient(to right, #4ade80, #3b82f6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
 
-    const correct = QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].c;
-    if (idx === correct) {
-      setScores(prev => ({ ...prev, [players[pIndex]]: prev[players[pIndex]] + 1 }));
-    }
+/* ИНПУТЫ */
+.bio-input-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+.bio-input-group label { font-size: 10px; letter-spacing: 2px; color: #64748b; font-weight: 800; }
 
-    setTimeout(() => {
-      setLocked(false);
-      setActiveIdx(null);
-      setSeconds(cfg.time);
+.bio-input-group select, .bio-players input {
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+  padding: 15px; border-radius: 20px; color: #fff; font-size: 15px;
+}
 
-      if (pIndex < players.length - 1) {
-        setPIndex(i => i + 1);
-        setView('waiting');
-      } else if (round < cfg.rounds) {
-        setRound(r => r + 1);
-        setPIndex(0);
-        setView('waiting');
-      } else {
-        setView('finish');
-      }
-    }, 1500);
-  };
+.bio-players { display: flex; flex-wrap: wrap; gap: 8px; }
+.bio-players input { flex: 1; min-width: 100px; }
+.bio-add { width: 45px; height: 45px; border-radius: 50%; border: none; background: #3b82f6; color: #fff; font-size: 20px; }
 
-  return (
-    <div className="bio-container">
-      <div className="bio-blob-bg"></div>
-      <button className="bio-exit-btn" onClick={onBack}>ABORT_CORE</button>
+/* КНОПКА-ПУЛЬС */
+.bio-pulse-btn {
+  width: 100%; padding: 20px; border-radius: 25px; border: none;
+  background: linear-gradient(45deg, #3b82f6, #4ade80);
+  color: #fff; font-weight: 800; text-transform: uppercase;
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+  cursor: pointer; transition: 0.3s;
+}
+.bio-pulse-btn:hover { transform: scale(1.02); filter: brightness(1.1); }
 
-      <AnimatePresence mode="wait">
-        {/* SETUP */}
-        {view === 'setup' && (
-          <motion.div key="s" className="bio-card" initial={{opacity:0, scale:0.8}} animate={{opacity:1, scale:1}}>
-            <h1 className="bio-header">EVO.<span>QUIZ</span></h1>
-            
-            <div className="bio-input-group">
-              <label>GENETIC_PATH</label>
-              <select onChange={(e) => setCfg({...cfg, cat: e.target.value})}>
-                {Object.keys(QUIZ_CONTENT).map(k => <option key={k} value={k}>{k}</option>)}
-              </select>
-            </div>
+/* ИГРОВОЙ ИНТЕРФЕЙС */
+.bio-play-zone { z-index: 5; width: 100%; max-width: 500px; align-self: center; margin: auto 0; }
 
-            <div className="bio-input-group">
-              <label>CYCLES: {cfg.rounds}</label>
-              <input type="range" min="1" max="5" value={cfg.rounds} onChange={(e) => setCfg({...cfg, rounds: e.target.value})} />
-            </div>
+.bio-hud {
+  display: flex; align-items: center; gap: 20px; margin-bottom: 40px;
+  background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 30px;
+}
 
-            <div className="bio-input-group">
-              <label>ORGANISMS</label>
-              <div className="bio-players">
-                {players.map((p, i) => (
-                  <input key={i} value={p} onChange={(e) => {
-                    let n = [...players]; n[i] = e.target.value; setPlayers(n);
-                  }} />
-                ))}
-                {players.length < 4 && <button className="bio-add" onClick={() => setPlayers([...players, `User_${players.length+1}`])}>+</button>}
-              </div>
-            </div>
+.bio-timer-circle {
+  position: relative; width: 60px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+}
+.bio-timer-circle svg { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
+.bio-timer-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
+.bio-timer-bar { fill: none; stroke: #4ade80; stroke-width: 5; stroke-dasharray: 282; transition: stroke-dashoffset 1s linear; }
+.bio-timer-circle span { font-size: 18px; font-weight: 800; color: #4ade80; }
 
-            <button className="bio-pulse-btn" onClick={init}>INITIATE EVOLUTION</button>
-          </motion.div>
-        )}
+.bio-question { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 30px; line-height: 1.3; }
 
-        {/* WAITING */}
-        {view === 'waiting' && (
-          <motion.div key="w" className="bio-card bio-center" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}}>
-            <div className="bio-round-info">CYCLE {round}</div>
-            <p className="bio-sub">NEXT SUBJECT:</p>
-            <h2 className="bio-player-name">{players[pIndex]}</h2>
-            <button className="bio-pulse-btn" onClick={() => setView('play')}>CONNECT</button>
-          </motion.div>
-        )}
+.bio-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
 
-        {/* PLAY */}
-        {view === 'play' && (
-          <motion.div key="p" className="bio-play-zone" initial={{opacity:0}} animate={{opacity:1}}>
-            <div className="bio-hud">
-              <div className="bio-timer-circle">
-                <svg viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="45" className="bio-timer-bg" />
-                  <circle cx="50" cy="50" r="45" className="bio-timer-bar" 
-                    style={{strokeDashoffset: 282 - (282 * seconds) / cfg.time}} />
-                </svg>
-                <span>{seconds}</span>
-              </div>
-              <div className="bio-hud-info">
-                <strong>{players[pIndex]}</strong>
-                <span>{round} / {cfg.rounds}</span>
-              </div>
-            </div>
+.bio-ans-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  padding: 22px; border-radius: 25px; color: #fff; font-size: 16px;
+  text-align: left; transition: 0.3s; cursor: pointer;
+}
 
-            <h2 className="bio-question">{QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].q}</h2>
+.bio-ans-btn.bio-corr { background: #4ade80; color: #000; border-color: #4ade80; box-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+.bio-ans-btn.bio-wrong { background: #ef4444; color: #fff; border-color: #ef4444; }
+.bio-ans-btn.bio-fade { opacity: 0.2; }
 
-            <div className="bio-grid">
-              {QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].a.map((ans, i) => {
-                let state = "";
-                if (activeIdx !== null) {
-                  const corr = QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].c;
-                  state = i === corr ? "bio-corr" : (i === activeIdx ? "bio-wrong" : "bio-fade");
-                }
-                return (
-                  <button key={i} className={`bio-ans-btn ${state}`} onClick={() => handleStep(i)}>
-                    {ans}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
+/* ИТОГИ */
+.bio-res-item {
+  display: flex; justify-content: space-between; padding: 20px;
+  background: rgba(255,255,255,0.03); border-radius: 20px; margin-bottom: 10px;
+}
+.bio-res-name { font-weight: 700; color: #3b82f6; }
+.bio-res-score { font-weight: 800; color: #4ade80; }
 
-        {/* FINISH */}
-        {view === 'finish' && (
-          <motion.div key="f" className="bio-card" initial={{scale:0.9}} animate={{scale:1}}>
-            <h2 className="bio-header">MUTATION COMPLETE</h2>
-            <div className="bio-results">
-              {Object.entries(scores).sort((a,b)=>b[1]-a[1]).map(([n, s], i) => (
-                <div key={i} className="bio-res-item">
-                  <span className="bio-res-name">{n}</span>
-                  <span className="bio-res-score">{s} RNA</span>
-                </div>
-              ))}
-            </div>
-            <button className="bio-pulse-btn" onClick={() => setView('setup')}>RE-EVOLVE</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+@media (max-width: 480px) {
+  .bio-question { font-size: 22px; }
+  .bio-ans-btn { padding: 18px; }
 }
