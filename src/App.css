@@ -97,3 +97,11 @@ body {
     font-size: 10px;
     font-weight: 900;
 }
+.neo-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 90vh;
+}
+.neo-grid {
+    flex-grow: 1;
+}
