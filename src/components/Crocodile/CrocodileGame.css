@@ -1,0 +1,130 @@
+/* Контейнер игры */
+.croc-container {
+    min-height: 100vh;
+    background-color: #C6F6D5; /* Светло-зеленый фон */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Кнопка назад */
+.croc-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #1A202C;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+/* Центрирование контента */
+.croc-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.croc-icon { font-size: 5rem; margin-bottom: 10px; }
+
+.croc-title {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    color: #1A202C;
+    margin-bottom: 15px;
+}
+.croc-title span { color: #2F855A; }
+
+.croc-desc {
+    font-weight: 700;
+    opacity: 0.7;
+    margin-bottom: 30px;
+    line-height: 1.4;
+}
+
+/* Карточка со словом */
+.croc-word-card {
+    background: white;
+    border: 4px solid #1A202C;
+    border-radius: 30px;
+    padding: 40px 20px;
+    width: 100%;
+    box-shadow: 10px 10px 0px #1A202C;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.croc-label {
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    opacity: 0.5;
+}
+
+.croc-word-text {
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 15px 0;
+    text-transform: uppercase;
+}
+
+/* Блок усложнения */
+.croc-modifier {
+    background: #FEB2B2;
+    border: 2px solid #1A202C;
+    padding: 10px;
+    border-radius: 15px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* Кнопки */
+.croc-btn-start, .croc-btn-done {
+    background: #1A202C;
+    color: white;
+    border: none;
+    padding: 20px 40px;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0px 6px 0px #2D3748;
+    transition: 0.1s;
+}
+
+.croc-btn-start:active, .croc-btn-done:active {
+    transform: translateY(3px);
+    box-shadow: 0px 2px 0px #2D3748;
+}
+
+.croc-btn-done { background: #38A169; } /* Зеленая кнопка "Угадано" */
+
+.croc-timer {
+    background: #1A202C;
+    color: white;
+    padding: 8px 25px;
+    border-radius: 100px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.croc-res-title {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    margin-bottom: 20px;
+}
