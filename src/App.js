@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Подключаем файлы игр, которые ты только что создал
-import AliasGame from './AliasGame'; 
-import CrocodileGame from './CrocodileGame';
+import AliasGame from './components/Alias/AliasGame'; 
+import CrocodileGame from './components/Crocodile/CrocodileGame';
 
 // Подключаем стили
 import './App.css';
