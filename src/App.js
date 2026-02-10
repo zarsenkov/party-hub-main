@@ -6,7 +6,7 @@ import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/quiz/QuizGame';
-import Whoami from './components/Whoami/GuessWhoGame';
+import GuessWhoGame from './components/Whoami/GuessWhoGame';
 
 
 // Твой CSS файл
@@ -136,7 +136,7 @@ export default function App() {
   
   // Если открыта игра Кто я?
   if (activeGame === 'whoami') {
-    return <WhoamiGame onBack={() => setActiveGame(null)} />;
+    return <GuessWhoGame onBack={() => setActiveGame(null)} />;
   }
   
   // Основной лендинг
