@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 // Подключаем компоненты игр из папок
 import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
+import SpyGame from './components/Spy/SpyGame';
 
 // Твой CSS файл
 import './App.css';
