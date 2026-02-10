@@ -129,7 +129,7 @@ export default function App() {
   }
   
   // Если открыта игра Шпион
-  if (activeGame === 'quz') {
+  if (activeGame === 'quiz') {
     return <QuizGame onBack={() => setActiveGame(null)} />;
   }
   
