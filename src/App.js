@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
+import QuizGame from './components/quiz/QuizGame';
+
 
 // Твой CSS файл
 import './App.css';
@@ -55,7 +57,7 @@ const GAMES = [
     icon: '🧠',
     desc: 'Сразись интеллектом в разных категориях знаний.',
     footer: '1-10 ИГРОКОВ',
-    ready: false
+    ready: true
   },
   {
     id: '5-letters',
@@ -125,6 +127,8 @@ export default function App() {
   if (activeGame === 'spy') {
     return <SpyGame onBack={() => setActiveGame(null)} />;
   }
+  
+  
   
   // Основной лендинг
   return (
