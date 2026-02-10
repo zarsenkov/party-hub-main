@@ -3,75 +3,75 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Подключаем стили
 import './QuizGame.css';
 
-// База вопросов (категории)
-const DATA = {
-  "Культура": [
-    { q: "Кто написал 'Черный квадрат'?", a: ["Пикассо", "Малевич", "Кандинский", "Дали"], c: 1 },
-    { q: "В какой стране находится Лувр?", a: ["Италия", "Германия", "Франция", "Испания"], c: 2 }
+// --- ДАННЫЕ ---
+const QUIZ_CONTENT = {
+  "Мифы": [
+    { q: "Кто похитил огонь у богов?", a: ["Геракл", "Прометей", "Зевс", "Атлант"], c: 1 },
+    { q: "Страж подземного мира?", a: ["Минотавр", "Цербер", "Гидра", "Сфинкс"], c: 1 }
   ],
-  "Космос": [
-    { q: "Первая планета от Солнца?", a: ["Венера", "Марс", "Меркурий", "Земля"], c: 2 },
-    { q: "Как называется наша галактика?", a: ["Андромеда", "Млечный Путь", "Орион", "Сириус"], c: 1 }
+  "Тайны": [
+    { q: "Где находится Бермудский треугольник?", a: ["Атлантика", "Тихий океан", "Индийский", "Северный"], c: 0 },
+    { q: "Какой город искал Шлиман?", a: ["Вавилон", "Троя", "Атлантида", "Помпеи"], c: 1 }
   ]
 };
 
 export default function QuizGame({ onBack }) {
-  // --- СОСТОЯНИЕ ---
-  const [view, setView] = useState('menu'); // menu, lobby, play, finish
-  const [config, setConfig] = useState({ cat: "Культура", rounds: 3, time: 20 });
-  const [players, setPlayers] = useState(["Игрок 1", "Игрок 2"]);
+  // Настройки
+  const [view, setView] = useState('setup'); // setup, waiting, play, finish
+  const [cfg, setCfg] = useState({ cat: "Мифы", rounds: 3, time: 15 });
+  const [players, setPlayers] = useState(["Alpha", "Beta"]);
+  
+  // Игровой цикл
   const [scores, setScores] = useState({});
-  const [turn, setTurn] = useState(0); // индекс текущего игрока
+  const [pIndex, setPIndex] = useState(0);
   const [round, setRound] = useState(1);
-  const [timer, setTimer] = useState(20);
-  const [answerIdx, setAnswerIdx] = useState(null);
-  const [lock, setLock] = useState(false);
+  const [seconds, setSeconds] = useState(15);
+  const [activeIdx, setActiveIdx] = useState(null);
+  const [locked, setLocked] = useState(false);
 
-  // Таймер логика
+  // Живой таймер
   useEffect(() => {
-    let interval;
-    if (view === 'play' && timer > 0 && !lock) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
-    } else if (timer === 0 && !lock) {
-      submitAnswer(null);
+    let t;
+    if (view === 'play' && seconds > 0 && !locked) {
+      t = setInterval(() => setSeconds(s => s - 1), 1000);
+    } else if (seconds === 0 && !locked) {
+      handleStep(null);
     }
-    return () => clearInterval(interval);
-  }, [view, timer, lock]);
+    return () => clearInterval(t);
+  }, [view, seconds, locked]);
 
-  // Запуск игры
-  const startAction = () => {
+  const init = () => {
     const s = {};
     players.forEach(p => s[p] = 0);
     setScores(s);
-    setTurn(0);
+    setPIndex(0);
     setRound(1);
-    setTimer(config.time);
-    setView('lobby');
+    setSeconds(cfg.time);
+    setView('waiting');
   };
 
-  // Проверка ответа
-  const submitAnswer = (idx) => {
-    if (lock) return;
-    setLock(true);
-    setAnswerIdx(idx);
+  const handleStep = (idx) => {
+    if (locked) return;
+    setLocked(true);
+    setActiveIdx(idx);
 
-    const correct = DATA[config.cat][(round - 1) % DATA[config.cat].length].c;
+    const correct = QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].c;
     if (idx === correct) {
-      setScores(prev => ({ ...prev, [players[turn]]: prev[players[turn]] + 1 }));
+      setScores(prev => ({ ...prev, [players[pIndex]]: prev[players[pIndex]] + 1 }));
     }
 
     setTimeout(() => {
-      setLock(false);
-      setAnswerIdx(null);
-      setTimer(config.time);
+      setLocked(false);
+      setActiveIdx(null);
+      setSeconds(cfg.time);
 
-      if (turn < players.length - 1) {
-        setTurn(t => t + 1);
-        setView('lobby');
-      } else if (round < config.rounds) {
+      if (pIndex < players.length - 1) {
+        setPIndex(i => i + 1);
+        setView('waiting');
+      } else if (round < cfg.rounds) {
         setRound(r => r + 1);
-        setTurn(0);
-        setView('lobby');
+        setPIndex(0);
+        setView('waiting');
       } else {
         setView('finish');
       }
@@ -79,75 +79,83 @@ export default function QuizGame({ onBack }) {
   };
 
   return (
-    <div className="art-wrapper">
-      <button className="art-back" onClick={onBack}>← ВЫХОД</button>
+    <div className="bio-container">
+      <div className="bio-blob-bg"></div>
+      <button className="bio-exit-btn" onClick={onBack}>ABORT_CORE</button>
 
       <AnimatePresence mode="wait">
-        {/* ЭКРАН 1: НАСТРОЙКИ */}
-        {view === 'menu' && (
-          <motion.div key="menu" className="art-card" initial={{y: 20, opacity: 0}} animate={{y: 0, opacity: 1}} exit={{y: -20, opacity: 0}}>
-            <h1 className="art-title">QUIZ.<span>ED</span></h1>
+        {/* SETUP */}
+        {view === 'setup' && (
+          <motion.div key="s" className="bio-card" initial={{opacity:0, scale:0.8}} animate={{opacity:1, scale:1}}>
+            <h1 className="bio-header">EVO.<span>QUIZ</span></h1>
             
-            <div className="art-field">
-              <label>ТЕМА</label>
-              <select onChange={(e) => setConfig({...config, cat: e.target.value})}>
-                {Object.keys(DATA).map(k => <option key={k} value={k}>{k}</option>)}
+            <div className="bio-input-group">
+              <label>GENETIC_PATH</label>
+              <select onChange={(e) => setCfg({...cfg, cat: e.target.value})}>
+                {Object.keys(QUIZ_CONTENT).map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
 
-            <div className="art-field">
-              <label>РАУНДЫ: {config.rounds}</label>
-              <input type="range" min="1" max="5" value={config.rounds} onChange={(e) => setConfig({...config, rounds: e.target.value})} />
+            <div className="bio-input-group">
+              <label>CYCLES: {cfg.rounds}</label>
+              <input type="range" min="1" max="5" value={cfg.rounds} onChange={(e) => setCfg({...cfg, rounds: e.target.value})} />
             </div>
 
-            <div className="art-field">
-              <label>УЧАСТНИКИ</label>
-              <div className="art-players-list">
+            <div className="bio-input-group">
+              <label>ORGANISMS</label>
+              <div className="bio-players">
                 {players.map((p, i) => (
                   <input key={i} value={p} onChange={(e) => {
                     let n = [...players]; n[i] = e.target.value; setPlayers(n);
                   }} />
                 ))}
-                {players.length < 4 && <button className="art-plus" onClick={() => setPlayers([...players, `Игрок ${players.length+1}`])}>+</button>}
+                {players.length < 4 && <button className="bio-add" onClick={() => setPlayers([...players, `User_${players.length+1}`])}>+</button>}
               </div>
             </div>
 
-            <button className="art-btn-black" onClick={startAction}>СОЗДАТЬ СЕССИЮ</button>
+            <button className="bio-pulse-btn" onClick={init}>INITIATE EVOLUTION</button>
           </motion.div>
         )}
 
-        {/* ЭКРАН 2: ЛОББИ / ПЕРЕДАЧА */}
-        {view === 'lobby' && (
-          <motion.div key="lobby" className="art-card art-center" initial={{scale: 0.9}} animate={{scale: 1}} exit={{opacity: 0}}>
-            <div className="art-badge">РАУНД {round}</div>
-            <p className="art-pre">СЛЕДУЮЩИЙ ИГРОК:</p>
-            <h2 className="art-hero-name">{players[turn]}</h2>
-            <button className="art-btn-black" onClick={() => setView('play')}>НАЧАТЬ</button>
+        {/* WAITING */}
+        {view === 'waiting' && (
+          <motion.div key="w" className="bio-card bio-center" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}}>
+            <div className="bio-round-info">CYCLE {round}</div>
+            <p className="bio-sub">NEXT SUBJECT:</p>
+            <h2 className="bio-player-name">{players[pIndex]}</h2>
+            <button className="bio-pulse-btn" onClick={() => setView('play')}>CONNECT</button>
           </motion.div>
         )}
 
-        {/* ЭКРАН 3: ИГРА */}
+        {/* PLAY */}
         {view === 'play' && (
-          <motion.div key="play" className="art-play-container" initial={{opacity: 0}} animate={{opacity: 1}}>
-            <div className="art-top-nav">
-              <div className="art-timer-line" style={{width: `${(timer/config.time)*100}%`}}></div>
-              <div className="art-meta">
-                <span>{players[turn]}</span>
-                <span>{round}/{config.rounds}</span>
+          <motion.div key="p" className="bio-play-zone" initial={{opacity:0}} animate={{opacity:1}}>
+            <div className="bio-hud">
+              <div className="bio-timer-circle">
+                <svg viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" className="bio-timer-bg" />
+                  <circle cx="50" cy="50" r="45" className="bio-timer-bar" 
+                    style={{strokeDashoffset: 282 - (282 * seconds) / cfg.time}} />
+                </svg>
+                <span>{seconds}</span>
+              </div>
+              <div className="bio-hud-info">
+                <strong>{players[pIndex]}</strong>
+                <span>{round} / {cfg.rounds}</span>
               </div>
             </div>
 
-            <h2 className="art-q">{DATA[config.cat][(round - 1) % DATA[config.cat].length].q}</h2>
+            <h2 className="bio-question">{QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].q}</h2>
 
-            <div className="art-grid">
-              {DATA[config.cat][(round - 1) % DATA[config.cat].length].a.map((ans, i) => {
+            <div className="bio-grid">
+              {QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].a.map((ans, i) => {
                 let state = "";
-                if (answerIdx !== null) {
-                  const correct = DATA[config.cat][(round - 1) % DATA[config.cat].length].c;
-                  state = i === correct ? "art-correct" : (i === answerIdx ? "art-wrong" : "art-dim");
+                if (activeIdx !== null) {
+                  const corr = QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].c;
+                  state = i === corr ? "bio-corr" : (i === activeIdx ? "bio-wrong" : "bio-fade");
                 }
                 return (
-                  <button key={i} className={`art-ans ${state}`} onClick={() => submitAnswer(i)}>
+                  <button key={i} className={`bio-ans-btn ${state}`} onClick={() => handleStep(i)}>
                     {ans}
                   </button>
                 );
@@ -156,19 +164,19 @@ export default function QuizGame({ onBack }) {
           </motion.div>
         )}
 
-        {/* ЭКРАН 4: ИТОГИ */}
+        {/* FINISH */}
         {view === 'finish' && (
-          <motion.div key="finish" className="art-card" initial={{y: 20}} animate={{y: 0}}>
-            <h2 className="art-title">ИТОГИ</h2>
-            <div className="art-results">
-              {Object.entries(scores).sort((a,b) => b[1]-a[1]).map(([n, s], i) => (
-                <div key={i} className="art-res-row">
-                  <span className="art-n">{n}</span>
-                  <span className="art-s">{s} PTS</span>
+          <motion.div key="f" className="bio-card" initial={{scale:0.9}} animate={{scale:1}}>
+            <h2 className="bio-header">MUTATION COMPLETE</h2>
+            <div className="bio-results">
+              {Object.entries(scores).sort((a,b)=>b[1]-a[1]).map(([n, s], i) => (
+                <div key={i} className="bio-res-item">
+                  <span className="bio-res-name">{n}</span>
+                  <span className="bio-res-score">{s} RNA</span>
                 </div>
               ))}
             </div>
-            <button className="art-btn-black" onClick={() => setView('menu')}>РЕСТАРТ</button>
+            <button className="bio-pulse-btn" onClick={() => setView('setup')}>RE-EVOLVE</button>
           </motion.div>
         )}
       </AnimatePresence>
