@@ -128,6 +128,11 @@ export default function App() {
     return <SpyGame onBack={() => setActiveGame(null)} />;
   }
   
+  // Если открыта игра Шпион
+  if (activeGame === 'quz') {
+    return <QuizGame onBack={() => setActiveGame(null)} />;
+  }
+  
   
   
   // Основной лендинг
