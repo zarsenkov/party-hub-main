@@ -120,7 +120,12 @@ export default function App() {
   if (activeGame === 'crocodile') {
     return <CrocodileGame onBack={() => setActiveGame(null)} />;
   }
-
+  
+// Если открыта игра Шпион
+  if (activeGame === 'spy') {
+    return <SpyGame onBack={() => setActiveGame(null)} />;
+  }
+  
   // Основной лендинг
   return (
     <div className="neo-wrapper">
