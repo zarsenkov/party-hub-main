@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // Подключаем "мягкие" стили
-import './GuessWhoGame.css';
+import './WhoamiGame.css';
 
 // --- БАЗА СЛОВ ---
 const WORDS = {
