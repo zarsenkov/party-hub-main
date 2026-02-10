@@ -3,153 +3,151 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Подключаем стили
 import './QuizGame.css';
 
-// База вопросов
-const CATEGORIES = {
-  "Кино": [
-    { q: "Кто сыграл Джека в 'Титанике'?", a: ["Брэд Питт", "Лео Ди Каприо", "Том Круз", "Джонни Депп"], c: 1 },
-    { q: "В каком фильме была красная таблетка?", a: ["Начало", "Матрица", "Трон", "Обливион"], c: 1 }
+// База вопросов (категории)
+const DATA = {
+  "Культура": [
+    { q: "Кто написал 'Черный квадрат'?", a: ["Пикассо", "Малевич", "Кандинский", "Дали"], c: 1 },
+    { q: "В какой стране находится Лувр?", a: ["Италия", "Германия", "Франция", "Испания"], c: 2 }
   ],
-  "Наука": [
-    { q: "Какая планета самая большая?", a: ["Марс", "Земля", "Юпитер", "Сатурн"], c: 2 },
-    { q: "Формула воды?", a: ["CO2", "H2O", "O2", "NaCl"], c: 1 }
-  ],
-  "Технологии": [
-    { q: "Какая компания создала iPhone?", a: ["Samsung", "Apple", "Microsoft", "Google"], c: 1 },
-    { q: "Первая криптовалюта?", a: ["Ether", "Dogecoin", "Bitcoin", "Litecoin"], c: 2 }
+  "Космос": [
+    { q: "Первая планета от Солнца?", a: ["Венера", "Марс", "Меркурий", "Земля"], c: 2 },
+    { q: "Как называется наша галактика?", a: ["Андромеда", "Млечный Путь", "Орион", "Сириус"], c: 1 }
   ]
 };
 
 export default function QuizGame({ onBack }) {
-  // --- СОСТОЯНИЯ ---
-  const [step, setStep] = useState('setup'); // setup, pass, play, results
-  const [settings, setSettings] = useState({ cat: "Кино", rounds: 3, time: 15 });
+  // --- СОСТОЯНИЕ ---
+  const [view, setView] = useState('menu'); // menu, lobby, play, finish
+  const [config, setConfig] = useState({ cat: "Культура", rounds: 3, time: 20 });
   const [players, setPlayers] = useState(["Игрок 1", "Игрок 2"]);
   const [scores, setScores] = useState({});
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
-  const [currentRound, setCurrentRound] = useState(1);
-  const [timeLeft, setTimeLeft] = useState(15);
-  const [selected, setSelected] = useState(null);
-  const [isLocked, setIsLocked] = useState(false);
+  const [turn, setTurn] = useState(0); // индекс текущего игрока
+  const [round, setRound] = useState(1);
+  const [timer, setTimer] = useState(20);
+  const [answerIdx, setAnswerIdx] = useState(null);
+  const [lock, setLock] = useState(false);
 
-  // Таймер обратного отсчета
+  // Таймер логика
   useEffect(() => {
-    let timer;
-    if (step === 'play' && timeLeft > 0 && !isLocked) {
-      timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (timeLeft === 0 && !isLocked) {
-      handleAnswer(null); // Авто-проигрыш при окончании времени
+    let interval;
+    if (view === 'play' && timer > 0 && !lock) {
+      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    } else if (timer === 0 && !lock) {
+      submitAnswer(null);
     }
-    return () => clearInterval(timer);
-  }, [step, timeLeft, isLocked]);
+    return () => clearInterval(interval);
+  }, [view, timer, lock]);
 
-  // Запуск системы
-  const initGame = () => {
-    const initialScores = {};
-    players.forEach(p => initialScores[p] = 0);
-    setScores(initialScores);
-    setCurrentPlayerIdx(0);
-    setCurrentRound(1);
-    setTimeLeft(settings.time);
-    setStep('pass');
+  // Запуск игры
+  const startAction = () => {
+    const s = {};
+    players.forEach(p => s[p] = 0);
+    setScores(s);
+    setTurn(0);
+    setRound(1);
+    setTimer(config.time);
+    setView('lobby');
   };
 
-  // Обработка клика по ответу
-  const handleAnswer = (idx) => {
-    if (isLocked) return;
-    setIsLocked(true);
-    setSelected(idx);
+  // Проверка ответа
+  const submitAnswer = (idx) => {
+    if (lock) return;
+    setLock(true);
+    setAnswerIdx(idx);
 
-    const questions = CATEGORIES[settings.cat];
-    const currentQ = questions[(currentRound - 1) % questions.length];
-
-    // Если ответ верный — добавляем очко
-    if (idx === currentQ.c) {
-      setScores(prev => ({ ...prev, [players[currentPlayerIdx]]: prev[players[currentPlayerIdx]] + 1 }));
+    const correct = DATA[config.cat][(round - 1) % DATA[config.cat].length].c;
+    if (idx === correct) {
+      setScores(prev => ({ ...prev, [players[turn]]: prev[players[turn]] + 1 }));
     }
 
-    // Пауза, чтобы увидеть результат
     setTimeout(() => {
-      if (currentPlayerIdx < players.length - 1) {
-        setCurrentPlayerIdx(p => p + 1);
-        setStep('pass');
-      } else if (currentRound < settings.rounds) {
-        setCurrentRound(r => r + 1);
-        setCurrentPlayerIdx(0);
-        setStep('pass');
+      setLock(false);
+      setAnswerIdx(null);
+      setTimer(config.time);
+
+      if (turn < players.length - 1) {
+        setTurn(t => t + 1);
+        setView('lobby');
+      } else if (round < config.rounds) {
+        setRound(r => r + 1);
+        setTurn(0);
+        setView('lobby');
       } else {
-        setStep('results');
+        setView('finish');
       }
-      setSelected(null);
-      setIsLocked(false);
-      setTimeLeft(settings.time);
-    }, 1200);
+    }, 1500);
   };
 
   return (
-    <div className="qz-wrapper">
-      <button className="qz-exit" onClick={onBack}>TERMINATE</button>
+    <div className="art-wrapper">
+      <button className="art-back" onClick={onBack}>← ВЫХОД</button>
 
       <AnimatePresence mode="wait">
-        {/* 1. НАСТРОЙКИ */}
-        {step === 'setup' && (
-          <motion.div key="setup" className="qz-panel" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}>
-            <h2 className="qz-neon-text">QUIZ SYSTEM</h2>
-            <div className="qz-setup-grid">
-              <label>DATA CATEGORY</label>
-              <select value={settings.cat} onChange={(e)=>setSettings({...settings, cat: e.target.value})}>
-                {Object.keys(CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+        {/* ЭКРАН 1: НАСТРОЙКИ */}
+        {view === 'menu' && (
+          <motion.div key="menu" className="art-card" initial={{y: 20, opacity: 0}} animate={{y: 0, opacity: 1}} exit={{y: -20, opacity: 0}}>
+            <h1 className="art-title">QUIZ.<span>ED</span></h1>
+            
+            <div className="art-field">
+              <label>ТЕМА</label>
+              <select onChange={(e) => setConfig({...config, cat: e.target.value})}>
+                {Object.keys(DATA).map(k => <option key={k} value={k}>{k}</option>)}
               </select>
+            </div>
 
-              <label>ROUNDS: {settings.rounds}</label>
-              <input type="range" min="1" max="10" value={settings.rounds} 
-                onChange={(e)=>setSettings({...settings, rounds: parseInt(e.target.value)})}/>
+            <div className="art-field">
+              <label>РАУНДЫ: {config.rounds}</label>
+              <input type="range" min="1" max="5" value={config.rounds} onChange={(e) => setConfig({...config, rounds: e.target.value})} />
+            </div>
 
-              <label>PLAYERS</label>
-              <div className="qz-players-setup">
+            <div className="art-field">
+              <label>УЧАСТНИКИ</label>
+              <div className="art-players-list">
                 {players.map((p, i) => (
-                  <input key={i} className="qz-input-text" value={p} onChange={(e) => {
-                    const n = [...players]; n[i] = e.target.value; setPlayers(n);
+                  <input key={i} value={p} onChange={(e) => {
+                    let n = [...players]; n[i] = e.target.value; setPlayers(n);
                   }} />
                 ))}
-                {players.length < 6 && (
-                  <button className="qz-add-btn" onClick={()=>setPlayers([...players, `Игрок ${players.length+1}`])}>+</button>
-                )}
+                {players.length < 4 && <button className="art-plus" onClick={() => setPlayers([...players, `Игрок ${players.length+1}`])}>+</button>}
               </div>
             </div>
-            <button className="qz-btn-main" onClick={initGame}>BOOT GAME</button>
+
+            <button className="art-btn-black" onClick={startAction}>СОЗДАТЬ СЕССИЮ</button>
           </motion.div>
         )}
 
-        {/* 2. ПЕРЕДАЧА ХОДА */}
-        {step === 'pass' && (
-          <motion.div key="pass" className="qz-panel qz-center" initial={{scale:0.8}} animate={{scale:1}} exit={{scale:1.2, opacity:0}}>
-            <div className="qz-round-badge">ROUND {currentRound}</div>
-            <p className="qz-label">PREPARE FOR SCAN:</p>
-            <h2 className="qz-player-highlight">{players[currentPlayerIdx]}</h2>
-            <button className="qz-btn-main" onClick={() => setStep('play')}>I AM READY</button>
+        {/* ЭКРАН 2: ЛОББИ / ПЕРЕДАЧА */}
+        {view === 'lobby' && (
+          <motion.div key="lobby" className="art-card art-center" initial={{scale: 0.9}} animate={{scale: 1}} exit={{opacity: 0}}>
+            <div className="art-badge">РАУНД {round}</div>
+            <p className="art-pre">СЛЕДУЮЩИЙ ИГРОК:</p>
+            <h2 className="art-hero-name">{players[turn]}</h2>
+            <button className="art-btn-black" onClick={() => setView('play')}>НАЧАТЬ</button>
           </motion.div>
         )}
 
-        {/* 3. ВОПРОС */}
-        {step === 'play' && (
-          <motion.div key="play" className="qz-play-area" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <div className="qz-info-bar">
-              <span className="qz-p-name">{players[currentPlayerIdx]}</span>
-              <div className="qz-timer-ring">{timeLeft}</div>
-              <span className="qz-r-count">{currentRound}/{settings.rounds}</span>
+        {/* ЭКРАН 3: ИГРА */}
+        {view === 'play' && (
+          <motion.div key="play" className="art-play-container" initial={{opacity: 0}} animate={{opacity: 1}}>
+            <div className="art-top-nav">
+              <div className="art-timer-line" style={{width: `${(timer/config.time)*100}%`}}></div>
+              <div className="art-meta">
+                <span>{players[turn]}</span>
+                <span>{round}/{config.rounds}</span>
+              </div>
             </div>
 
-            <h2 className="qz-q-text">{CATEGORIES[settings.cat][(currentRound-1) % CATEGORIES[settings.cat].length].q}</h2>
+            <h2 className="art-q">{DATA[config.cat][(round - 1) % DATA[config.cat].length].q}</h2>
 
-            <div className="qz-grid-answers">
-              {CATEGORIES[settings.cat][(currentRound-1) % CATEGORIES[settings.cat].length].a.map((ans, i) => {
-                let cl = "";
-                if (selected !== null) {
-                   if (i === CATEGORIES[settings.cat][(currentRound-1) % CATEGORIES[settings.cat].length].c) cl = "correct";
-                   else if (i === selected) cl = "wrong";
+            <div className="art-grid">
+              {DATA[config.cat][(round - 1) % DATA[config.cat].length].a.map((ans, i) => {
+                let state = "";
+                if (answerIdx !== null) {
+                  const correct = DATA[config.cat][(round - 1) % DATA[config.cat].length].c;
+                  state = i === correct ? "art-correct" : (i === answerIdx ? "art-wrong" : "art-dim");
                 }
                 return (
-                  <button key={i} className={`qz-ans-btn ${cl} ${selected === i ? 'sel' : ''}`} onClick={() => handleAnswer(i)}>
+                  <button key={i} className={`art-ans ${state}`} onClick={() => submitAnswer(i)}>
                     {ans}
                   </button>
                 );
@@ -158,20 +156,19 @@ export default function QuizGame({ onBack }) {
           </motion.div>
         )}
 
-        {/* 4. РЕЗУЛЬТАТЫ */}
-        {step === 'results' && (
-          <motion.div key="res" className="qz-panel" initial={{y:30}} animate={{y:0}}>
-            <h2 className="qz-neon-text">FINAL SCORE</h2>
-            <div className="qz-score-list">
-              {Object.entries(scores).sort((a,b)=>b[1]-a[1]).map(([name, sc], i) => (
-                <div key={i} className="qz-score-item">
-                  <span className="qz-rank">#{i+1}</span>
-                  <span className="qz-name">{name}</span>
-                  <b className="qz-pts">{sc} PTS</b>
+        {/* ЭКРАН 4: ИТОГИ */}
+        {view === 'finish' && (
+          <motion.div key="finish" className="art-card" initial={{y: 20}} animate={{y: 0}}>
+            <h2 className="art-title">ИТОГИ</h2>
+            <div className="art-results">
+              {Object.entries(scores).sort((a,b) => b[1]-a[1]).map(([n, s], i) => (
+                <div key={i} className="art-res-row">
+                  <span className="art-n">{n}</span>
+                  <span className="art-s">{s} PTS</span>
                 </div>
               ))}
             </div>
-            <button className="qz-btn-main" onClick={() => setStep('setup')}>NEW CYCLE</button>
+            <button className="art-btn-black" onClick={() => setView('menu')}>РЕСТАРТ</button>
           </motion.div>
         )}
       </AnimatePresence>
