@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
-import QuizGame from './components/quiz/QuizGame';
-import GuessWhoGame from './components/whoami/GuessWhoGame';
+import QuizGame from './components/Quiz/QuizGame';
+import GuessWhoGame from './components/Whoami/GuessWhoGame';
 
 
 // Твой CSS файл
