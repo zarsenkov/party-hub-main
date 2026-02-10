@@ -6,6 +6,7 @@ import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/quiz/QuizGame';
+import Whoami from './components/Whoami/GuessWhoGame';
 
 
 // Твой CSS файл
@@ -48,7 +49,7 @@ const GAMES = [
     icon: '👤',
     desc: 'Угадай персонажа на своем лбу, задавая вопросы "Да" или "Нет".',
     footer: '2-8 ИГРОКОВ',
-    ready: false
+    ready: true
   },
   {
     id: 'quiz',
@@ -128,12 +129,15 @@ export default function App() {
     return <SpyGame onBack={() => setActiveGame(null)} />;
   }
   
-  // Если открыта игра Шпион
+  // Если открыта игра Квиз
   if (activeGame === 'quiz') {
     return <QuizGame onBack={() => setActiveGame(null)} />;
   }
   
-  
+  // Если открыта игра Кто я?
+  if (activeGame === 'whoami') {
+    return <GuessWhoGame onBack={() => setActiveGame(null)} />;
+  }
   
   // Основной лендинг
   return (
