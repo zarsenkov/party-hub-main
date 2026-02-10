@@ -3,159 +3,160 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Подключаем стили
 import './QuizGame.css';
 
-// --- ДАННЫЕ ---
-const QUIZ_CONTENT = {
-  "Мифы": [
-    { q: "Кто похитил огонь у богов?", a: ["Геракл", "Прометей", "Зевс", "Атлант"], c: 1 },
-    { q: "Страж подземного мира?", a: ["Минотавр", "Цербер", "Гидра", "Сфинкс"], c: 1 }
+// --- БАЗА ЗНАНИЙ (Добавляй свои вопросы сюда) ---
+const QUESTIONS_DB = {
+  "Мультфильмы": [
+    { q: "Как зовут жёлтую губку, живущую на дне океана?", a: ["Патрик", "Спанч Боб", "Сквидвард", "Гэри"], c: 1 },
+    { q: "Что любит есть Винни-Пух?", a: ["Пиццу", "Варенье", "Мёд", "Морковку"], c: 2 },
+    { q: "Кто самый быстрый в мире?", a: ["Молния Маккуин", "Мэтр", "Салли", "Шериф"], c: 0 }
   ],
-  "Тайны": [
-    { q: "Где находится Бермудский треугольник?", a: ["Атлантика", "Тихий океан", "Индийский", "Северный"], c: 0 },
-    { q: "Какой город искал Шлиман?", a: ["Вавилон", "Троя", "Атлантида", "Помпеи"], c: 1 }
+  "Еда": [
+    { q: "Из чего делают чипсы?", a: ["Из муки", "Из картофеля", "Из яблок", "Из сыра"], c: 1 },
+    { q: "Какой фрукт называют королём цитрусовых?", a: ["Лимон", "Апельсин", "Грейпфрут", "Помело"], c: 1 }
+  ],
+  "Животные": [
+    { q: "Какое животное самое высокое?", a: ["Слон", "Жираф", "Страус", "Бегемот"], c: 1 },
+    { q: "Кто спит вниз головой?", a: ["Сова", "Ленивец", "Летучая мышь", "Коала"], c: 2 }
   ]
 };
 
 export default function QuizGame({ onBack }) {
-  // Настройки
-  const [view, setView] = useState('setup'); // setup, waiting, play, finish
-  const [cfg, setCfg] = useState({ cat: "Мифы", rounds: 3, time: 15 });
-  const [players, setPlayers] = useState(["Alpha", "Beta"]);
+  // --- НАСТРОЙКИ ---
+  const [step, setStep] = useState('setup'); // setup, waiting, play, finish
+  const [config, setConfig] = useState({ cat: "Мультфильмы", rounds: 3, time: 15 });
+  const [players, setPlayers] = useState(["Игрок 1", "Игрок 2"]);
   
-  // Игровой цикл
+  // --- СОСТОЯНИЕ ИГРЫ ---
   const [scores, setScores] = useState({});
-  const [pIndex, setPIndex] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
   const [round, setRound] = useState(1);
-  const [seconds, setSeconds] = useState(15);
-  const [activeIdx, setActiveIdx] = useState(null);
-  const [locked, setLocked] = useState(false);
+  const [timer, setTimer] = useState(15);
+  const [ansActive, setAnsActive] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
 
-  // Живой таймер
+  // --- ЛОГИКА ТАЙМЕРА ---
   useEffect(() => {
-    let t;
-    if (view === 'play' && seconds > 0 && !locked) {
-      t = setInterval(() => setSeconds(s => s - 1), 1000);
-    } else if (seconds === 0 && !locked) {
-      handleStep(null);
+    let interval;
+    if (step === 'play' && timer > 0 && !isLocked) {
+      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    } else if (timer === 0 && !isLocked) {
+      handleAnswer(null); // Время вышло
     }
-    return () => clearInterval(t);
-  }, [view, seconds, locked]);
+    return () => clearInterval(interval);
+  }, [step, timer, isLocked]);
 
-  const init = () => {
+  // --- СТАРТ ИГРЫ ---
+  const startReady = () => {
     const s = {};
     players.forEach(p => s[p] = 0);
     setScores(s);
-    setPIndex(0);
+    setCurrentPlayer(0);
     setRound(1);
-    setSeconds(cfg.time);
-    setView('waiting');
+    setTimer(config.time);
+    setStep('waiting');
   };
 
-  const handleStep = (idx) => {
-    if (locked) return;
-    setLocked(true);
-    setActiveIdx(idx);
+  // --- ОБРАБОТКА ОТВЕТА ---
+  const handleAnswer = (idx) => {
+    if (isLocked) return;
+    setIsLocked(true);
+    setAnsActive(idx);
 
-    const correct = QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].c;
+    const correct = QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].c;
     if (idx === correct) {
-      setScores(prev => ({ ...prev, [players[pIndex]]: prev[players[pIndex]] + 1 }));
+      setScores(prev => ({ ...prev, [players[currentPlayer]]: prev[players[currentPlayer]] + 1 }));
     }
 
     setTimeout(() => {
-      setLocked(false);
-      setActiveIdx(null);
-      setSeconds(cfg.time);
+      setIsLocked(false);
+      setAnsActive(null);
+      setTimer(config.time);
 
-      if (pIndex < players.length - 1) {
-        setPIndex(i => i + 1);
-        setView('waiting');
-      } else if (round < cfg.rounds) {
+      if (currentPlayer < players.length - 1) {
+        setCurrentPlayer(c => c + 1);
+        setStep('waiting');
+      } else if (round < config.rounds) {
         setRound(r => r + 1);
-        setPIndex(0);
-        setView('waiting');
+        setCurrentPlayer(0);
+        setStep('waiting');
       } else {
-        setView('finish');
+        setStep('finish');
       }
     }, 1500);
   };
 
   return (
-    <div className="bio-container">
-      <div className="bio-blob-bg"></div>
-      <button className="bio-exit-btn" onClick={onBack}>ABORT_CORE</button>
+    <div className="cosmic-container">
+      <button className="cosmic-back" onClick={onBack}>ВЫЙТИ</button>
 
       <AnimatePresence mode="wait">
-        {/* SETUP */}
-        {view === 'setup' && (
-          <motion.div key="s" className="bio-card" initial={{opacity:0, scale:0.8}} animate={{opacity:1, scale:1}}>
-            <h1 className="bio-header">EVO.<span>QUIZ</span></h1>
+        {/* ЭКРАН 1: НАСТРОЙКИ */}
+        {step === 'setup' && (
+          <motion.div key="s" className="cosmic-card" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}>
+            <h1 className="cosmic-logo">МЕГА<span>КВИЗ</span></h1>
             
-            <div className="bio-input-group">
-              <label>GENETIC_PATH</label>
-              <select onChange={(e) => setCfg({...cfg, cat: e.target.value})}>
-                {Object.keys(QUIZ_CONTENT).map(k => <option key={k} value={k}>{k}</option>)}
+            <div className="cosmic-field">
+              <label>ВЫБЕРИ ТЕМУ</label>
+              <select onChange={(e) => setConfig({...config, cat: e.target.value})}>
+                {Object.keys(QUESTIONS_DB).map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
 
-            <div className="bio-input-group">
-              <label>CYCLES: {cfg.rounds}</label>
-              <input type="range" min="1" max="5" value={cfg.rounds} onChange={(e) => setCfg({...cfg, rounds: e.target.value})} />
+            <div className="cosmic-field">
+              <label>РАУНДОВ: {config.rounds}</label>
+              <input type="range" min="1" max="10" value={config.rounds} onChange={(e) => setConfig({...config, rounds: e.target.value})} />
             </div>
 
-            <div className="bio-input-group">
-              <label>ORGANISMS</label>
-              <div className="bio-players">
+            <div className="cosmic-field">
+              <label>КТО ИГРАЕТ?</label>
+              <div className="cosmic-player-inputs">
                 {players.map((p, i) => (
                   <input key={i} value={p} onChange={(e) => {
                     let n = [...players]; n[i] = e.target.value; setPlayers(n);
                   }} />
                 ))}
-                {players.length < 4 && <button className="bio-add" onClick={() => setPlayers([...players, `User_${players.length+1}`])}>+</button>}
+                {players.length < 5 && <button className="cosmic-add" onClick={() => setPlayers([...players, `Игрок ${players.length+1}`])}>+</button>}
               </div>
             </div>
 
-            <button className="bio-pulse-btn" onClick={init}>INITIATE EVOLUTION</button>
+            <button className="cosmic-main-btn" onClick={startReady}>ПОЕХАЛИ!</button>
           </motion.div>
         )}
 
-        {/* WAITING */}
-        {view === 'waiting' && (
-          <motion.div key="w" className="bio-card bio-center" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}}>
-            <div className="bio-round-info">CYCLE {round}</div>
-            <p className="bio-sub">NEXT SUBJECT:</p>
-            <h2 className="bio-player-name">{players[pIndex]}</h2>
-            <button className="bio-pulse-btn" onClick={() => setView('play')}>CONNECT</button>
+        {/* ЭКРАН 2: ОЖИДАНИЕ ИГРОКА */}
+        {step === 'waiting' && (
+          <motion.div key="w" className="cosmic-card cosmic-center" initial={{y: 100}} animate={{y: 0}}>
+            <div className="cosmic-round-info">РАУНД {round}</div>
+            <p className="cosmic-label">ПРИГОТОВИТЬСЯ:</p>
+            <h2 className="cosmic-player-target">{players[currentPlayer]}</h2>
+            <button className="cosmic-main-btn pulse" onClick={() => setStep('play')}>Я ТУТ!</button>
           </motion.div>
         )}
 
-        {/* PLAY */}
-        {view === 'play' && (
-          <motion.div key="p" className="bio-play-zone" initial={{opacity:0}} animate={{opacity:1}}>
-            <div className="bio-hud">
-              <div className="bio-timer-circle">
-                <svg viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="45" className="bio-timer-bg" />
-                  <circle cx="50" cy="50" r="45" className="bio-timer-bar" 
-                    style={{strokeDashoffset: 282 - (282 * seconds) / cfg.time}} />
-                </svg>
-                <span>{seconds}</span>
-              </div>
-              <div className="bio-hud-info">
-                <strong>{players[pIndex]}</strong>
-                <span>{round} / {cfg.rounds}</span>
+        {/* ЭКРАН 3: ВОПРОС */}
+        {step === 'play' && (
+          <motion.div key="p" className="cosmic-play-zone" initial={{opacity:0}} animate={{opacity:1}}>
+            <div className="cosmic-hud">
+              <div className="cosmic-timer">{timer}</div>
+              <div className="cosmic-stats">
+                <strong>{players[currentPlayer]}</strong>
+                <span>{round} / {config.rounds}</span>
               </div>
             </div>
 
-            <h2 className="bio-question">{QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].q}</h2>
+            <div className="cosmic-q-bubble">
+              {QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].q}
+            </div>
 
-            <div className="bio-grid">
-              {QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].a.map((ans, i) => {
-                let state = "";
-                if (activeIdx !== null) {
-                  const corr = QUIZ_CONTENT[cfg.cat][(round - 1) % QUIZ_CONTENT[cfg.cat].length].c;
-                  state = i === corr ? "bio-corr" : (i === activeIdx ? "bio-wrong" : "bio-fade");
+            <div className="cosmic-grid">
+              {QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].a.map((ans, i) => {
+                let status = "";
+                if (ansActive !== null) {
+                  const corr = QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].c;
+                  status = i === corr ? "correct" : (i === ansActive ? "wrong" : "dim");
                 }
                 return (
-                  <button key={i} className={`bio-ans-btn ${state}`} onClick={() => handleStep(i)}>
+                  <button key={i} className={`cosmic-ans-btn ${status}`} onClick={() => handleAnswer(i)}>
                     {ans}
                   </button>
                 );
@@ -164,19 +165,20 @@ export default function QuizGame({ onBack }) {
           </motion.div>
         )}
 
-        {/* FINISH */}
-        {view === 'finish' && (
-          <motion.div key="f" className="bio-card" initial={{scale:0.9}} animate={{scale:1}}>
-            <h2 className="bio-header">MUTATION COMPLETE</h2>
-            <div className="bio-results">
+        {/* ЭКРАН 4: ФИНАЛ */}
+        {step === 'finish' && (
+          <motion.div key="f" className="cosmic-card" initial={{scale:0}} animate={{scale:1}}>
+            <h2 className="cosmic-logo">ЗАВЕРШЕНО!</h2>
+            <div className="cosmic-results">
               {Object.entries(scores).sort((a,b)=>b[1]-a[1]).map(([n, s], i) => (
-                <div key={i} className="bio-res-item">
-                  <span className="bio-res-name">{n}</span>
-                  <span className="bio-res-score">{s} RNA</span>
+                <div key={i} className="cosmic-res-item">
+                  <span className="cosmic-res-rank">#{i+1}</span>
+                  <span className="cosmic-res-name">{n}</span>
+                  <b className="cosmic-res-score">{s} ОЧКОВ</b>
                 </div>
               ))}
             </div>
-            <button className="bio-pulse-btn" onClick={() => setView('setup')}>RE-EVOLVE</button>
+            <button className="cosmic-main-btn" onClick={() => setStep('setup')}>НОВАЯ ИГРА</button>
           </motion.div>
         )}
       </AnimatePresence>
