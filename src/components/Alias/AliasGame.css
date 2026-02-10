@@ -1,3 +1,4 @@
+/* --- ПЕРЕМЕННЫЕ ЦВЕТОВ --- */
 :root {
     --bg: #F0F4F8; 
     --white: #FFFFFF; 
@@ -11,190 +12,235 @@
     --shadow: 6px 6px 0px #2D3748;
 }
 
-/* ОБНУЛЕНИЕ */
-* { 
-    margin: 0; padding: 0; box-sizing: border-box; 
+/* --- ОБНУЛЕНИЕ И БАЗОВЫЕ НАСТРОЙКИ --- */
+/* Убираем лишние отступы и настраиваем шрифт */
+.alias-body-wrapper { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
     font-family: 'Montserrat', sans-serif; 
     -webkit-tap-highlight-color: transparent; 
+    background: var(--bg);
+    color: var(--black);
+    height: 100vh;
+    width: 100%;
+    overflow: hidden; /* Запрещаем общий скролл, чтобы не дергался экран */
 }
 
-body { 
-    background: var(--bg); 
-    color: var(--black); 
-    height: 100dvh; width: 100%; 
-    overflow: hidden; 
-}
-
+/* --- ГЛАВНАЯ ОБОЛОЧКА ИГРЫ --- */
 .app-shell { 
-    height: 100%; display: flex; flex-direction: column; 
-    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom); 
-    max-width: 500px; margin: 0 auto; 
+    height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+    padding: 20px;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    max-width: 500px; 
+    margin: 0 auto; 
     position: relative;
 }
 
-/* HEADER */
+/* --- ВЕРХНЯЯ ПАНЕЛЬ (ТАЙМЕР И ОЧКИ) --- */
 .pop-header { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 15px 0; min-height: 80px; 
-    opacity: 0; transition: 0.3s;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 15px 0; 
+    min-height: 80px; 
+    opacity: 0; 
+    transition: 0.3s;
 }
+
+/* Класс для анимации появления хедера */
 .pop-header.visible { opacity: 1; }
 
 .timer-bubble, .score-pill { 
-    background: var(--yellow); border: 3px solid var(--black); 
-    padding: 8px 15px; border-radius: 30px; 
-    font-weight: 900; box-shadow: 4px 4px 0 var(--black); 
+    background: var(--yellow); 
+    border: 3px solid var(--black); 
+    padding: 8px 15px; 
+    border-radius: 30px; 
+    font-weight: 900; 
+    box-shadow: 4px 4px 0 var(--black); 
 }
+
 .score-pill { background: var(--mint); }
 
-/* ЭКРАНЫ */
-.pop-screen { display: none; flex-direction: column; flex-grow: 1; overflow: hidden; }
+/* --- ЭКРАНЫ ИГРЫ --- */
+.pop-screen { 
+    display: none; 
+    flex-direction: column; 
+    flex-grow: 1; 
+    overflow: hidden; 
+}
+
+/* Активный экран делаем видимым */
 .pop-screen.active { display: flex; }
 
-.pop-title { font-size: 3.5rem; font-weight: 900; text-align: center; margin: 10px 0; letter-spacing: -2px; }
+.pop-title { 
+    font-size: 3.2rem; 
+    font-weight: 900; 
+    text-align: center; 
+    margin: 10px 0; 
+    letter-spacing: -2px; 
+    line-height: 1;
+}
+
 .pop-title span { color: var(--accent); }
 
-.section-label { font-size: 0.7rem; font-weight: 900; color: #718096; text-transform: uppercase; margin: 10px 0; letter-spacing: 1px; }
+.section-label { 
+    font-size: 0.75rem; 
+    font-weight: 900; 
+    color: #718096; 
+    text-transform: uppercase; 
+    margin: 15px 0 10px; 
+    letter-spacing: 1px; 
+}
 
-/* КАРТОЧКА СЛОВА */
-.card-container { margin: auto 0; padding: 20px 0; }
+/* --- КАРТОЧКА СО СЛОВОМ --- */
+.card-container { 
+    margin: auto 0; 
+    padding: 10px 0; 
+}
+
 .word-card { 
-    background: var(--white); border: 4px solid var(--black); 
-    border-radius: 30px; box-shadow: 10px 10px 0 var(--black); 
-    height: 250px; display: flex; align-items: center; justify-content: center; 
+    background: var(--white); 
+    border: 4px solid var(--black); 
+    border-radius: 30px; 
+    box-shadow: 10px 10px 0 var(--black); 
+    height: 220px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
 }
-#word-display { font-size: 2rem; font-weight: 900; text-transform: uppercase; text-align: center; padding: 20px; }
 
-/* КНОПКИ */
+#word-display { 
+    font-size: 2.2rem; 
+    font-weight: 900; 
+    text-transform: uppercase; 
+    text-align: center; 
+    padding: 20px; 
+    color: var(--black);
+}
+
+.swipe-hint { 
+    text-align: center; 
+    font-size: 0.8rem; 
+    font-weight: 800; 
+    opacity: 0.5; 
+    margin-top: 15px; 
+}
+
+/* --- КНОПКИ --- */
 .btn-pop-main { 
-    background: var(--accent); color: white; border: 4px solid var(--black); 
-    padding: 18px; border-radius: 20px; font-weight: 900; font-size: 1.2rem; 
-    box-shadow: var(--shadow); cursor: pointer; margin-top: auto; margin-bottom: 15px; 
+    background: var(--accent); 
+    color: white; 
+    border: 4px solid var(--black); 
+    padding: 18px; 
+    border-radius: 20px; 
+    font-weight: 900; 
+    font-size: 1.2rem; 
+    box-shadow: var(--shadow); 
+    cursor: pointer; 
+    margin-top: 20px;
+    margin-bottom: 15px; 
     transition: 0.1s;
+    width: 100%;
 }
-.btn-pop-main:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0 var(--black); }
 
-.game-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+.btn-pop-main:active { 
+    transform: translate(4px, 4px); 
+    box-shadow: 0px 0px 0 var(--black); 
+}
+
+/* Контейнер для двух кнопок в игре */
+.game-actions { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; 
+    margin-bottom: 15px; 
+}
+
 .btn-skip { background: #FEB2B2; color: var(--black); margin-top: 0; }
 .btn-check { background: var(--mint); color: var(--black); margin-top: 0; }
 
-/* КАТЕГОРИИ */
-.chips-group { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+/* --- КАТЕГОРИИ (ЧИПСЫ) --- */
+.chips-group { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 20px; 
+    flex-wrap: wrap; 
+}
+
 .pop-chip { 
-    padding: 10px 14px; border-radius: 12px; border: 3px solid var(--black); 
-    background: var(--white); font-weight: 800; font-size: 0.7rem; 
-    box-shadow: 3px 3px 0 var(--black); cursor: pointer; 
-}
-.pop-chip.active { background: var(--purple); transform: translate(2px, 2px); box-shadow: 0px 0px 0 var(--black); }
-
-/* РЕЗУЛЬТАТЫ */
-.pop-list { 
-    flex-grow: 1; overflow-y: auto; margin: 15px 0; 
-    border: 3px solid var(--black); border-radius: 15px; background: var(--white); 
-}
-.word-row { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 12px 15px; border-bottom: 2px solid var(--black); font-weight: 800; 
-}
-.status-icon { 
-    width: 35px; height: 35px; border-radius: 10px; border: 2px solid var(--black);
-    display: flex; align-items: center; justify-content: center;
-}
-.status-ok { background: var(--mint); }
-.status-err { background: #FEB2B2; }
-
-.summary-box { 
-    background: var(--blue); border: 3px solid var(--black); 
-    border-radius: 15px; padding: 15px; font-weight: 900; text-align: center; 
-}
-
-.team-ready-box {
-    background: var(--white); border: 4px solid var(--black);
-    padding: 30px; border-radius: 25px; text-align: center;
-    margin: auto 0; box-shadow: 8px 8px 0 var(--black);
-}
-.team-ready-box h3 { font-size: 2rem; color: var(--accent); }
-
-.swipe-hint { text-align: center; font-size: 0.7rem; font-weight: 800; opacity: 0.5; margin-bottom: 10px; }
-.pop-list { 
-    flex-grow: 1; 
-    overflow-y: auto; /* Включает прокрутку, если слов много */
-    margin: 15px 0; 
+    padding: 12px 16px; 
+    border-radius: 14px; 
     border: 3px solid var(--black); 
-    border-radius: 15px; 
-    background: var(--white);
-    max-height: 50vh; /* Ограничиваем высоту, чтобы кнопка не улетала */
-}
-
-/* Стилизация полосы прокрутки (для красоты) */
-.pop-list::-webkit-scrollbar { width: 8px; }
-.pop-list::-webkit-scrollbar-thumb { background: var(--black); border-radius: 10px; }
-
-/* Фиксация кнопок внизу экрана */
-.btn-pop-main {
-    flex-shrink: 0; /* Чтобы кнопка не сжималась */
-    margin-top: auto;
-}
-/* КНОПКА НАЗАД (Neo-Pop стиль) */
-.btn-back-menu {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background: #FFFFFF;
-    border: 3px solid #1A202C; /* Твой --text */
-    padding: 10px 18px;
-    border-radius: 15px;
-    font-weight: 900;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 11px;
-    cursor: pointer;
-    box-shadow: 4px 4px 0px #1A202C;
-    z-index: 1000;
+    background: var(--white); 
+    font-weight: 800; 
+    font-size: 0.8rem; 
+    box-shadow: 4px 4px 0 var(--black); 
+    cursor: pointer; 
     transition: 0.1s;
 }
 
-.btn-back-menu:active {
-    transform: translate(2px, 2px);
-    box-shadow: 0px 0px 0px #1A202C;
+.pop-chip.active { 
+    background: var(--purple); 
+    transform: translate(2px, 2px); 
+    box-shadow: 0px 0px 0 var(--black); 
 }
 
-/* Остальные стили для Alias (чтобы было красиво) */
-.alias-container {
-    min-height: 100vh;
-    background: #FFD1DC; /* Твой --card-alias */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+/* --- СПИСОК РЕЗУЛЬТАТОВ --- */
+.pop-list { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    margin: 15px 0; 
+    border: 3px solid var(--black); 
+    border-radius: 20px; 
+    background: var(--white); 
+    max-height: 40vh; /* Чтобы список не выталкивал кнопку за экран */
 }
 
-.alias-word-card {
-    background: white;
-    border: 4px solid #1A202C;
-    border-radius: 30px;
-    padding: 40px 20px;
-    width: 100%;
-    max-width: 340px;
-    box-shadow: 10px 10px 0px #1A202C;
-    margin-bottom: 20px;
-    text-align: center;
+/* Полоса прокрутки */
+.pop-list::-webkit-scrollbar { width: 6px; }
+.pop-list::-webkit-scrollbar-thumb { background: var(--black); border-radius: 10px; }
+
+.word-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 12px 15px; 
+    border-bottom: 2px solid var(--black); 
+    font-weight: 800; 
 }
 
-.alias-word-text {
-    font-size: 2.2rem;
+.word-row:last-child { border-bottom: none; }
+
+.status-icon { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 10px; 
+    border: 2px solid var(--black); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
     font-weight: 900;
-    margin-top: 10px;
-    text-transform: uppercase;
 }
 
-.btn-alias-main {
-    background: #1A202C;
-    color: white;
-    border: none;
-    padding: 20px 40px;
-    border-radius: 20px;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0px 6px 0px #4A5568;
+.status-ok { background: var(--mint); }
+.status-err { background: #FEB2B2; }
+
+/* Финальная плашка с очками */
+.summary-box { 
+    background: var(--blue); 
+    border: 4px solid var(--black); 
+    border-radius: 20px; 
+    padding: 20px; 
+    font-weight: 900; 
+    text-align: center; 
+    box-shadow: 6px 6px 0 var(--black);
+}
+
+.summary-box h2 {
+    font-size: 2rem;
+    margin-bottom: 5px;
 }
