@@ -77,21 +77,40 @@ body {
 }
 
 /* ЦВЕТА КАРТОЧЕК */
+/* Alias - Розовый */
 .neo-card.alias { background: var(--card-alias); }
+
+/* Шпион - Мятный */
 .neo-card.spy { background: var(--card-spy); }
-.neo-card.danetki { background: var(--card-danetki); }
+
+/* Бункер (используем фиолетовый Danetki) */
+.neo-card.bunker { background: var(--card-danetki); }
+
+/* Крокодил - Зеленый */
 .neo-card.crocodile { background: var(--card-croc); }
+
+/* Кто я - Бежевый */
 .neo-card.whoami { background: var(--card-whoami); }
+
+/* Викторина - Голубой */
 .neo-card.quiz { background: var(--card-quiz); }
+
+/* Love Moments - Светло-розовый */
 .neo-card.couples { background: var(--card-couples); }
+
+/* Мафия - Серый */
 .neo-card.mafia { background: var(--card-mafia); }
-.neo-card.locked { background: var(--card-locked); opacity: 0.8; cursor: not-allowed; }
+
+/* 5 Букв - Бирюзовый */
 .neo-card.one-letter { background: var(--card-one-letter); }
+
+/* Города РФ - Желтый */
 .neo-card.city-quest { background: var(--card-city); }
 
-.neo-card:hover:not(.locked) {
-    transform: translate(-4px, -4px);
-    box-shadow: 14px 14px 0px var(--text);
+.neo-card.locked { 
+    filter: grayscale(0.3) brightness(0.9); /* Слегка приглушаем цвета */
+    opacity: 0.8; 
+    cursor: not-allowed; 
 }
 
 .neo-icon { font-size: 54px; margin-bottom: 25px; }
