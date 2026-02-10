@@ -328,3 +328,66 @@
     margin: 10px 0 20px;
     transform: rotate(-3deg);
 }
+/* Поля ввода и строки */
+.spy-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.spy-id {
+    font-weight: 900;
+    color: #888;
+    font-size: 14px;
+}
+
+/* Текст брифинга на экране с таймером */
+.spy-briefing {
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 30px;
+    opacity: 0.8;
+    text-transform: uppercase;
+}
+
+/* Кнопка "К ГОЛОСОВАНИЮ" (Вторичная) */
+.spy-btn-secondary {
+    background: transparent;
+    border: 2px solid #2c2c2c;
+    color: #2c2c2c;
+    padding: 15px 25px;
+    font-family: 'Courier New', monospace;
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: 100%;
+}
+
+.spy-btn-secondary:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+/* Результаты финала */
+.spy-results-content label {
+    display: block;
+    font-size: 10px;
+    color: #888;
+    margin-top: 15px;
+}
+
+.spy-loc-reveal {
+    font-size: 24px;
+    font-weight: 900;
+    margin-top: 5px;
+    text-transform: uppercase;
+}
+
+/* Фикс для прокрутки списка имен */
+.spy-names-list::-webkit-scrollbar {
+    width: 4px;
+}
+.spy-names-list::-webkit-scrollbar-thumb {
+    background: #2c2c2c;
+}
