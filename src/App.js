@@ -179,7 +179,7 @@ export default function App() {
         ))}
       </main>
 
-      {/* Твой футер со ссылками */}
+      {/* Футер со ссылками */}
       <footer className="neo-footer-links">
         <a href="https://lovecouple.ru" className="footer-link">LOVECOUPLE.RU</a>
         <a href="https://t.me/LoveCouple_news" className="footer-link">TELEGRAM CHANNEL</a>
