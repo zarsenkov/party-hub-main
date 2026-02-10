@@ -85,3 +85,15 @@ body {
     color: var(--accent);
     border-color: var(--accent);
 }
+.soon-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(26, 32, 44, 0.1); /* Прозрачный черный */
+    color: var(--black);
+    border: 2px solid var(--black);
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 900;
+}
