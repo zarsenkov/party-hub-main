@@ -136,7 +136,7 @@ export default function App() {
   
   // Если открыта игра Кто я?
   if (activeGame === 'whoami') {
-    return <GuessWhoGame onBack={() => setActiveGame(null)} />;
+    return <WhoamiGame onBack={() => setActiveGame(null)} />;
   }
   
   // Основной лендинг
