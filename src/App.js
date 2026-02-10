@@ -2,67 +2,106 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 
-// --- СПИСОК ВСЕХ ИГР ---
-// Добавляем Alias и настраиваем цвета под наш Neo-Pop стиль
+// --- ДАННЫЕ ИГР (РАСШИРЕННЫЙ СПИСОК) ---
 const GAMES = [
   {
     id: 'alias',
     title: 'ALIAS NEO',
     icon: '🗣️',
-    desc: 'Объясняй слова, не называя их. Динамичная игра для любой компании.',
+    desc: 'Объясняй слова на скорость, не называя запретных слов.',
     footer: '2+ ИГРОКА',
-    color: '#B2F5EA', // Мятный (Mint)
+    color: '#B2F5EA', // Мятный
     badge: 'NEW',
-    url: 'https://alias-pop.vercel.app' // Сюда вставь ссылку на свой Alias
+    url: 'https://alias-pop.vercel.app'
   },
   {
-    id: 'couples',
-    title: 'LOVE MOMENTS',
-    icon: '❤️',
-    desc: 'Укрепляйте отношения: задания и вопросы для самых близких.',
-    footer: '2 ИГРОКА',
-    color: '#FFB7B2',
-    badge: 'HOT',
-    url: 'https://love-moments.vercel.app'
+    id: 'who-am-i',
+    title: 'КТО Я?',
+    icon: '👤',
+    desc: 'Угадай персонажа на своем лбу, задавая вопросы друзьям.',
+    footer: '2-8 ИГРОКОВ',
+    color: '#FEFCBF', // Желтый
+    url: '#' 
+  },
+  {
+    id: 'quiz',
+    title: 'ВИКТОРИНА',
+    icon: '🧠',
+    desc: 'Битва умов: отвечай на вопросы из разных областей знаний.',
+    footer: '1-10 ИГРОКОВ',
+    color: '#BEE3F8', // Голубой
+    url: '#'
+  },
+  {
+    id: 'crocodile',
+    title: 'КРОКОДИЛ',
+    icon: '🐊',
+    desc: 'Классика пантомимы: показывай слова только жестами.',
+    footer: '3+ ИГРОКА',
+    color: '#C6F6D5', // Зеленоватый
+    url: '#'
+  },
+  {
+    id: '5-letters',
+    title: '5 БУКВ',
+    icon: '📝',
+    desc: 'Угадай секретное слово из пяти букв за шесть попыток.',
+    footer: '1 ИГРОК',
+    color: '#FED7E2', // Розовый
+    url: '#'
+  },
+  {
+    id: 'cities-rf',
+    title: 'ГОРОДА РФ',
+    icon: '🇷🇺',
+    desc: 'Путешествуй по России: угадывай интересные места и факты.',
+    footer: '1-4 ИГРОКА',
+    color: '#E9D8FD', // Фиолетовый
+    url: '#'
+  },
+  {
+    id: 'bunker',
+    title: 'БУНКЕР',
+    icon: '🛡️',
+    desc: 'Дискуссионная игра: убеди всех, что именно ты должен выжить.',
+    footer: '4-12 ИГРОКОВ',
+    color: '#FEEBC8', // Оранжевый
+    url: '#'
   },
   {
     id: 'spy',
     title: 'ШПИОН',
     icon: '🕵️',
-    desc: 'Вычисли чужого, пока он не узнал локацию.',
+    desc: 'Вычисли чужого среди своих, пока он не раскрыл локацию.',
     footer: '3-10 ИГРОКОВ',
     color: '#FFD93D',
-    badge: 'POP-RETRO',
     url: 'https://spy-pop-party.vercel.app'
   },
   {
-    id: 'mafia',
-    title: 'МАФИЯ',
-    icon: '🎭',
-    desc: 'Город засыпает... Сможешь ли ты вычислить убийцу?',
-    footer: '6-16 ИГРОКОВ',
-    color: '#CBD5E0',
-    url: 'https://mafia-noir.vercel.app/'
-  },
-  {
-    id: 'danetki',
-    title: 'ДАНЕТКИ',
-    icon: '💡',
-    desc: 'Запутанные истории, где важен только твой вопрос.',
-    footer: '2+ ИГРОКА',
-    color: '#E9D8FD',
-    url: 'https://danetki-offline.vercel.app/'
+    id: 'couples',
+    title: 'LOVE MOMENTS',
+    icon: '❤️',
+    desc: 'Укрепляйте отношения: задания для самых близких.',
+    footer: '2 ИГРОКА',
+    color: '#FFB7B2',
+    badge: 'HOT',
+    url: 'https://love-moments.vercel.app'
   }
 ];
 
 export default function App() {
-  // Состояние для анимации затухания экрана
   const [isFading, setIsFading] = useState(false);
 
-  // Функция для плавного перехода по ссылке
+  // --- ФУНКЦИЯ ПЕРЕХОДА ---
   const handleGameClick = (url) => {
-    setIsFading(true); // Включаем черный оверлей
-    // Через полсекунды (время анимации) делаем редирект
+    // Если ссылки еще нет (стоит #), ничего не делаем
+    if (url === '#') {
+      alert("Эта игра скоро появится!");
+      return;
+    }
+    
+    setIsFading(true);
+    // Ждем анимации перед редиректом
     setTimeout(() => {
       window.location.href = url;
     }, 500);
@@ -70,7 +109,7 @@ export default function App() {
 
   return (
     <div className="neo-wrapper">
-      {/* Анимация черного экрана при переходе на игру */}
+      {/* Плавный черный экран при переходе */}
       <AnimatePresence>
         {isFading && (
           <motion.div 
@@ -87,23 +126,28 @@ export default function App() {
         <p style={subtitleStyle}>ТВОЯ ПЛАНЕТА РАЗВЛЕЧЕНИЙ</p>
       </header>
 
+      {/* Сетка карточек подстраивается под количество игр автоматически */}
       <main className="neo-grid">
         {GAMES.map((game) => (
           <motion.div
             key={game.id}
-            // Анимация при наведении и нажатии
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             className="neo-card"
             style={{ backgroundColor: game.color }}
             onClick={() => handleGameClick(game.url)}
           >
-            {/* Показываем значок (HOT, NEW и т.д.), если он есть */}
+            {/* Значки "NEW", "HOT" и т.д. */}
             {game.badge && <div style={badgeStyle}>{game.badge}</div>}
             
+            {/* Иконка игры */}
             <div style={{ fontSize: '54px', marginBottom: '25px' }}>{game.icon}</div>
+            
+            {/* Заголовок и описание */}
             <h2 style={titleStyle}>{game.title}</h2>
             <p style={descStyle}>{game.desc}</p>
+            
+            {/* Нижняя часть карточки */}
             <div style={footerStyle}>{game.footer}</div>
           </motion.div>
         ))}
@@ -111,37 +155,21 @@ export default function App() {
 
       <footer style={footerLinksStyle}>
         <a href="http://lovecouple.ru/" className="footer-link">LOVECOUPLE.RU</a>
-        <a href="https://t.me/LoveCouple_news" className="footer-link">TELEGRAM</a>
+        <a href="https://t.me/LoveCouple_news" className="footer-link">TELEGRAM CHANNEL</a>
       </footer>
     </div>
   );
 }
 
-// --- ИНЛАЙН СТИЛИ ---
-// Оверлей для эффекта "киношного" затухания
+// --- СТИЛИ (ОСТАЮТСЯ ПРЕЖНИМИ ДЛЯ ЕДИНООБРАЗИЯ) ---
 const overlayStyle = {
   position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
   background: '#1A202C', zIndex: 9999, pointerEvents: 'all'
 };
 
-// Подзаголовок под логотипом
 const subtitleStyle = { fontWeight: 800, letterSpacing: '4px', fontSize: '12px', opacity: 0.6 };
-
-// Маленькие плашки (Badges) на карточках
-const badgeStyle = { 
-  position: 'absolute', top: '20px', right: '20px', 
-  background: '#1A202C', color: 'white', padding: '6px 14px', 
-  borderRadius: '100px', fontSize: '10px', fontWeight: 900 
-};
-
-// Стили заголовка внутри карточки
+const badgeStyle = { position: 'absolute', top: '20px', right: '20px', background: '#1A202C', color: 'white', padding: '6px 14px', borderRadius: '100px', fontSize: '10px', fontWeight: 900 };
 const titleStyle = { fontFamily: 'Unbounded', fontSize: '24px', marginBottom: '12px', fontWeight: 900 };
-
-// Описание игры в карточке
 const descStyle = { fontSize: '15px', fontWeight: 600, opacity: 0.8, marginBottom: '40px' };
-
-// Нижняя часть карточки (кол-во игроков)
 const footerStyle = { marginTop: 'auto', fontSize: '11px', fontWeight: 900, opacity: 0.5 };
-
-// Навигация в самом низу страницы
 const footerLinksStyle = { marginTop: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' };
