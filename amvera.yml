@@ -1,17 +1,15 @@
-{
-  "name": "love-couple-hub",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "framer-motion": "^10.16.4",
-    "lucide-react": "^0.284.0",
-    "serve": "^14.2.4"
-  },
-  "scripts": {
-    "start": "serve -s build -p 80",
-    "build": "react-scripts build"
-  }
-}
+version: null
+meta:
+  environment: node
+  toolchain:
+    name: npm
+    version: "20"
+build:
+  skip: false
+  additionalCommands: npm install && CI=false npm run build
+run:
+  persistenceMount: /data
+  # scriptName: start означает, что будет запущена команда "npm start"
+  scriptName: start
+  containerPort: 80
+serviceType: compute
