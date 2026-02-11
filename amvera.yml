@@ -9,7 +9,6 @@ build:
   additionalCommands: npm install && CI=false npm run build
 run:
   persistenceMount: /data
-  # scriptName: start означает, что будет запущена команда "npm start"
   scriptName: start
-  containerPort: 80
+  containerPort: 3000 # ВАЖНО: Тут должен быть 3000!
 serviceType: compute
