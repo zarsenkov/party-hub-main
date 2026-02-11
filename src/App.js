@@ -9,6 +9,7 @@ import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
 import FiveLettersGame from './components/FiveLetters/FiveLettersGame';
 import CityGuide from './components/CityGuide/CityGuide';
+import MafiaGame from './components/Mafia/MafiaGame';
 
 // Твой CSS файл
 import './App.css';
@@ -105,7 +106,7 @@ const GAMES = [
     icon: '🎭',
     desc: 'Город засыпает... Проверь свою интуицию и блеф.',
     footer: '6-16 ИГРОКОВ',
-    ready: false
+    ready: true
   }
 ];
 
@@ -146,6 +147,9 @@ export default function App() {
   }
 
   if (activeGame === 'city-guide') return <CityGuide onBack={() => setActiveGame(null)} />;
+  
+  if (activeGame === 'mafia') return <MafiaGame onBack={() => setActiveGame(null)} />;
+
 
   
   // Основной лендинг
