@@ -1,70 +1,76 @@
-/* // LoveStory.css */
-.ls-container {
-    position: fixed; inset: 0;
-    background: #0f0f0f; /* Глубокий черный */
-    color: #e0e0e0;
-    font-family: 'Cormorant Garamond', serif; /* Элегантный шрифт с засечками */
-    display: flex; flex-direction: column;
-    padding: 40px 20px;
-    z-index: 1000;
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;600&family=Playfair+Display:ital@1&display=swap');
+
+:root {
+  --magic-gold: #f3e5ab;
+  --magic-rose: #ffafbd;
 }
 
-.ls-grain { /* Эффект шума на фоне */
-    position: absolute; inset: 0;
-    background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
-    opacity: 0.05; pointer-events: none;
+.ls-wrapper {
+  position: fixed; inset: 0;
+  display: flex; flexDirection: column;
+  font-family: 'Comfortaa', sans-serif;
+  color: white; overflow: hidden;
+  background: #121212; /* Базовый цвет до загрузки локации */
 }
 
-.ls-story-title {
-    font-size: 0.7rem;
-    letter-spacing: 0.4rem;
-    text-transform: uppercase;
-    color: #888;
-    text-align: center;
-    margin-bottom: 60px;
+/* // Фон меняется плавно в зависимости от локации */
+.ls-scene-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at center, var(--bg-color-top) 0%, var(--bg-color-bot) 100%);
+  transition: all 1.5s ease;
+  z-index: 0;
 }
 
-.ls-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    animation: fadeIn 1.2s ease;
+/* // Эффект «Волшебной пыли» */
+.ls-particles {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.1; animation: moveDust 20s linear infinite;
 }
 
-.ls-phrase {
-    font-size: 1.8rem;
-    line-height: 1.4;
-    font-style: italic;
-    margin-bottom: 40px;
+@keyframes moveDust { from { background-position: 0 0; } to { background-position: 500px 1000px; } }
+
+.ls-content {
+  position: relative; z-index: 10;
+  flex: 1; display: flex; flex-direction: column;
+  padding: 40px 20px; text-align: center;
 }
 
-.ls-instruction {
-    font-size: 0.8rem;
-    letter-spacing: 0.1rem;
-    color: #ff4d6d; /* Тонкий акцентный красный */
-    text-transform: uppercase;
+.ls-top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
 }
 
-.ls-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
+/* // Стекло для карточек */
+.ls-glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 40px 10px; /* Асимметрия для стиля */
+  padding: 40px 25px; margin: auto 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
-.ls-btn-next {
-    background: none; border: 1px solid #333;
-    color: #888; padding: 10px 20px;
-    font-size: 0.7rem; letter-spacing: 2px;
-    cursor: pointer; transition: 0.3s;
+.ls-location-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.8rem; letter-spacing: 3px;
+  color: var(--magic-gold); margin-bottom: 10px;
 }
 
-.ls-btn-next:hover { border-color: #eee; color: #eee; }
+.ls-main-text {
+  font-size: 1.4rem; line-height: 1.6; margin-bottom: 30px;
+}
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.ls-btn {
+  background: white; color: #333;
+  border: none; padding: 15px 30px;
+  border-radius: 50px; font-weight: 600;
+  cursor: pointer; transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+}
+
+.ls-btn-outline {
+  background: transparent; border: 1px solid rgba(255,255,255,0.4);
+  color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.8rem;
 }
