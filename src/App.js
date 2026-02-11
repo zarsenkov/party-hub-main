@@ -10,6 +10,7 @@ import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
 import FiveLettersGame from './components/FiveLetters/FiveLettersGame';
 import CityGuide from './components/CityGuide/CityGuide';
 import MafiaGame from './components/Mafia/MafiaGame';
+import LoveStory from './components/LoveStory/LoveStory';
 
 // Твой CSS файл
 import './App.css';
@@ -92,12 +93,12 @@ const GAMES = [
   {
     id: 'couples',
     className: 'couples', // Светло-розовый
-    title: 'LOVE MOMENTS',
+    title: 'LOVE STORY',
     icon: '❤️',
     desc: 'Укрепляйте отношения через милые и честные задания.',
     footer: '2 ИГРОКА',
     badge: 'HOT',
-    ready: false
+    ready: true
   },
   {
     id: 'mafia',
@@ -150,7 +151,9 @@ export default function App() {
   
   if (activeGame === 'mafia') return <MafiaGame onBack={() => setActiveGame(null)} />;
 
-
+  if (activeGame === 'couples') {
+    return <LoveStory onBack={() => setActiveGame(null)} />;
+  }
   
   // Основной лендинг
   return (
