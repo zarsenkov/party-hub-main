@@ -1,126 +1,114 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// Подключаем стили именно этой игры
+import { Timer, RefreshCw, CheckCircle2, XCircle, ArrowLeft, Play } from 'lucide-react';
 import './CrocodileGame.css';
 
-// --- БАЗА СЛОВ ---
-const CROC_WORDS = [
-  "Синхрофазотрон", "Зубная паста", "Понедельник", "Кот в сапогах", 
-  "Электрический ток", "Миксер", "Сноуборд", "Гарри Поттер", 
-  "Шлагбаум", "Интуиция", "Эволюция", "Кофемашина"
-];
+// База слов, разделенная по уровням сложности
+const WORDS_DATABASE = {
+  easy: ['Кошка', 'Телефон', 'Арбуз', 'Гитара', 'Зонт', 'Повар', 'Книга', 'Молоток'],
+  medium: ['Счастье', 'Интервью', 'Электричество', 'Орбита', 'Микроскоп', 'Шахматы'],
+  hard: ['Дежавю', 'Синхрофазотрон', 'Менеджмент', 'Харизма', 'Когнитивность']
+};
 
-// --- УСЛОЖНЕНИЯ ---
-const MODIFIERS = [
-  "Только одной рукой", 
-  "Стоя на одной ноге", 
-  "С закрытыми глазами", 
-  "Спиной к игрокам", 
-  "Не используя руки"
-];
+const CrocodileGame = ({ onBack }) => {
+  // Состояния игры: menu (выбор сложности), play (процесс), result (финал раунда)
+  const [gameState, setGameState] = useState('menu');
+  const [difficulty, setDifficulty] = useState('easy');
+  const [currentWord, setCurrentWord] = useState('');
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isPaused, setIsPaused] = useState(false);
 
-export default function CrocodileGame({ onBack }) {
-  // --- СОСТОЯНИЯ ---
-  const [screen, setScreen] = useState('menu'); // menu, play, result
-  const [word, setWord] = useState(''); // Текущее слово
-  const [mod, setMod] = useState(null); // Текущее усложнение
-  const [timer, setTimer] = useState(60); // Время раунда
-  const [isActive, setIsActive] = useState(false);
-
-  // --- ТАЙМЕР ---
-  // Запускает обратный отсчет, если isActive = true
-  useEffect(() => {
-    let interval = null;
-    if (isActive && timer > 0) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
-    } else if (timer === 0) {
-      setIsActive(false);
-      setScreen('result');
-    }
-    return () => clearInterval(interval);
-  }, [isActive, timer]);
-
-  // --- ФУНКЦИИ ---
-  
-  // Генерация нового задания: выбирает слово и с шансом 40% добавляет усложнение
-  const startGame = () => {
-    const randomWord = CROC_WORDS[Math.floor(Math.random() * CROC_WORDS.length)];
-    const randomMod = Math.random() > 0.6 ? MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)] : null;
-    
-    setWord(randomWord);
-    setMod(randomMod);
-    setTimer(60);
-    setScreen('play');
-    setIsActive(true);
+  // Функция для случайного выбора слова из базы
+  const getRandomWord = (level) => {
+    const words = WORDS_DATABASE[level];
+    const randomIndex = Math.floor(Math.random() * words.length);
+    return words[randomIndex];
   };
 
+  // Функция запуска раунда
+  const startGame = (level) => {
+    setDifficulty(level);
+    setCurrentWord(getRandomWord(level));
+    setTimeLeft(60);
+    setGameState('play');
+    setIsPaused(false);
+  };
+
+  // Эффект для работы таймера
+  useEffect(() => {
+    let timer;
+    if (gameState === 'play' && timeLeft > 0 && !isPaused) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setGameState('result');
+    }
+    return () => clearInterval(timer);
+  }, [gameState, timeLeft, isPaused]);
+
+  // Экран выбора сложности (Menu)
+  if (gameState === 'menu') {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="croc-container">
+        <button className="back-btn" onClick={onBack}><ArrowLeft size={24} /></button>
+        <h2 className="croc-title">КРОКОДИЛ</h2>
+        <p className="croc-subtitle">Выбери сложность слов:</p>
+        <div className="difficulty-grid">
+          {Object.keys(WORDS_DATABASE).map((level) => (
+            <motion.button
+              key={level}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`diff-card ${level}`}
+              onClick={() => startGame(level)}
+            >
+              {level === 'easy' && 'Легко'}
+              {level === 'medium' && 'Средне'}
+              {level === 'hard' && 'Хардкор'}
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Экран игрового процесса (Play)
   return (
     <div className="croc-container">
-      {/* Кнопка выхода на лендинг */}
-      <button className="croc-back" onClick={onBack}>← МЕНЮ</button>
+      <div className="game-header">
+        <div className={`timer-badge ${timeLeft < 10 ? 'low' : ''}`}>
+          <Timer size={20} />
+          <span>{timeLeft}с</span>
+        </div>
+      </div>
 
       <AnimatePresence mode="wait">
-        
-        {/* ЭКРАН 1: ГЛАВНОЕ МЕНЮ ИГРЫ */}
-        {screen === 'menu' && (
-          <motion.div 
-            key="menu" 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            className="croc-content"
-          >
-            <div className="croc-icon">🐊</div>
-            <h1 className="croc-title">КРОКО<span>ДИЛ</span></h1>
-            <p className="croc-desc">Показывай слово жестами. Никаких звуков и слов!</p>
-            <button className="croc-btn-start" onClick={startGame}>ПОЛУЧИТЬ ЗАДАНИЕ</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 2: ПРОЦЕСС ПОКАЗА */}
-        {screen === 'play' && (
-          <motion.div 
-            key="play" 
-            initial={{ y: 20, opacity: 0 }} 
-            animate={{ y: 0, opacity: 1 }} 
-            className="croc-content"
-          >
-            <div className="croc-timer">⏱ {timer}</div>
-            
-            <div className="croc-word-card">
-              <span className="croc-label">ТВОЕ СЛОВО:</span>
-              <div className="croc-word-text">{word}</div>
-              
-              {/* Показываем усложнение, если оно выпало */}
-              {mod && (
-                <div className="croc-modifier">
-                  ⚠️ {mod}
-                </div>
-              )}
-            </div>
-
-            <button className="croc-btn-done" onClick={() => { setIsActive(false); setScreen('result'); }}>
-              УГАДАНО!
-            </button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 3: РЕЗУЛЬТАТ */}
-        {screen === 'result' && (
-          <motion.div 
-            key="result" 
-            initial={{ scale: 0.8 }} 
-            animate={{ scale: 1 }} 
-            className="croc-content"
-          >
-            <h2 className="croc-res-title">{timer > 0 ? "ОТЛИЧНО! 🎉" : "ВРЕМЯ ВЫШЛО"}</h2>
-            <div className="croc-word-card" style={{ boxShadow: 'none', background: 'rgba(255,255,255,0.5)' }}>
-               <p>Слово: <strong>{word}</strong></p>
-            </div>
-            <button className="croc-btn-start" onClick={() => setScreen('menu')}>ИГРАТЬ ЕЩЕ</button>
-          </motion.div>
-        )}
-
+        <motion.div
+          key={currentWord}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -20, opacity: 0 }}
+          className="word-card"
+        >
+          <span className="word-label">Покажи слово:</span>
+          <h1 className="word-main">{currentWord}</h1>
+        </motion.div>
       </AnimatePresence>
+
+      <div className="game-controls">
+        <button className="control-btn skip" onClick={() => setCurrentWord(getRandomWord(difficulty))}>
+          <RefreshCw size={24} />
+          <span>Другое слово</span>
+        </button>
+        
+        <button className="control-btn done" onClick={() => setGameState('result')}>
+          <CheckCircle2 size={24} />
+          <span>Угадано!</span>
+        </button>
+      </div>
     </div>
   );
-}
+};
+
+export default CrocodileGame;
