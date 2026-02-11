@@ -1,20 +1,13 @@
-# // Указываем правильную среду
 meta:
   environment: node
   toolchain:
     name: npm
     version: 20
 
-# // Инструкции по сборке
 build:
-  # // Установка всех зависимостей проекта
   install: npm install
-  # // Создание папки build
   command: npm run build
 
-# // Инструкции по запуску
 run:
-  # // Папка, из которой будет работать сайт
   directory: build
-  # // Команда для работы React-роутинга
   command: npx serve -s .
