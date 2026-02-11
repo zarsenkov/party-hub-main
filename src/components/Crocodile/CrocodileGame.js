@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-// Библиотека для плавных жестов и анимаций
+// Библиотека для анимаций
 import { motion, AnimatePresence } from 'framer-motion';
-// Иконки для интерфейса
-import { Timer, Trophy, Users, ChevronRight, ArrowLeft, X, Check, Play, Settings } from 'lucide-react';
+// Иконки
+import { Timer, Trophy, Users, ArrowLeft, X, Check, Play, Settings } from 'lucide-react';
 import './CrocodileGame.css';
 
-// Полноценная база слов, разделенная по уровням
 const WORDS_LIBRARY = {
   easy: ['Банан', 'Обезьяна', 'Пальма', 'Змея', 'Лиана', 'Слон', 'Кокос', 'Попугай', 'Солнце', 'Трава'],
   medium: ['Фотоаппарат', 'Мачете', 'Водопад', 'Исследователь', 'Рюкзак', 'Джунгли', 'Леопард', 'Тукан'],
@@ -13,20 +12,19 @@ const WORDS_LIBRARY = {
 };
 
 const CrocodileGame = ({ onBack }) => {
-  // --- СОСТОЯНИЯ ИГРЫ ---
-  const [screen, setScreen] = useState('setup'); // setup | rules | ready | play | results | final
+  // --- СОСТОЯНИЯ ---
+  const [screen, setScreen] = useState('setup'); 
   const [difficulty, setDifficulty] = useState('easy');
-  const [settings, setSettings] = useState({ time: 60, rounds: 3 });
+  const [settings, setSettings] = useState({ time: 60, rounds: 3 }); // Настройка раундов здесь
   const [currentRound, setCurrentRound] = useState(1);
   const [currentTeam, setCurrentTeam] = useState(0);
-  const [score, setScore] = useState([0, 0]); // Счет Команды 1 и Команды 2
+  const [score, setScore] = useState([0, 0]); 
   const [currentWord, setCurrentWord] = useState('');
   const [timeLeft, setTimeLeft] = useState(60);
 
   const teamNames = ['Команда Лиан', 'Команда Ягуаров'];
 
-  // --- ЛОГИКА ТАЙМЕРА ---
-  // // Срабатывает каждую секунду, если экран "play"
+  // --- ТАЙМЕР ---
   useEffect(() => {
     let timer;
     if (screen === 'play' && timeLeft > 0) {
@@ -37,23 +35,21 @@ const CrocodileGame = ({ onBack }) => {
     return () => clearInterval(timer);
   }, [screen, timeLeft]);
 
-  // --- ФУНКЦИИ УПРАВЛЕНИЯ ---
-  
-  // Получение случайного слова
+  // --- ЛОГИКА ---
+
+  // Выбор слова
+  // // Берет случайное слово из библиотеки по ключу сложности
   const nextWord = () => {
     const list = WORDS_LIBRARY[difficulty];
-    const randomIndex = Math.floor(Math.random() * list.length);
-    setCurrentWord(list[randomIndex]);
+    setCurrentWord(list[Math.floor(Math.random() * list.length)]);
   };
 
-  // Старт раунда
   const startRound = () => {
     nextWord();
     setTimeLeft(settings.time);
     setScreen('play');
   };
 
-  // Обработка результата (Угадал / Пропустил)
   const handleAction = (isWin) => {
     if (isWin) {
       const newScore = [...score];
@@ -63,11 +59,12 @@ const CrocodileGame = ({ onBack }) => {
     nextWord();
   };
 
-  // Переход к следующему шагу после итогов раунда
+  // Переход хода (Логика завершения игры)
+  // // Проверяет, был ли это последний раунд для последней команды
   const handleNext = () => {
-    if (currentTeam === 1) { // Если сходила вторая команда
+    if (currentTeam === 1) { 
       if (currentRound >= settings.rounds) {
-        setScreen('final');
+        setScreen('final'); // Если лимит раундов исчерпан — финал
       } else {
         setCurrentRound(r => r + 1);
         setCurrentTeam(0);
@@ -79,9 +76,9 @@ const CrocodileGame = ({ onBack }) => {
     }
   };
 
-  // --- ЭКРАНЫ (UI) ---
+  // --- ЭКРАНЫ ---
 
-  // 1. Настройки (Setup)
+  // Экран настроек
   if (screen === 'setup') {
     return (
       <div className="jungle-ui">
@@ -98,6 +95,13 @@ const CrocodileGame = ({ onBack }) => {
               ))}
             </div>
           </div>
+
+          {/* НОВОЕ: Настройка количества раундов */}
+          <div className="j-option">
+            <span className="j-label"><Trophy size={14}/> РАУНДОВ: {settings.rounds}</span>
+            <input type="range" min="1" max="10" step="1" value={settings.rounds} onChange={e => setSettings({...settings, rounds: +e.target.value})} />
+          </div>
+
           <div className="j-option">
             <span className="j-label"><Timer size={14}/> ВРЕМЯ: {settings.time}с</span>
             <input type="range" min="30" max="120" step="10" value={settings.time} onChange={e => setSettings({...settings, time: +e.target.value})} />
@@ -108,27 +112,11 @@ const CrocodileGame = ({ onBack }) => {
     );
   }
 
-  // 2. Правила (Rules)
-  if (screen === 'rules') {
-    return (
-      <div className="jungle-ui center">
-        <h2 className="j-title">ПРАВИЛА</h2>
-        <div className="j-rules-list">
-          <p>🏝 Объясняй слова только жестами.</p>
-          <p>🤫 Никаких звуков и подсказок.</p>
-          <p>✅ Угадали — жми зеленую кнопку.</p>
-          <p>❌ Хочешь другое слово — жми красную.</p>
-        </div>
-        <button className="j-btn-prime" onClick={() => setScreen('ready')}>ПОНЯТНО</button>
-      </div>
-    );
-  }
-
-  // 3. Готовность (Ready)
+  // Экран "Готовность"
   if (screen === 'ready') {
     return (
       <div className="jungle-ui center">
-        <div className="j-badge">РАУНД {currentRound}</div>
+        <div className="j-badge">РАУНД {currentRound} ИЗ {settings.rounds}</div>
         <Users size={48} color="#ffe600" />
         <p className="j-pre-title">Очередь команды:</p>
         <h2 className="j-team-name">{teamNames[currentTeam]}</h2>
@@ -137,21 +125,22 @@ const CrocodileGame = ({ onBack }) => {
     );
   }
 
-  // 4. Игра (Play)
+  // Игровой экран (Play)
   if (screen === 'play') {
     return (
       <div className="jungle-ui">
         <div className="j-game-header">
           <div className={`j-timer-box ${timeLeft < 10 ? 'urgent' : ''}`}>{timeLeft}</div>
+          <div className="j-round-mini">Раунд {currentRound}/{settings.rounds}</div>
           <div className="j-current-score">Счет: {score[currentTeam]}</div>
         </div>
         <div className="j-word-area">
           <AnimatePresence mode="wait">
             <motion.div 
               key={currentWord}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.2 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               className="j-word-card"
             >
               <h3>{currentWord}</h3>
@@ -166,14 +155,21 @@ const CrocodileGame = ({ onBack }) => {
     );
   }
 
-  // 5. Итоги раунда и Финал (Results / Final)
+  // Финальный экран и Итоги
   return (
     <div className="jungle-ui center">
       <Trophy size={64} color="#ffe600" className="j-icon-anim" />
       <h2 className="j-title">{screen === 'final' ? 'ИГРА ОКОНЧЕНА' : 'ИТОГИ РАУНДА'}</h2>
+      
+      {screen === 'final' && (
+        <div className="j-winner-announce">
+          {score[0] === score[1] ? 'НИЧЬЯ!' : `ПОБЕДИЛИ ${score[0] > score[1] ? teamNames[0] : teamNames[1]}!`}
+        </div>
+      )}
+
       <div className="j-score-board">
         {teamNames.map((name, i) => (
-          <div key={i} className="j-score-row">
+          <div key={i} className={`j-score-row ${screen === 'final' && score[i] === Math.max(...score) ? 'winner' : ''}`}>
             <span>{name}</span>
             <span className="val">{score[i]}</span>
           </div>
