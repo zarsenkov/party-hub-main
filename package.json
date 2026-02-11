@@ -11,8 +11,7 @@
     "serve": "^14.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "start-server": "serve -s build -p 80"
+    "start": "serve -s build -p 80",
+    "build": "react-scripts build"
   }
 }
