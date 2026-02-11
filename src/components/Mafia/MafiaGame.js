@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-// // Используем нужные иконки
+// // Импорт иконок для интерфейса
 import { Moon, Sun, ArrowLeft, Users, Skull, Heart, Timer, RefreshCw } from 'lucide-react';
 import { mafiaRoles } from './mafiaData';
 
+// // Список кличек для атмосферы
 const NICKNAMES = ["Крот", "Шустрый", "Барон", "Доцент", "Бритва", "Молчун", "Артист", "Счастливчик", "Шериф", "Лис", "Призрак", "Кабан", "Акула", "Маэстро", "Стукач"];
 
 export default function MafiaGame({ onBack }) {
-  // // Состояния
-  const [gameState, setGameState] = useState('setup'); 
+  // // Глобальные состояния игры
+  const [gameState, setGameState] = useState('setup'); // setup, dealing, action, results
   const [phase, setPhase] = useState('night');
   const [playerCount, setPlayerCount] = useState(6);
   const [useManiac, setUseManiac] = useState(false);
@@ -19,7 +20,7 @@ export default function MafiaGame({ onBack }) {
   const [timerActive, setTimerActive] = useState(false);
   const [winner, setWinner] = useState(null);
 
-  // // Таймер обсуждения
+  // // Логика таймера для обсуждения
   useEffect(() => {
     let interval;
     if (timerActive && timeLeft > 0) {
@@ -28,18 +29,22 @@ export default function MafiaGame({ onBack }) {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
 
-  // // Старт раздачи: мешаем роли и клички
+  // // Функция перемешивания и раздачи ролей
   const startDealing = () => {
     let rolesPool = [];
     const mafiaCount = Math.floor(playerCount / 3);
+    
+    // // Наполнение пула ролей на основе выбора пользователя
     for (let i = 0; i < mafiaCount; i++) rolesPool.push(mafiaRoles.find(r => r.id === 'mafia'));
     rolesPool.push(mafiaRoles.find(r => r.id === 'doctor'));
     rolesPool.push(mafiaRoles.find(r => r.id === 'detective'));
     if (useManiac) rolesPool.push(mafiaRoles.find(r => r.id === 'maniac'));
     if (useProstitute) rolesPool.push(mafiaRoles.find(r => r.id === 'prostitute'));
     
+    // // Добор мирных жителей
     while (rolesPool.length < playerCount) rolesPool.push(mafiaRoles.find(r => r.id === 'civilian'));
     
+    // // Ограничение по кол-ву игроков и рандом
     rolesPool = rolesPool.slice(0, playerCount).sort(() => Math.random() - 0.5);
     const shuffledNames = [...NICKNAMES].sort(() => Math.random() - 0.5);
     
@@ -54,7 +59,7 @@ export default function MafiaGame({ onBack }) {
     setGameState('dealing');
   };
 
-  // // Проверка условий победы
+  // // Проверка условий победы (Мафия/Мирные/Маньяк)
   const checkVictory = (currentPlayers) => {
     const alive = currentPlayers.filter(p => p.alive);
     const mafia = alive.filter(p => p.role.side === 'evil' && p.role.id !== 'maniac');
@@ -67,19 +72,28 @@ export default function MafiaGame({ onBack }) {
     return null;
   };
 
-  // // Итоги ночи
-  const confirmDeaths = () => {
+  // // Обработка нажатия главной кнопки (смена фаз и проверка смерти)
+  const confirmAction = () => {
     const updated = players.map(p => {
       if (p.statusEffect === 'killed') return { ...p, alive: false, statusEffect: null };
       if (p.statusEffect === 'healed') return { ...p, statusEffect: null };
       return p;
     });
+    
     setPlayers(updated);
     const v = checkVictory(updated);
-    if (v) { setWinner(v); setGameState('results'); } else { setPhase('day'); }
+    
+    if (v) {
+      setWinner(v);
+      setGameState('results');
+    } else {
+      setPhase(phase === 'night' ? 'day' : 'night');
+      setTimerActive(false);
+      setTimeLeft(60);
+    }
   };
 
-  // --- ЭКРАН 1: НАСТРОЙКА (ТВОЙ ДИЗАЙН) ---
+  // --- ЭКРАН 1: НАСТРОЙКА ---
   if (gameState === 'setup') {
     return (
       <div style={ui.container('day')}>
@@ -108,12 +122,12 @@ export default function MafiaGame({ onBack }) {
     );
   }
 
-  // --- ЭКРАН 2: РАЗДАЧА (ТВОЙ ДИЗАЙН) ---
+  // --- ЭКРАН 2: РАЗДАЧА РОЛЕЙ ---
   if (gameState === 'dealing') {
     const p = players[currentPlayerIdx];
     return (
       <div style={ui.container('night')}>
-        <h2 style={{fontWeight: '900', letterSpacing: '2px', marginBottom: '30px'}}>ПЕРЕДАЙ ТЕЛЕФОН</h2>
+        <h2 style={{fontWeight: '900', letterSpacing: '2px', marginBottom: '30px', color: '#fff'}}>ПЕРЕДАЙ ТЕЛЕФОН</h2>
         <div style={ui.card('night')}>
           <p style={{color: '#ff4444', fontWeight: '900', fontSize: '1.4rem'}}>ЭЙ, {p.name.toUpperCase()}!</p>
           {!showRole ? (
@@ -121,12 +135,12 @@ export default function MafiaGame({ onBack }) {
           ) : (
             <>
               <h1 style={{color: p.role.side === 'evil' ? '#ff4444' : '#44ff44', fontSize: '2.5rem', margin: '20px 0'}}>{p.role.name}</h1>
-              <p style={{fontSize: '0.9rem', marginBottom: '20px'}}>{p.role.desc}</p>
+              <p style={{fontSize: '0.8rem', marginBottom: '20px', color: '#fff'}}>{p.role.desc}</p>
               <button onClick={() => { setShowRole(false); currentPlayerIdx < playerCount - 1 ? setCurrentPlayerIdx(c => c + 1) : setGameState('action'); }} style={{...ui.mainBtn, background: '#fff', color: '#000'}}>ЗАПОМНИЛ</button>
             </>
           )}
         </div>
-        <p style={{marginTop: '20px', opacity: 0.5}}>ИГРОК {currentPlayerIdx + 1} / {playerCount}</p>
+        <p style={{marginTop: '20px', opacity: 0.5, color: '#fff'}}>ИГРОК {currentPlayerIdx + 1} / {playerCount}</p>
       </div>
     );
   }
@@ -144,7 +158,7 @@ export default function MafiaGame({ onBack }) {
     );
   }
 
-  // --- ЭКРАН 4: ПУЛЬТ ВЕДУЩЕГО (ТВОЙ ГАЗЕТНЫЙ СТИЛЬ) ---
+  // --- ЭКРАН 4: ПУЛЬТ ВЕДУЩЕГО ---
   return (
     <div style={ui.container(phase)}>
       <header style={ui.header}>
@@ -174,17 +188,14 @@ export default function MafiaGame({ onBack }) {
         ))}
       </div>
 
-      <button onClick={phase === 'night' ? confirmDeaths : () => {
-        const v = checkVictory(players);
-        if (v) { setWinner(v); setGameState('results'); }
-      }} style={ui.confirmBtn}>
-        {phase === 'night' ? 'ПОДВЕСТИ ИТОГИ НОЧИ' : 'ПРОВЕРИТЬ ПОБЕДУ'}
+      <button onClick={confirmAction} style={ui.confirmBtn}>
+        {phase === 'night' ? 'ПОДВЕСТИ ИТОГИ НОЧИ' : 'ЗАВЕРШИТЬ ГОЛОСОВАНИЕ'}
       </button>
     </div>
   );
 }
 
-// // СТИЛИ: Возвращаем твой Neo-стиль
+// // ОБЪЕКТ СТИЛЕЙ (ТВОЙ ДИЗАЙН)
 const ui = {
   container: (p) => ({
     position: 'fixed', inset: 0, padding: '20px', zIndex: 1000,
