@@ -1,23 +1,17 @@
-version: null
-meta:
-  environment: node
-  toolchain:
-    name: npm
-    version: "20"
-build:
-  skip: false
-  # Сборка проекта (оставляем как было, она работает)
-  additionalCommands: npm install && CI=false npm run build
-run:
-  persistenceMount: /data
-  # ВАЖНОЕ ИЗМЕНЕНИЕ 1:
-  # Мы не используем scriptName. Мы пишем команду запуска напрямую.
-  # -s build: раздавать папку build
-  # -l 3000: слушать порт 3000 (это безопаснее, чем 80)
-  command: npx serve -s build -l 3000
-  
-  # ВАЖНОЕ ИЗМЕНЕНИЕ 2:
-  # Говорим Амвере, что внутри контейнера сайт работает на 3000 порту.
-  # Амвера сама перенаправит на него внешний трафик.
-  containerPort: 3000
-serviceType: compute
+{
+  "name": "love-couple-hub",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.284.0",
+    "serve": "^14.2.4"
+  },
+  "scripts": {
+    "start": "serve -s build -p 80",
+    "build": "react-scripts build"
+  }
+}
