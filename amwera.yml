@@ -1,11 +1,18 @@
+# // Настройки для сборки проекта
 meta:
   environment: nodejs
   toolchain:
     name: npm
     version: 20
+
 build:
+  # // Установка библиотек
   install: npm install
+  # // Создание папки с готовой игрой
   command: npm run build
+
 run:
+  # // Указываем, где лежит готовый результат
   directory: build
+  # // Запускаем сервер для показа игры
   command: npx serve -s .
