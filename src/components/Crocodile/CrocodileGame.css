@@ -164,3 +164,29 @@ input[type="range"] {
 @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
 .j-back { position: absolute; top: 20px; left: 20px; background: none; border: none; color: white; }
+
+/* Мини-индикатор раунда в хедере */
+.j-round-mini {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: #ffe600;
+    font-weight: 700;
+}
+
+/* Объявление победителя в финале */
+.j-winner-announce {
+    font-family: 'Unbounded', sans-serif;
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+/* Подсветка победившей команды в списке */
+.j-score-row.winner {
+    border: 2px solid #ffe600;
+    background: rgba(255, 230, 0, 0.1);
+    box-shadow: 0 0 20px rgba(255, 230, 0, 0.2);
+}
