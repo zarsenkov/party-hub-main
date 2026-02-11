@@ -91,3 +91,24 @@
 .pop-list-item.is-no { color: #ff4747; }
 
 .pop-back { position: absolute; top: 20px; left: 20px; background: none; border: none; }
+
+/* Для Алиас */
+.back-btn-fixed-pop {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #111;
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 3px 3px 0 #ff4782;
+}
+
+/* Общее исправление анимации */
+.card-zone, .pop-card-area {
+  perspective: 1000px; /* Убирает "дерганье" при 3D переходах */
+}
