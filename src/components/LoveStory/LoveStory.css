@@ -1,174 +1,70 @@
-/* // ПЕРЕМЕННЫЕ И ЦВЕТА */
-:root {
-    --p-pink: #ffafbd;
-    --p-rose: #ff8fa3;
-    --p-dark: #ff4d6d;
-    --p-white: #ffffff;
-    --p-text: #4a3a3d;
-    --clay-shadow: 8px 8px 16px rgba(255, 143, 163, 0.2), -8px -8px 16px #ffffff;
-    --clay-inset: inset 4px 4px 8px rgba(255, 143, 163, 0.1), inset -4px -4px 8px #ffffff;
+/* // LoveStory.css */
+.ls-container {
+    position: fixed; inset: 0;
+    background: #0f0f0f; /* Глубокий черный */
+    color: #e0e0e0;
+    font-family: 'Cormorant Garamond', serif; /* Элегантный шрифт с засечками */
+    display: flex; flex-direction: column;
+    padding: 40px 20px;
+    z-index: 1000;
 }
 
-/* // ОСНОВНАЯ ОБОЛОЧКА */
-.app-shell {
-    max-width: 500px;
-    margin: 0 auto;
-    height: 100dvh;
-    position: relative;
-    overflow: hidden;
-    transition: background 0.8s ease;
-    font-family: 'Montserrat', sans-serif;
+.ls-grain { /* Эффект шума на фоне */
+    position: absolute; inset: 0;
+    background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+    opacity: 0.05; pointer-events: none;
 }
 
-/* // КНОПКИ CLAYMORPHISM */
-.btn-clay {
-    border: none;
-    padding: 18px 32px;
-    border-radius: 25px;
-    font-weight: 800;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: var(--clay-shadow);
-    display: block;
-    width: 100%;
+.ls-story-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.4rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 60px;
 }
 
-.btn-clay.primary { background: var(--p-rose); color: white; }
-.btn-clay.primary:active { transform: scale(0.95); box-shadow: inset 4px 4px 8px rgba(0,0,0,0.1); }
-
-.btn-mini {
-    width: 45px; height: 45px;
-    border-radius: 15px;
-    background: white;
-    box-shadow: var(--clay-shadow);
-    border: none;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-}
-
-/* // КАРТОЧКИ И БЛОКИ */
-.clay-box {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 30px;
-    padding: 25px;
-    box-shadow: var(--clay-shadow);
-    border: 1px solid rgba(255,255,255,0.4);
-}
-
-/* // АМАЛИЯ (NPC) */
-.npc-block {
+.ls-card {
+    flex: 1;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: 15px;
-    margin-top: 20px;
-    padding: 0 20px;
-}
-
-.amalia-avatar {
-    width: 80px; height: 80px;
-    background: white;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2rem;
-    box-shadow: var(--clay-shadow);
-    animation: float 3s ease-in-out infinite;
-}
-
-.amalia-talking {
-    animation: pulse-glow 1s infinite alternate;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse-glow {
-    from { box-shadow: 0 0 10px var(--p-rose); }
-    to { box-shadow: 0 0 25px var(--p-rose); }
-}
-
-/* // БАНКА ЛЮБВИ (ПРОГРЕСС) */
-.love-jar {
-    width: 50px; height: 70px;
-    background: rgba(255,255,255,0.4);
-    border: 3px solid white;
-    border-radius: 10px 10px 20px 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--clay-shadow);
-}
-
-.liquid {
-    position: absolute;
-    bottom: 0; left: 0; width: 100%;
-    transition: height 1s ease-in-out;
-}
-
-/* // КОЛЕСО СУДЬБЫ */
-.duel-overlay {
-    position: fixed; inset: 0;
-    background: rgba(255, 240, 243, 0.95);
-    z-index: 2000;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-}
-
-.wheel-container {
-    position: relative;
-    width: 280px; height: 280px;
-}
-
-.wheel {
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    border: 8px solid white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--clay-shadow);
-}
-
-.sector {
-    position: absolute; width: 50%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 900; color: white;
-}
-
-#sector1 { left: 0; background: var(--p-rose); }
-#sector2 { right: 0; background: var(--p-dark); }
-
-/* // ВВОД ДАННЫХ */
-.joy-input {
-    width: 100%;
-    padding: 18px;
-    border-radius: 20px;
-    border: none;
-    background: white;
-    box-shadow: var(--clay-inset);
-    font-family: inherit;
-    font-weight: 700;
-    color: var(--p-text);
     text-align: center;
+    animation: fadeIn 1.2s ease;
 }
 
-/* // ОВЕРЛЕЙ ЧЕСТНОСТИ */
-.honesty-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(5px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 3000; padding: 20px;
+.ls-phrase {
+    font-size: 1.8rem;
+    line-height: 1.4;
+    font-style: italic;
+    margin-bottom: 40px;
 }
 
-.honesty-btns {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 15px; margin-top: 20px;
+.ls-instruction {
+    font-size: 0.8rem;
+    letter-spacing: 0.1rem;
+    color: #ff4d6d; /* Тонкий акцентный красный */
+    text-transform: uppercase;
 }
 
-.btn-clay.green { background: #4caf50; color: white; }
-.btn-clay.red { background: #f44336; color: white; }
+.ls-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.ls-btn-next {
+    background: none; border: 1px solid #333;
+    color: #888; padding: 10px 20px;
+    font-size: 0.7rem; letter-spacing: 2px;
+    cursor: pointer; transition: 0.3s;
+}
+
+.ls-btn-next:hover { border-color: #eee; color: #eee; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
