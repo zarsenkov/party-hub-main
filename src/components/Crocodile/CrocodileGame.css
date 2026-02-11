@@ -1,119 +1,147 @@
-.croc-container {
-    min-height: 100vh;
-    padding: 20px;
-    background: #0a0a0a; /* Глубокий черный фон */
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@900&display=swap');
+
+/* Общий фон — глубокий лесной зеленый с градиентом */
+.jungle-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top, #2d5a27 0%, #1a3317 100%);
     color: white;
+    padding: 30px;
     display: flex;
     flex-direction: column;
-    align-items: center;
     font-family: 'Inter', sans-serif;
+    overflow: hidden;
 }
 
-.croc-title {
+.center { justify-content: center; align-items: center; text-align: center; }
+
+/* Заголовок в стиле "диких" джунглей */
+.jungle-title {
     font-family: 'Unbounded', sans-serif;
-    font-size: 2.5rem;
-    margin-top: 40px;
-    background: linear-gradient(90deg, #4ade80, #22c55e); /* Зеленый градиент */
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.difficulty-grid {
-    display: grid;
-    gap: 15px;
-    width: 100%;
-    max-width: 400px;
-    margin-top: 30px;
-}
-
-.diff-card {
-    padding: 25px;
-    border-radius: 20px;
-    border: none;
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: white;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.diff-card.easy { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-.diff-card.medium { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-.diff-card.hard { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-
-.word-card {
-    flex: 1;
-    width: 100%;
-    max-width: 350px;
-    margin: 40px 0;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    backdrop-filter: blur(10px);
-}
-
-.word-label {
-    color: #4ade80;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 0.8rem;
-    margin-bottom: 10px;
-}
-
-.word-main {
-    font-size: 3rem;
+    font-size: 2.8rem;
+    color: #ffe600; /* Ярко-желтый */
     text-align: center;
-    font-weight: 800;
-    margin: 0;
+    text-shadow: 0 4px 0 #8a7a00;
+    margin-bottom: 40px;
 }
 
-.game-controls {
+/* Карточки с эффектом стекла и зеленоватым оттенком */
+.jungle-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(139, 195, 74, 0.3);
+    border-radius: 30px;
+    padding: 25px;
+    position: relative;
+}
+
+.jungle-diff-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    width: 100%;
-    max-width: 400px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
 }
 
-.control-btn {
+.jungle-opt {
+    background: #254d21;
+    border: none;
+    padding: 15px 5px;
+    border-radius: 15px;
+    color: #a3c99e;
+    font-weight: 800;
+    font-size: 0.8rem;
+}
+
+.jungle-opt.active {
+    background: #ffe600;
+    color: #1a3317;
+}
+
+/* Основная кнопка — "Джунгли-стиль" */
+.jungle-btn-main {
+    margin-top: auto;
+    background: #ffe600;
+    color: #1a3317;
+    border: none;
+    padding: 24px;
+    border-radius: 24px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1rem;
+    box-shadow: 0 8px 0 #b3a100;
+    cursor: pointer;
+}
+
+/* Свайп-карточка */
+.jungle-card-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jungle-swipe-card {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 3/4;
+    background: #fdfdfd;
+    border-radius: 40px;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    touch-action: none;
+}
+
+.jungle-word {
+    color: #1a3317;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 2rem;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.swipe-info {
+    color: #999;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: auto;
+}
+
+.jungle-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.jungle-timer {
+    background: #ffe600;
+    color: #1a3317;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 900;
+    display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Списки результатов */
+.jungle-results-list {
+    width: 100%;
+    margin: 40px 0;
+}
+
+.jungle-res-item {
+    background: rgba(0,0,0,0.2);
+    margin-bottom: 12px;
     padding: 20px;
     border-radius: 20px;
-    border: none;
-    color: white;
-    font-weight: 600;
-}
-
-.control-btn.skip { background: #1a1a1a; border: 1px solid #333; }
-.control-btn.done { background: #4ade80; color: #000; }
-
-.timer-badge {
-    background: #1a1a1a;
-    padding: 8px 16px;
-    border-radius: 100px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid #333;
+    justify-content: space-between;
+    font-weight: 800;
+    border-left: 5px solid #ffe600;
 }
 
-.timer-badge.low {
-    border-color: #ef4444;
-    color: #ef4444;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
+.res-val { color: #ffe600; font-size: 1.2rem; }
