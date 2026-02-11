@@ -6,14 +6,13 @@ meta:
     version: "20"
 build:
   skip: false
-  additionalCommands: npm install && npm run build
-  artifacts:
-    build: build
+  # Устанавливаем зависимости и собираем проект
+  additionalCommands: npm ci && npm run build
 run:
   persistenceMount: /data
-  scriptName: ""
+  # Используем нашу готовую команду из package.json
+  scriptName: start-server
   scriptArguments: null
   nodeArguments: null
-  command: npx serve -s build -p 80
   containerPort: 80
 serviceType: compute
