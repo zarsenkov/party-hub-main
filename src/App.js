@@ -6,7 +6,7 @@ import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
-import WhoamiGame from './components/WhoAmiGame';
+import WhoamiGame from './components/WhoAmi';
 
 
 // Твой CSS файл
