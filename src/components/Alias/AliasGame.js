@@ -1,117 +1,62 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// Анимации для эффекта появления карточек
 import { motion, AnimatePresence } from 'framer-motion';
-// Иконки: молния, часы, пользователи, кнопки управления
-import { Zap, Timer, Users, X, Check, ArrowLeft, Trophy } from 'lucide-react';
+import { Timer, X, Check, ArrowLeft, Zap } from 'lucide-react';
 import './AliasGame.css';
 
-// Базовая библиотека слов
-const WORDS_BANK = ["Космос", "Пицца", "Детектив", "Айсберг", "Дракон", "Гитара", "Сэндвич", "Вертолет", "Магия", "Океан"];
+const WORDS = ['Космос', 'Пицца', 'Гитара', 'Метро', 'Робот', 'Зомби', 'Спорт', 'Кино'];
 
 const AliasGame = ({ onBack }) => {
-  // Состояния: lobby (меню), ready (заставка), play (игра), results (итоги)
-  const [screen, setScreen] = useState('lobby');
-  const [teams, setTeams] = useState([
-    { name: 'КОМАНДА А', score: 0 },
-    { name: 'КОМАНДА Б', score: 0 }
-  ]);
-  const [currentTeam, setCurrentTeam] = useState(0);
+  const [stage, setStage] = useState('menu'); // menu, play, results
   const [word, setWord] = useState('');
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [history, setHistory] = useState([]); // История угаданных слов за раунд
+  const [score, setScore] = useState(0);
+  const [time, setTime] = useState(60);
+  const [log, setLog] = useState([]);
 
-  // Функция получения нового слова
-  // // Берет случайное слово и обновляет стейт
   const nextWord = useCallback(() => {
-    const random = WORDS_BANK[Math.floor(Math.random() * WORDS_BANK.length)];
-    setWord(random);
+    setWord(prev => {
+      let n = WORDS[Math.floor(Math.random() * WORDS.length)];
+      while (n === prev) n = WORDS[Math.floor(Math.random() * WORDS.length)];
+      return n;
+    });
   }, []);
 
-  // Таймер раунда
   useEffect(() => {
-    let timer;
-    if (screen === 'play' && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (timeLeft === 0 && screen === 'play') {
-      setScreen('results');
+    let t;
+    if (stage === 'play' && time > 0) {
+      t = setInterval(() => setTime(prev => prev - 1), 1000);
+    } else if (time === 0 && stage === 'play') {
+      setStage('results');
     }
-    return () => clearInterval(timer);
-  }, [screen, timeLeft]);
+    return () => clearInterval(t);
+  }, [stage, time]);
 
-  // Старт игрового раунда
-  const startRound = () => {
-    setHistory([]);
-    setTimeLeft(60);
-    nextWord();
-    setScreen('play');
-  };
-
-  // Обработка ответа
-  // // Сохраняет результат в историю и переключает слово
-  const handleAction = (isCorrect) => {
-    setHistory(prev => [...prev, { word, isCorrect }]);
-    nextWord();
-  };
-
-  // Переход к следующей команде после итогов
-  const confirmRound = () => {
-    const roundScore = history.reduce((acc, item) => acc + (item.isCorrect ? 1 : -1), 0);
-    const updated = [...teams];
-    updated[currentTeam].score += roundScore;
-    
-    setTeams(updated);
-    setCurrentTeam(currentTeam === 0 ? 1 : 0);
-    setScreen('ready');
-  };
-
-  // --- ЭКРАНЫ ---
-
-  // 1. ЛОББИ
-  if (screen === 'lobby') {
-    return (
-      <div className="pop-container">
-        <button className="pop-back" onClick={onBack}><ArrowLeft /></button>
-        <h1 className="pop-logo">ALIAS!</h1>
-        <div className="pop-teams">
-          {teams.map((t, i) => (
-            <div key={i} className="pop-team-row">
-              <span>{t.name}</span>
-              <span className="pop-score-badge">{t.score}</span>
-            </div>
-          ))}
-        </div>
-        <button className="pop-btn-main" onClick={() => setScreen('ready')}>ПОЕХАЛИ</button>
-      </div>
-    );
-  }
-
-  // 2. ГОТОВНОСТЬ
-  if (screen === 'ready') {
+  if (stage === 'menu') {
     return (
       <div className="pop-container center">
-        <Users size={80} strokeWidth={3} />
-        <p className="pop-pre">ГОТОВИТСЯ</p>
-        <h2 className="pop-team-name">{teams[currentTeam].name}</h2>
-        <button className="pop-btn-main" onClick={startRound}>Я ГОТОВ!</button>
+        <button className="back-btn-fixed-pop" onClick={onBack}><ArrowLeft /> Назад</button>
+        <h1 className="pop-logo">ALIAS!</h1>
+        <button className="pop-btn-main" onClick={() => { setScore(0); setTime(60); setLog([]); nextWord(); setStage('play'); }}>
+          ИГРАТЬ (1 РАУНД)
+        </button>
       </div>
     );
   }
 
-  // 3. ИГРА
-  if (screen === 'play') {
+  if (stage === 'play') {
     return (
       <div className="pop-container play-bg">
         <div className="pop-header">
-          <div className="pop-timer-pill"><Timer size={20}/> {timeLeft}с</div>
-          <div className="pop-team-pill">{teams[currentTeam].name}</div>
+          <div className="pop-timer-pill">{time}с</div>
+          <div className="pop-score-pill">Очки: {score}</div>
         </div>
         <div className="pop-card-area">
           <AnimatePresence mode="wait">
             <motion.div 
-              key={word + history.length}
-              initial={{ rotate: -5, scale: 0.9, opacity: 0 }}
-              animate={{ rotate: 0, scale: 1, opacity: 1 }}
-              exit={{ y: -100, opacity: 0 }}
+              key={word}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.2 }}
               className="pop-word-card"
             >
               <h2>{word}</h2>
@@ -119,25 +64,24 @@ const AliasGame = ({ onBack }) => {
           </AnimatePresence>
         </div>
         <div className="pop-actions">
-          <button className="pop-action-btn btn-no" onClick={() => handleAction(false)}><X size={40}/></button>
-          <button className="pop-action-btn btn-yes" onClick={() => handleAction(true)}><Check size={40}/></button>
+          <button className="pop-action-btn btn-no" onClick={() => { setLog(prev => [...prev, {word, ok: false}]); nextWord(); }}><X size={35}/></button>
+          <button className="pop-action-btn btn-yes" onClick={() => { setScore(s => s + 1); setLog(prev => [...prev, {word, ok: true}]); nextWord(); }}><Check size={35}/></button>
         </div>
       </div>
     );
   }
 
-  // 4. ИТОГИ
   return (
     <div className="pop-container">
-      <h2 className="pop-title-sm">РЕЗУЛЬТАТЫ</h2>
+      <h2 className="pop-res-title">ИТОГИ</h2>
       <div className="pop-list">
-        {history.map((h, i) => (
-          <div key={i} className={`pop-list-item ${h.isCorrect ? 'is-ok' : 'is-no'}`}>
-            {h.word} <span>{h.isCorrect ? '+1' : '-1'}</span>
+        {log.map((item, i) => (
+          <div key={i} className={`pop-list-item ${item.ok ? 'is-ok' : 'is-no'}`}>
+            {item.word} <span>{item.ok ? '+1' : '-1'}</span>
           </div>
         ))}
       </div>
-      <button className="pop-btn-main" onClick={confirmRound}>ПРОДОЛЖИТЬ</button>
+      <button className="pop-btn-main" onClick={onBack}>ЗАКОНЧИТЬ</button>
     </div>
   );
 };
