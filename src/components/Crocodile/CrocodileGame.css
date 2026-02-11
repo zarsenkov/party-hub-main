@@ -1,183 +1,151 @@
 @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@900&display=swap');
 
-/* Общий фон — глубокий лесной зеленый с градиентом */
 .jungle-screen {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at top, #2d5a27 0%, #1a3317 100%);
+    background: radial-gradient(circle at top, #1e3d1a 0%, #0d1a0b 100%);
     color: white;
-    padding: 30px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     font-family: 'Inter', sans-serif;
-    overflow: hidden;
-}
-
-.center { justify-content: center; align-items: center; text-align: center; }
-
-/* Заголовок в стиле "диких" джунглей */
-.jungle-title {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 2.8rem;
-    color: #ffe600; /* Ярко-желтый */
-    text-align: center;
-    text-shadow: 0 4px 0 #8a7a00;
-    margin-bottom: 40px;
-}
-
-/* Карточки с эффектом стекла и зеленоватым оттенком */
-.jungle-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(15px);
-    border: 2px solid rgba(139, 195, 74, 0.3);
-    border-radius: 30px;
-    padding: 25px;
-    position: relative;
-}
-
-.jungle-diff-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.jungle-opt {
-    background: #254d21;
-    border: none;
-    padding: 15px 5px;
-    border-radius: 15px;
-    color: #a3c99e;
-    font-weight: 800;
-    font-size: 0.8rem;
-}
-
-.jungle-opt.active {
-    background: #ffe600;
-    color: #1a3317;
-}
-
-/* Основная кнопка — "Джунгли-стиль" */
-.jungle-btn-main {
-    margin-top: auto;
-    background: #ffe600;
-    color: #1a3317;
-    border: none;
-    padding: 24px;
-    border-radius: 24px;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 1rem;
-    box-shadow: 0 8px 0 #b3a100;
-    cursor: pointer;
-}
-
-/* Свайп-карточка */
-.jungle-card-zone {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.jungle-swipe-card {
-    width: 100%;
-    max-width: 320px;
-    aspect-ratio: 3/4;
-    background: #fdfdfd;
-    border-radius: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
     touch-action: none;
 }
 
-.jungle-word {
-    color: #1a3317;
+.jungle-title {
     font-family: 'Unbounded', sans-serif;
-    font-size: 2rem;
+    font-size: 2.2rem;
+    color: #ffe600;
     text-align: center;
-    margin: 20px 0;
+    margin: 40px 0 20px;
+    text-shadow: 0 4px 0 #6d5c00;
 }
 
-.swipe-info {
-    color: #999;
-    font-size: 0.7rem;
+.setup-box {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 25px;
+    padding: 20px;
+    border: 1px solid rgba(255, 230, 0, 0.2);
+}
+
+.setup-item { margin-bottom: 25px; }
+
+.label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ffe600;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: auto;
-}
-
-.jungle-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.jungle-timer {
-    background: #ffe600;
-    color: #1a3317;
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-weight: 900;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-/* Списки результатов */
-.jungle-results-list {
-    width: 100%;
-    margin: 40px 0;
+.jungle-diff-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
 
-.jungle-res-item {
-    background: rgba(0,0,0,0.2);
-    margin-bottom: 12px;
+.jungle-opt {
+    background: #1a2e17;
+    border: 1px solid #334d2f;
+    padding: 12px;
+    border-radius: 12px;
+    color: #88a684;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.jungle-opt.active {
+    background: #ffe600;
+    color: #000;
+    border-color: #ffe600;
+}
+
+.jungle-slider {
+    width: 100%;
+    accent-color: #ffe600;
+    margin-top: 5px;
+}
+
+.jungle-btn-main {
+    margin-top: auto;
+    background: #ffe600;
+    color: #0d1a0b;
+    border: none;
     padding: 20px;
     border-radius: 20px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1rem;
+    box-shadow: 0 6px 0 #9b8a00;
+    cursor: pointer;
     display: flex;
-    justify-content: space-between;
-    font-weight: 800;
-    border-left: 5px solid #ffe600;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
 
-.res-val { color: #ffe600; font-size: 1.2rem; }
-/* ... (весь предыдущий CSS) ... */
+.jungle-btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #9b8a00; }
 
+/* Свайп-карточка */
 .jungle-swipe-card {
-    width: 100%;
-    max-width: 300px;
-    aspect-ratio: 3/4;
-    background: #ffffff;
-    border-radius: 40px;
+    width: 280px;
+    height: 380px;
+    background: white;
+    border-radius: 35px;
+    padding: 30px;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    padding: 40px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-    
-    /* КРИТИЧНО ДЛЯ СВАЙПОВ НА ТЕЛЕФОНЕ */
-    touch-action: none; 
-    user-select: none;
-    -webkit-user-drag: none;
-    cursor: grab;
+    align-items: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    touch-action: none;
+    position: relative;
 }
 
-.jungle-swipe-card:active {
-    cursor: grabbing;
+.jungle-word {
+    color: #1a3317;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1.8rem;
+    text-align: center;
 }
 
-.jungle-card-zone {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.swipe-hints {
+    position: absolute;
+    bottom: 20px;
     width: 100%;
-    /* Чтобы карточка не вылетала за края экрана при свайпе */
-    overflow: visible; 
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.7rem;
+    color: #ccc;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
+.hint-left { color: #ff4d4d; }
+.hint-right { color: #2ecc71; }
+
+.jungle-timer {
+    background: #ffe600;
+    color: #000;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 900;
+}
+
+.jungle-timer.danger { background: #ff4d4d; color: white; animation: blink 0.5s infinite; }
+
+@keyframes blink { 50% { opacity: 0.5; } }
+
+.round-badge {
+    background: rgba(255, 230, 0, 0.1);
+    color: #ffe600;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.rules-text p { margin-bottom: 15px; font-size: 0.95rem; line-height: 1.4; }
