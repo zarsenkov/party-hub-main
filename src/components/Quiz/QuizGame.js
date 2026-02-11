@@ -1,187 +1,150 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-// Подключаем стили
-import './QuizGame.css';
+import React, { useState } from 'react';
+// Иконки
+import { Brain, ArrowLeft, RotateCcw, Zap, Target } from 'lucide-react';
 
-// --- БАЗА ЗНАНИЙ (Добавляй свои вопросы сюда) ---
-const QUESTIONS_DB = {
-  "Мультфильмы": [
-    { q: "Как зовут жёлтую губку, живущую на дне океана?", a: ["Патрик", "Спанч Боб", "Сквидвард", "Гэри"], c: 1 },
-    { q: "Что любит есть Винни-Пух?", a: ["Пиццу", "Варенье", "Мёд", "Морковку"], c: 2 },
-    { q: "Кто самый быстрый в мире?", a: ["Молния Маккуин", "Мэтр", "Салли", "Шериф"], c: 0 }
-  ],
-  "Еда": [
-    { q: "Из чего делают чипсы?", a: ["Из муки", "Из картофеля", "Из яблок", "Из сыра"], c: 1 },
-    { q: "Какой фрукт называют королём цитрусовых?", a: ["Лимон", "Апельсин", "Грейпфрут", "Помело"], c: 1 }
-  ],
-  "Животные": [
-    { q: "Какое животное самое высокое?", a: ["Слон", "Жираф", "Страус", "Бегемот"], c: 1 },
-    { q: "Кто спит вниз головой?", a: ["Сова", "Ленивец", "Летучая мышь", "Коала"], c: 2 }
-  ]
-};
+const QUIZ_DATA = [
+  {
+    q: "Какой химический элемент составляет более 90% атомов во Вселенной?",
+    a: ["Гелий", "Кислород", "Водород", "Углерод"],
+    correct: 2
+  },
+  {
+    q: "В каком году произошел первый полет человека в космос?",
+    a: ["1957", "1961", "1965", "1969"],
+    correct: 1
+  },
+  {
+    q: "Кто из этих художников отрезал себе мочку уха?",
+    a: ["Пабло Пикассо", "Сальвадор Дали", "Винсент Ван Гог", "Клод Моне"],
+    correct: 2
+  }
+];
 
-export default function QuizGame({ onBack }) {
-  // --- НАСТРОЙКИ ---
-  const [step, setStep] = useState('setup'); // setup, waiting, play, finish
-  const [config, setConfig] = useState({ cat: "Мультфильмы", rounds: 3, time: 15 });
-  const [players, setPlayers] = useState(["Игрок 1", "Игрок 2"]);
-  
-  // --- СОСТОЯНИЕ ИГРЫ ---
-  const [scores, setScores] = useState({});
-  const [currentPlayer, setCurrentPlayer] = useState(0);
-  const [round, setRound] = useState(1);
-  const [timer, setTimer] = useState(15);
-  const [ansActive, setAnsActive] = useState(null);
+const QuizGame = ({ onBack }) => {
+  const [stage, setStage] = useState('menu');
+  const [currentQ, setCurrentQ] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
 
-  // --- ЛОГИКА ТАЙМЕРА ---
-  useEffect(() => {
-    let interval;
-    if (step === 'play' && timer > 0 && !isLocked) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
-    } else if (timer === 0 && !isLocked) {
-      handleAnswer(null); // Время вышло
-    }
-    return () => clearInterval(interval);
-  }, [step, timer, isLocked]);
-
-  // --- СТАРТ ИГРЫ ---
-  const startReady = () => {
-    const s = {};
-    players.forEach(p => s[p] = 0);
-    setScores(s);
-    setCurrentPlayer(0);
-    setRound(1);
-    setTimer(config.time);
-    setStep('waiting');
-  };
-
-  // --- ОБРАБОТКА ОТВЕТА ---
+  // Обработка клика по ответу
+  // // Фиксирует выбор и переключает вопрос через секунду
   const handleAnswer = (idx) => {
     if (isLocked) return;
+    setSelectedIdx(idx);
     setIsLocked(true);
-    setAnsActive(idx);
 
-    const correct = QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].c;
-    if (idx === correct) {
-      setScores(prev => ({ ...prev, [players[currentPlayer]]: prev[players[currentPlayer]] + 1 }));
+    if (idx === QUIZ_DATA[currentQ].correct) {
+      setScore(s => s + 1);
     }
 
     setTimeout(() => {
-      setIsLocked(false);
-      setAnsActive(null);
-      setTimer(config.time);
-
-      if (currentPlayer < players.length - 1) {
-        setCurrentPlayer(c => c + 1);
-        setStep('waiting');
-      } else if (round < config.rounds) {
-        setRound(r => r + 1);
-        setCurrentPlayer(0);
-        setStep('waiting');
+      if (currentQ + 1 < QUIZ_DATA.length) {
+        setCurrentQ(prev => prev + 1);
+        setSelectedIdx(null);
+        setIsLocked(false);
       } else {
-        setStep('finish');
+        setStage('result');
       }
-    }, 1500);
+    }, 1000);
   };
 
+  // Стили в стиле Ретро-Футуризма (Synthwave)
+  const styles = {
+    container: {
+      position: 'fixed', inset: 0, padding: '20px', display: 'flex', flexDirection: 'column',
+      zIndex: 1000, background: '#0d0221', color: '#fb00ff', fontFamily: '"Courier New", monospace',
+      overflow: 'hidden'
+    },
+    // Эффект светящейся сетки на фоне
+    gridBg: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundImage: 'linear-gradient(rgba(251, 0, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(251, 0, 255, 0.1) 1px, transparent 1px)',
+      backgroundSize: '40px 40px', transform: 'perspective(500px) rotateX(60deg)',
+      transformOrigin: 'center top', zIndex: -1, opacity: 0.5
+    },
+    header: { display: 'flex', justifyContent: 'space-between', marginBottom: '30px', textShadow: '0 0 10px #fb00ff' },
+    qCard: {
+      background: 'rgba(13, 2, 33, 0.8)', border: '2px solid #00f2ff', borderRadius: '4px',
+      padding: '25px', marginBottom: '30px', boxShadow: '0 0 20px #00f2ff',
+      position: 'relative'
+    },
+    ansBtn: (idx) => {
+      let color = '#00f2ff'; // Дефолтный голубой
+      if (selectedIdx === idx) {
+        color = idx === QUIZ_DATA[currentQ].correct ? '#39ff14' : '#ff003c';
+      }
+      return {
+        width: '100%', padding: '15px', marginBottom: '15px', background: 'transparent',
+        border: `2px solid ${color}`, color: color, fontSize: '1rem', fontWeight: 'bold',
+        cursor: 'pointer', textTransform: 'uppercase', textAlign: 'left',
+        boxShadow: selectedIdx === idx ? `0 0 15px ${color}` : 'none',
+        transition: 'all 0.2s', clipPath: 'polygon(90% 0, 100% 30%, 100% 100%, 0 100%, 0 0)'
+      };
+    },
+    startBtn: {
+      background: 'transparent', border: '3px solid #fb00ff', color: '#fb00ff',
+      padding: '20px 40px', fontSize: '1.5rem', fontWeight: '900', cursor: 'pointer',
+      boxShadow: '0 0 20px #fb00ff', textTransform: 'uppercase'
+    }
+  };
+
+  // 1. МЕНЮ
+  if (stage === 'menu') {
+    return (
+      <div style={styles.container}>
+        <div style={styles.gridBg}></div>
+        <button onClick={onBack} style={{background: 'none', border: 'none', color: '#00f2ff', cursor: 'pointer'}}><ArrowLeft/></button>
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+          <Zap size={80} color="#fb00ff" style={{filter: 'drop-shadow(0 0 15px #fb00ff)', marginBottom: '20px'}}/>
+          <h1 style={{fontSize: '3.5rem', margin: 0, textAlign: 'center'}}>NEO<br/>QUIZ</h1>
+          <p style={{color: '#00f2ff', margin: '20px 0'}}>ВХОД В СИСТЕМУ ЗНАНИЙ...</p>
+          <button style={styles.startBtn} onClick={() => setStage('play')}>START</button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. ИГРА
+  if (stage === 'play') {
+    const q = QUIZ_DATA[currentQ];
+    return (
+      <div style={styles.container}>
+        <div style={styles.gridBg}></div>
+        <div style={styles.header}>
+          <span>DATA_CHUNK: {currentQ + 1}</span>
+          <span>SCORE: {score}</span>
+        </div>
+
+        <div style={styles.qCard}>
+          <div style={{position: 'absolute', top: -10, left: 10, background: '#0d0221', padding: '0 10px', fontSize: '0.8rem', color: '#00f2ff'}}>QUESTION_LOG</div>
+          <h2 style={{margin: 0, color: '#fff', fontSize: '1.2rem', lineHeight: 1.5}}>{q.q}</h2>
+        </div>
+
+        <div>
+          {q.a.map((ans, i) => (
+            <button key={i} style={styles.ansBtn(i)} onClick={() => handleAnswer(i)}>
+              {`> ${ans}`}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 3. ИТОГИ
   return (
-    <div className="cosmic-container">
-      <button className="cosmic-back" onClick={onBack}>ВЫЙТИ</button>
-
-      <AnimatePresence mode="wait">
-        {/* ЭКРАН 1: НАСТРОЙКИ */}
-        {step === 'setup' && (
-          <motion.div key="s" className="cosmic-card" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}>
-            <h1 className="cosmic-logo">МЕГА<span>КВИЗ</span></h1>
-            
-            <div className="cosmic-field">
-              <label>ВЫБЕРИ ТЕМУ</label>
-              <select onChange={(e) => setConfig({...config, cat: e.target.value})}>
-                {Object.keys(QUESTIONS_DB).map(k => <option key={k} value={k}>{k}</option>)}
-              </select>
-            </div>
-
-            <div className="cosmic-field">
-              <label>РАУНДОВ: {config.rounds}</label>
-              <input type="range" min="1" max="10" value={config.rounds} onChange={(e) => setConfig({...config, rounds: e.target.value})} />
-            </div>
-
-            <div className="cosmic-field">
-              <label>КТО ИГРАЕТ?</label>
-              <div className="cosmic-player-inputs">
-                {players.map((p, i) => (
-                  <input key={i} value={p} onChange={(e) => {
-                    let n = [...players]; n[i] = e.target.value; setPlayers(n);
-                  }} />
-                ))}
-                {players.length < 5 && <button className="cosmic-add" onClick={() => setPlayers([...players, `Игрок ${players.length+1}`])}>+</button>}
-              </div>
-            </div>
-
-            <button className="cosmic-main-btn" onClick={startReady}>ПОЕХАЛИ!</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 2: ОЖИДАНИЕ ИГРОКА */}
-        {step === 'waiting' && (
-          <motion.div key="w" className="cosmic-card cosmic-center" initial={{y: 100}} animate={{y: 0}}>
-            <div className="cosmic-round-info">РАУНД {round}</div>
-            <p className="cosmic-label">ПРИГОТОВИТЬСЯ:</p>
-            <h2 className="cosmic-player-target">{players[currentPlayer]}</h2>
-            <button className="cosmic-main-btn pulse" onClick={() => setStep('play')}>Я ТУТ!</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 3: ВОПРОС */}
-        {step === 'play' && (
-          <motion.div key="p" className="cosmic-play-zone" initial={{opacity:0}} animate={{opacity:1}}>
-            <div className="cosmic-hud">
-              <div className="cosmic-timer">{timer}</div>
-              <div className="cosmic-stats">
-                <strong>{players[currentPlayer]}</strong>
-                <span>{round} / {config.rounds}</span>
-              </div>
-            </div>
-
-            <div className="cosmic-q-bubble">
-              {QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].q}
-            </div>
-
-            <div className="cosmic-grid">
-              {QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].a.map((ans, i) => {
-                let status = "";
-                if (ansActive !== null) {
-                  const corr = QUESTIONS_DB[config.cat][(round - 1) % QUESTIONS_DB[config.cat].length].c;
-                  status = i === corr ? "correct" : (i === ansActive ? "wrong" : "dim");
-                }
-                return (
-                  <button key={i} className={`cosmic-ans-btn ${status}`} onClick={() => handleAnswer(i)}>
-                    {ans}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 4: ФИНАЛ */}
-        {step === 'finish' && (
-          <motion.div key="f" className="cosmic-card" initial={{scale:0}} animate={{scale:1}}>
-            <h2 className="cosmic-logo">ЗАВЕРШЕНО!</h2>
-            <div className="cosmic-results">
-              {Object.entries(scores).sort((a,b)=>b[1]-a[1]).map(([n, s], i) => (
-                <div key={i} className="cosmic-res-item">
-                  <span className="cosmic-res-rank">#{i+1}</span>
-                  <span className="cosmic-res-name">{n}</span>
-                  <b className="cosmic-res-score">{s} ОЧКОВ</b>
-                </div>
-              ))}
-            </div>
-            <button className="cosmic-main-btn" onClick={() => setStep('setup')}>НОВАЯ ИГРА</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div style={styles.container}>
+      <div style={styles.gridBg}></div>
+      <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+        <Target size={100} color="#00f2ff" style={{filter: 'drop-shadow(0 0 20px #00f2ff)'}}/>
+        <h2 style={{fontSize: '2rem', marginTop: '30px'}}>MISS_COMPLETED</h2>
+        <div style={{fontSize: '4rem', color: '#fff', margin: '20px 0'}}>{score}/{QUIZ_DATA.length}</div>
+        <button style={styles.startBtn} onClick={restart}>REBOOT</button>
+        <button onClick={onBack} style={{marginTop: '30px', background: 'none', border: 'none', color: '#00f2ff', cursor: 'pointer', fontWeight: 'bold'}}>ВЫЙТИ В ХАБ</button>
+      </div>
     </div>
   );
-}
+};
+
+export default QuizGame;
