@@ -6,11 +6,13 @@ meta:
     version: "20"
 build:
   skip: false
-  # Устанавливаем зависимости и собираем проект
-  additionalCommands: npm ci && npm run build
+  # ИЗМЕНЕНИЯ:
+  # 1. Используем 'npm install' вместо 'npm ci' (работает даже без lock-файла)
+  # 2. Добавляем 'CI=false', чтобы React не падал от мелких предупреждений
+  additionalCommands: npm install && CI=false npm run build
 run:
   persistenceMount: /data
-  # Используем нашу готовую команду из package.json
+  # Запускаем через скрипт, который мы прописали в package.json
   scriptName: start-server
   scriptArguments: null
   nodeArguments: null
