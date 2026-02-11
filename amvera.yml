@@ -7,9 +7,8 @@ meta:
 build:
   install: npm install
   command: npm run build
-  additionalCommands: npm instal && npm run bulid
   artifacts:
-    bulid: bulid
+    build: build
 run:
   persistenceMount: /data
   directory: build
