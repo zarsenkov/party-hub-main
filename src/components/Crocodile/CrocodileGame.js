@@ -1,72 +1,72 @@
-import React, { useState, useEffect } from 'react';
-// Импортируем только нужные иконки
-import { Timer, Trophy, Play, RotateCcw, X, Check, ArrowLeft } from 'lucide-react';
-// Плавные анимации карточек
+import React, { useState, useEffect, useCallback } from 'react';
+// Плавные анимации
 import { motion, AnimatePresence } from 'framer-motion';
+// Иконки
+import { Timer, Trophy, Play, RotateCcw, X, Check, ArrowLeft } from 'lucide-react';
 import './CrocodileGame.css';
 
-// Максимально полная база слов
+// Расширенная база слов
 const WORDS = {
-  easy: ['Кошка', 'Телефон', 'Арбуз', 'Зеркало', 'Гитара', 'Корона', 'Лампа', 'Книга'],
-  medium: ['Кинотеатр', 'Стоматолог', 'Пылесос', 'Бумеранг', 'Сковорода', 'Шахматы'],
-  hard: ['Адреналин', 'Гравитация', 'Сарказм', 'Ностальгия', 'Синхронизация']
+  easy: ['Кошка', 'Телефон', 'Арбуз', 'Зеркало', 'Гитара', 'Корона', 'Лампа', 'Книга', 'Пицца', 'Диван'],
+  medium: ['Кинотеатр', 'Стоматолог', 'Пылесос', 'Бумеранг', 'Сковорода', 'Шахматы', 'Официант', 'Магнит'],
+  hard: ['Адреналин', 'Гравитация', 'Сарказм', 'Ностальгия', 'Синхронизация', 'Метафора', 'Престиж']
 };
 
 const CrocodileGame = ({ onBack }) => {
-  // Базовые настройки состояний
-  const [stage, setStage] = useState('menu'); // menu, play, result, final
+  // Основные состояния
+  const [stage, setStage] = useState('menu'); 
   const [diff, setDiff] = useState('easy');
   const [word, setWord] = useState('');
   const [score, setScore] = useState(0);
   const [time, setTime] = useState(60);
-  const [round, setRound] = useState(1);
 
-  // Логика таймера
-  // // Следит за временем и переключает на экран итогов при 0
+  // Умная функция смены слова
+  // // Гарантирует, что новое слово не будет повторять предыдущее
+  const getRandomWord = useCallback(() => {
+    const list = WORDS[diff];
+    setWord(prevWord => {
+      let nextWord = list[Math.floor(Math.random() * list.length)];
+      // Если выпало то же самое слово, берем другое
+      while (nextWord === prevWord && list.length > 1) {
+        nextWord = list[Math.floor(Math.random() * list.length)];
+      }
+      return nextWord;
+    });
+  }, [diff]);
+
+  // Таймер раунда
   useEffect(() => {
     let interval;
     if (stage === 'play' && time > 0) {
       interval = setInterval(() => setTime(t => t - 1), 1000);
-    } else if (time === 0) {
+    } else if (time === 0 && stage === 'play') {
       setStage('result');
     }
     return () => clearInterval(interval);
   }, [stage, time]);
 
-  // Выбор нового слова
-  // // Берет случайный элемент из выбранной категории сложности
-  const getRandomWord = () => {
-    const list = WORDS[diff];
-    const newWord = list[Math.floor(Math.random() * list.length)];
-    setWord(newWord);
-  };
-
   // Старт игры
-  // // Сбрасывает счетчики и запускает первый раунд
   const startGame = () => {
     setScore(0);
     setTime(60);
-    setRound(1);
     getRandomWord();
     setStage('play');
   };
 
-  // Обработка кнопки "Угадано"
-  // // Прибавляет балл и сразу дает новое слово
+  // Обработка кнопки "Угадано" (Галочка)
+  // // Используем функциональное обновление стейта для мгновенной реакции
   const handleSuccess = () => {
-    setScore(s => s + 1);
+    setScore(prevScore => prevScore + 1);
     getRandomWord();
   };
 
-  // Обработка кнопки "Пропустить"
-  // // Просто меняет слово без начисления баллов
+  // Обработка кнопки "Пропустить" (Крестик)
   const handleSkip = () => {
     getRandomWord();
   };
 
-  // --- ЭКРАНЫ ---
+  // --- РЕНДЕР ---
 
-  // 1. ГЛАВНОЕ МЕНЮ ИГРЫ
   if (stage === 'menu') {
     return (
       <div className="croc-container jungle-theme">
@@ -87,7 +87,6 @@ const CrocodileGame = ({ onBack }) => {
     );
   }
 
-  // 2. ИГРОВОЙ ПРОЦЕСС
   if (stage === 'play') {
     return (
       <div className="croc-container play-mode jungle-theme">
@@ -97,11 +96,13 @@ const CrocodileGame = ({ onBack }) => {
         </div>
         <div className="croc-card-wrap">
           <AnimatePresence mode="wait">
+            {/* key={word + score} заставляет React перерисовывать карточку мгновенно */}
             <motion.div 
-              key={word}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.2, opacity: 0 }}
+              key={word + score} 
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -50, opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="croc-card"
             >
               <h2>{word}</h2>
@@ -116,11 +117,10 @@ const CrocodileGame = ({ onBack }) => {
     );
   }
 
-  // 3. ИТОГИ РАУНДА
   return (
     <div className="croc-container result-mode jungle-theme">
       <Trophy size={80} color="#ffe600" className="trophy-anim" />
-      <h1 className="res-title">ВРЕМЯ ВЫШЛО!</h1>
+      <h1 className="res-title">ФИНИШ!</h1>
       <div className="res-score-box">
         <p>ВАШ РЕЗУЛЬТАТ:</p>
         <h2>{score}</h2>
