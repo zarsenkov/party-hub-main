@@ -102,3 +102,26 @@
 @keyframes pulse { 50% { opacity: 0.5; } }
 .trophy-anim { animation: bounce 2s infinite; }
 @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+
+/* Для Крокодила */
+.back-btn-fixed {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+
+/* Общее исправление анимации */
+.card-zone, .pop-card-area {
+  perspective: 1000px; /* Убирает "дерганье" при 3D переходах */
+}
