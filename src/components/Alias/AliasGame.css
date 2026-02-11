@@ -1,199 +1,258 @@
-/* Переменные для Alias */
-:root {
-  --alias-pink: #FFD1DC;
-  --alias-dark: #FF9EAF;
-  --alias-black: #1A202C;
-  --alias-white: #FFFFFF;
-  --alias-green: #9AE6B4;
-  --alias-red: #FEB2B2;
-}
-
 .alias-container {
+  position: fixed;
+  inset: 0;
+  background-color: #FFD1DC;
+  padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding: 20px;
-  background: var(--alias-pink);
-  font-family: 'Inter', sans-serif;
-  color: var(--alias-black);
-  position: relative;
-  overflow: hidden;
+  z-index: 10000;
+  height: 100dvh;
 }
 
-/* --- ТИПОГРАФИКА --- */
+.alias-exit-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid #000;
+  background: #fff;
+  font-weight: 900;
+  cursor: pointer;
+  z-index: 11000;
+}
+
 .alias-title {
   font-family: 'Unbounded', sans-serif;
-  font-weight: 900;
-  font-size: 28px;
+  font-size: 24px;
   text-align: center;
-  margin-bottom: 20px;
+  margin: 20px 0;
   text-transform: uppercase;
-  text-shadow: 3px 3px 0px rgba(255,255,255,0.5);
 }
 
-.alias-subtitle {
-  font-size: 14px;
-  font-weight: 700;
-  text-align: center;
-  opacity: 0.6;
-  margin-bottom: 10px;
-}
-
-/* --- КНОПКИ --- */
-.alias-btn {
-  background: var(--alias-white);
-  border: 3px solid var(--alias-black);
-  padding: 15px;
-  border-radius: 20px;
-  font-weight: 800;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: 5px 5px 0px var(--alias-black);
-  transition: transform 0.1s, box-shadow 0.1s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.alias-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 3px 3px 0px var(--alias-black);
-}
-
-.alias-btn.primary {
-  background: var(--alias-black);
-  color: var(--alias-white);
-  border: 3px solid var(--alias-white);
-}
-
-.alias-btn.icon-only {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  padding: 0;
-}
-
-/* --- КАРТОЧКИ И ИНПУТЫ --- */
-.alias-card {
-  background: var(--alias-white);
-  border: 3px solid var(--alias-black);
-  border-radius: 25px;
-  padding: 20px;
-  box-shadow: 8px 8px 0px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-
-.alias-input {
-  width: 100%;
-  padding: 15px;
-  border: 3px solid var(--alias-black);
-  border-radius: 15px;
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 10px;
-  outline: none;
-}
-
-.team-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: #FFF0F5;
-  border-radius: 15px;
-  margin-bottom: 8px;
-  border: 2px solid transparent;
-}
-
-.team-row.active {
-  border-color: var(--alias-black);
-  background: var(--alias-white);
-}
-
-/* --- ИГРОВОЙ ЭКРАН --- */
-.game-area {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-.word-card-stack {
-  width: 100%;
-  height: 350px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.play-card {
-  width: 90%;
-  height: 100%;
-  background: var(--alias-white);
-  border: 4px solid var(--alias-black);
-  border-radius: 30px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-  cursor: grab;
-}
-
-.play-card:active {
-  cursor: grabbing;
-}
-
-.word-text {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 36px;
-  font-weight: 900;
-  text-align: center;
-  text-transform: uppercase;
-  pointer-events: none;
-}
-
-.timer-badge {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 48px;
-  font-weight: 900;
-  color: var(--alias-black);
-  margin-bottom: 20px;
-}
-
-/* --- ИТОГИ --- */
-.results-list {
-  max-height: 50vh;
+/* Настройки */
+.alias-setup-scroll {
+  flex: 1;
   overflow-y: auto;
   margin-bottom: 20px;
 }
 
-.result-item {
+.alias-card {
+  background: white;
+  border: 3px solid #000;
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 6px 6px 0 #000;
+}
+
+.alias-label {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+
+.alias-input-group {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background: var(--alias-white);
-  border: 2px solid var(--alias-black);
-  border-radius: 15px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.alias-input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.alias-remove-team {
+  background: #FEB2B2;
+  border: 2px solid #000;
+  width: 44px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
-.result-item.correct { background: var(--alias-green); }
-.result-item.skipped { background: var(--alias-red); }
+.alias-add-btn {
+  width: 100%;
+  padding: 10px;
+  background: #f0f0f0;
+  border: 2px dashed #000;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
 
-.toggle-icon {
-  font-size: 20px;
+/* Кнопки */
+.alias-btn {
+  width: 100%;
+  padding: 18px;
+  border: 3px solid #000;
+  border-radius: 20px;
+  font-family: 'Unbounded';
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 #000;
+  margin-bottom: 15px;
+}
+
+.alias-btn.primary {
+  background: #000;
+  color: #fff;
+}
+
+.alias-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* Игра */
+.alias-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.alias-timer {
+  width: 60px;
+  height: 60px;
+  background: white;
+  border: 3px solid #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Unbounded';
+  font-size: 24px;
+  font-weight: 900;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.alias-game-info {
+  text-align: right;
   font-weight: 900;
 }
 
-/* АНИМАЦИИ */
-.fade-enter { opacity: 0; transform: scale(0.95); }
-.fade-enter-active { opacity: 1; transform: scale(1); transition: 300ms; }
+.alias-game-info small { display: block; opacity: 0.5; }
+
+.alias-card-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.alias-swipe-card {
+  width: 100%;
+  height: 300px;
+  border: 4px solid #000;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Unbounded';
+  font-size: 32px;
+  text-align: center;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  text-transform: uppercase;
+}
+
+.alias-game-footer {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.alias-game-btn {
+  padding: 15px;
+  border: 3px solid #000;
+  border-radius: 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.alias-game-btn.skip { background: #fff; }
+.alias-game-btn.done { background: #000; color: #fff; }
+
+/* Итоги */
+.alias-summary-score {
+  font-size: 64px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.alias-results-scroll {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.alias-result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.alias-result-item.ok { border-color: #38A169; background: #f0fff4; }
+.alias-result-item.skip { border-color: #E53E3E; background: #fff5f5; }
+
+.alias-toggle-status {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #000;
+}
+
+.alias-result-item.ok .alias-toggle-status { background: #38A169; }
+
+/* Победа */
+.alias-victory-card {
+  text-align: center;
+  padding: 40px 20px;
+  margin: 40px 0;
+}
+
+.victory-icon { font-size: 64px; }
+.victory-score { font-size: 32px; font-weight: 900; margin-top: 10px; }
+
+/* Скролл команд */
+.alias-score-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.alias-team-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 15px;
+  font-weight: 800;
+}
+
+.alias-team-line.active {
+  background: white;
+  border: 3px solid #000;
+  transform: scale(1.02);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
