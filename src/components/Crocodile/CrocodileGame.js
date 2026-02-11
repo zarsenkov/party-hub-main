@@ -1,202 +1,186 @@
 import React, { useState, useEffect } from 'react';
-// Подключаем анимации для свайпов
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-// Иконки: таймер, трофей, игроки, настройки, книга правил
-import { Timer, Trophy, Users, ChevronRight, ArrowLeft, Settings, BookOpen, Play } from 'lucide-react';
+// Библиотека для плавных жестов и анимаций
+import { motion, AnimatePresence } from 'framer-motion';
+// Иконки для интерфейса
+import { Timer, Trophy, Users, ChevronRight, ArrowLeft, X, Check, Play, Settings } from 'lucide-react';
 import './CrocodileGame.css';
 
-// Расширенная база слов
-const WORDS = {
-  easy: ['Банан', 'Пальма', 'Обезьяна', 'Солнце', 'Лиана', 'Слон', 'Змея', 'Попугай', 'Кокос', 'Ананас'],
-  medium: ['Исследователь', 'Фотоаппарат', 'Мачете', 'Водопад', 'Тропики', 'Джунгли', 'Тукан', 'Леопард'],
-  hard: ['Инкубационный период', 'Эндемик', 'Мимикрия', 'Биоразнообразие', 'Пангея', 'Экспедиция']
+// Полноценная база слов, разделенная по уровням
+const WORDS_LIBRARY = {
+  easy: ['Банан', 'Обезьяна', 'Пальма', 'Змея', 'Лиана', 'Слон', 'Кокос', 'Попугай', 'Солнце', 'Трава'],
+  medium: ['Фотоаппарат', 'Мачете', 'Водопад', 'Исследователь', 'Рюкзак', 'Джунгли', 'Леопард', 'Тукан'],
+  hard: ['Эндемик', 'Мимикрия', 'Биоразнообразие', 'Инкубация', 'Пангея', 'Экспедиция', 'Артефакт']
 };
 
 const CrocodileGame = ({ onBack }) => {
-  // Состояния экранов: setup -> rules -> round_start -> playing -> results -> final
-  const [gameState, setGameState] = useState('setup'); 
+  // --- СОСТОЯНИЯ ИГРЫ ---
+  const [screen, setScreen] = useState('setup'); // setup | rules | ready | play | results | final
   const [difficulty, setDifficulty] = useState('easy');
   const [settings, setSettings] = useState({ time: 60, rounds: 3 });
   const [currentRound, setCurrentRound] = useState(1);
-  
-  const [teams, setTeams] = useState([
-    { id: 1, name: 'Команда Лиан', score: 0 },
-    { id: 2, name: 'Команда Ягуаров', score: 0 }
-  ]);
-  const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
+  const [currentTeam, setCurrentTeam] = useState(0);
+  const [score, setScore] = useState([0, 0]); // Счет Команды 1 и Команды 2
   const [currentWord, setCurrentWord] = useState('');
   const [timeLeft, setTimeLeft] = useState(60);
 
-  // Параметры для свайпа
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+  const teamNames = ['Команда Лиан', 'Команда Ягуаров'];
 
-  // Функция выбора нового слова
-  // // Выбирает случайное слово из WORDS на основе текущей сложности
-  const getNewWord = () => {
-    const list = WORDS[difficulty];
-    setCurrentWord(list[Math.floor(Math.random() * list.length)]);
-  };
-
-  // Логика таймера
+  // --- ЛОГИКА ТАЙМЕРА ---
+  // // Срабатывает каждую секунду, если экран "play"
   useEffect(() => {
-    let interval;
-    if (gameState === 'playing' && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (timeLeft === 0 && gameState === 'playing') {
-      setGameState('results');
+    let timer;
+    if (screen === 'play' && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    } else if (timeLeft === 0 && screen === 'play') {
+      setScreen('results');
     }
-    return () => clearInterval(interval);
-  }, [gameState, timeLeft]);
+    return () => clearInterval(timer);
+  }, [screen, timeLeft]);
 
-  // Обработка жеста свайпа
-  // // Вправо - балл, Влево - пропуск
-  const handleDragEnd = (e, info) => {
-    if (info.offset.x > 100) {
-      const newTeams = [...teams];
-      newTeams[currentTeamIndex].score += 1;
-      setTeams(newTeams);
-      getNewWord();
-    } else if (info.offset.x < -100) {
-      getNewWord();
-    }
-    x.set(0); // Возвращаем карточку в центр
+  // --- ФУНКЦИИ УПРАВЛЕНИЯ ---
+  
+  // Получение случайного слова
+  const nextWord = () => {
+    const list = WORDS_LIBRARY[difficulty];
+    const randomIndex = Math.floor(Math.random() * list.length);
+    setCurrentWord(list[randomIndex]);
   };
 
-  // Запуск самого процесса показа слов
-  const startActualPlay = () => {
-    getNewWord();
+  // Старт раунда
+  const startRound = () => {
+    nextWord();
     setTimeLeft(settings.time);
-    setGameState('playing');
+    setScreen('play');
   };
 
-  // Переход хода или завершение игры
-  const nextTurn = () => {
-    if (currentTeamIndex === teams.length - 1) {
-      if (currentRound >= settings.rounds) {
-        setGameState('final');
-        return;
-      }
-      setCurrentRound(prev => prev + 1);
+  // Обработка результата (Угадал / Пропустил)
+  const handleAction = (isWin) => {
+    if (isWin) {
+      const newScore = [...score];
+      newScore[currentTeam] += 1;
+      setScore(newScore);
     }
-    setCurrentTeamIndex((currentTeamIndex + 1) % teams.length);
-    setGameState('round_start');
+    nextWord();
   };
 
-  // --- ЭКРАНЫ ---
+  // Переход к следующему шагу после итогов раунда
+  const handleNext = () => {
+    if (currentTeam === 1) { // Если сходила вторая команда
+      if (currentRound >= settings.rounds) {
+        setScreen('final');
+      } else {
+        setCurrentRound(r => r + 1);
+        setCurrentTeam(0);
+        setScreen('ready');
+      }
+    } else {
+      setCurrentTeam(1);
+      setScreen('ready');
+    }
+  };
 
-  // 1. Настройки
-  if (gameState === 'setup') {
+  // --- ЭКРАНЫ (UI) ---
+
+  // 1. Настройки (Setup)
+  if (screen === 'setup') {
     return (
-      <div className="jungle-screen">
-        <button className="jungle-back" onClick={onBack}><ArrowLeft /></button>
-        <h1 className="jungle-title">CROCODILE</h1>
-        
-        <div className="jungle-card setup-box">
-          <div className="setup-item">
-            <p className="label"><Settings size={16}/> СЛОЖНОСТЬ</p>
-            <div className="jungle-diff-grid">
+      <div className="jungle-ui">
+        <button className="j-back" onClick={onBack}><ArrowLeft /></button>
+        <h1 className="j-title">КРОКОДИЛ</h1>
+        <div className="j-card-setup">
+          <div className="j-option">
+            <span className="j-label"><Settings size={14}/> СЛОЖНОСТЬ</span>
+            <div className="j-tabs">
               {['easy', 'medium', 'hard'].map(d => (
-                <button key={d} className={`jungle-opt ${difficulty === d ? 'active' : ''}`} onClick={() => setDifficulty(d)}>
-                  {d === 'easy' ? 'Легко' : d === 'medium' ? 'Средне' : 'Хард'}
+                <button key={d} className={difficulty === d ? 'active' : ''} onClick={() => setDifficulty(d)}>
+                  {d === 'easy' ? 'Легко' : d === 'medium' ? 'Норм' : 'Хард'}
                 </button>
               ))}
             </div>
           </div>
-
-          <div className="setup-item">
-            <p className="label"><Timer size={16}/> ВРЕМЯ РАУНДА: {settings.time}с</p>
-            <input type="range" min="30" max="120" step="10" value={settings.time} 
-                   onChange={(e) => setSettings({...settings, time: parseInt(e.target.value)})} className="jungle-slider" />
-          </div>
-
-          <div className="setup-item">
-            <p className="label"><Trophy size={16}/> КОЛ-ВО РАУНДОВ: {settings.rounds}</p>
-            <input type="range" min="1" max="10" value={settings.rounds} 
-                   onChange={(e) => setSettings({...settings, rounds: parseInt(e.target.value)})} className="jungle-slider" />
+          <div className="j-option">
+            <span className="j-label"><Timer size={14}/> ВРЕМЯ: {settings.time}с</span>
+            <input type="range" min="30" max="120" step="10" value={settings.time} onChange={e => setSettings({...settings, time: +e.target.value})} />
           </div>
         </div>
-        
-        <button className="jungle-btn-main" onClick={() => setGameState('rules')}>ПРАВИЛА</button>
+        <button className="j-btn-prime" onClick={() => setScreen('rules')}>ДАЛЕЕ</button>
       </div>
     );
   }
 
-  // 2. Правила
-  if (gameState === 'rules') {
+  // 2. Правила (Rules)
+  if (screen === 'rules') {
     return (
-      <div className="jungle-screen center">
-        <BookOpen size={60} color="#ffe600" />
-        <h2 className="jungle-title-small">КАК ИГРАТЬ?</h2>
-        <div className="jungle-card rules-text">
-          <p>1. Игрок берет телефон и видит слово.</p>
-          <p>2. Объясняй его <b>жестами</b>, не издавая звуков.</p>
-          <p>3. <b>Свайп ВПРАВО</b> — угадано (+1 балл).</p>
-          <p>4. <b>Свайп ВЛЕВО</b> — пропустить слово.</p>
+      <div className="jungle-ui center">
+        <h2 className="j-title">ПРАВИЛА</h2>
+        <div className="j-rules-list">
+          <p>🏝 Объясняй слова только жестами.</p>
+          <p>🤫 Никаких звуков и подсказок.</p>
+          <p>✅ Угадали — жми зеленую кнопку.</p>
+          <p>❌ Хочешь другое слово — жми красную.</p>
         </div>
-        <button className="jungle-btn-main" onClick={() => setGameState('round_start')}>ПОНЯТНО</button>
+        <button className="j-btn-prime" onClick={() => setScreen('ready')}>ПОНЯТНО</button>
       </div>
     );
   }
 
-  // 3. Ожидание команды
-  if (gameState === 'round_start') {
+  // 3. Готовность (Ready)
+  if (screen === 'ready') {
     return (
-      <div className="jungle-screen center">
-        <div className="round-badge">РАУНД {currentRound} / {settings.rounds}</div>
-        <Users size={60} color="#ffe600" />
-        <h2 className="jungle-sub">Очередь команды:</h2>
-        <h1 className="jungle-team-title neon-text">{teams[currentTeamIndex].name}</h1>
-        <button className="jungle-btn-main highlight" onClick={startActualPlay}><Play size={20}/> НАЧАТЬ</button>
+      <div className="jungle-ui center">
+        <div className="j-badge">РАУНД {currentRound}</div>
+        <Users size={48} color="#ffe600" />
+        <p className="j-pre-title">Очередь команды:</p>
+        <h2 className="j-team-name">{teamNames[currentTeam]}</h2>
+        <button className="j-btn-prime highlight" onClick={startRound}><Play fill="currentColor" size={16}/> НАЧАТЬ</button>
       </div>
     );
   }
 
-  // 4. Игра (Свайпы)
-  if (gameState === 'playing') {
+  // 4. Игра (Play)
+  if (screen === 'play') {
     return (
-      <div className="jungle-screen play">
-        <div className="jungle-header">
-          <div className={`jungle-timer ${timeLeft < 10 ? 'danger' : ''}`}>{timeLeft}с</div>
-          <div className="jungle-score-mini">Счёт: {teams[currentTeamIndex].score}</div>
+      <div className="jungle-ui">
+        <div className="j-game-header">
+          <div className={`j-timer-box ${timeLeft < 10 ? 'urgent' : ''}`}>{timeLeft}</div>
+          <div className="j-current-score">Счет: {score[currentTeam]}</div>
         </div>
-        <div className="jungle-card-zone">
+        <div className="j-word-area">
           <AnimatePresence mode="wait">
-            <motion.div
+            <motion.div 
               key={currentWord}
-              style={{ x, rotate, opacity }}
-              drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.8}
-              onDragEnd={handleDragEnd}
-              className="jungle-swipe-card"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              className="j-word-card"
             >
-              <h2 className="jungle-word">{currentWord}</h2>
-              <div className="swipe-hints">
-                <span className="hint-left">← Пропуск</span>
-                <span className="hint-right">Угадал →</span>
-              </div>
+              <h3>{currentWord}</h3>
             </motion.div>
           </AnimatePresence>
         </div>
+        <div className="j-game-controls">
+          <button className="j-ctrl-btn skip" onClick={() => handleAction(false)}><X /></button>
+          <button className="j-ctrl-btn check" onClick={() => handleAction(true)}><Check /></button>
+        </div>
       </div>
     );
   }
 
-  // 5. Итоги раунда или финал
+  // 5. Итоги раунда и Финал (Results / Final)
   return (
-    <div className="jungle-screen results center">
-      <Trophy size={80} color="#ffe600" className="floating" />
-      <h1 className="jungle-title">{gameState === 'final' ? 'ФИНАЛ!' : 'ИТОГИ'}</h1>
-      <div className="jungle-results-list">
-        {teams.map(t => (
-          <div key={t.id} className="jungle-res-item">
-            <span>{t.name}</span>
-            <span className="res-val">{t.score}</span>
+    <div className="jungle-ui center">
+      <Trophy size={64} color="#ffe600" className="j-icon-anim" />
+      <h2 className="j-title">{screen === 'final' ? 'ИГРА ОКОНЧЕНА' : 'ИТОГИ РАУНДА'}</h2>
+      <div className="j-score-board">
+        {teamNames.map((name, i) => (
+          <div key={i} className="j-score-row">
+            <span>{name}</span>
+            <span className="val">{score[i]}</span>
           </div>
         ))}
       </div>
-      <button className="jungle-btn-main" onClick={gameState === 'final' ? onBack : nextTurn}>
-        {gameState === 'final' ? 'В МЕНЮ' : 'СЛЕД. ХОД'} <ChevronRight />
+      <button className="j-btn-prime" onClick={screen === 'final' ? onBack : handleNext}>
+        {screen === 'final' ? 'В МЕНЮ' : 'СЛЕДУЮЩИЙ ХОД'}
       </button>
     </div>
   );
