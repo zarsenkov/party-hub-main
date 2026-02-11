@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, X, Check, ArrowLeft } from 'lucide-react';
 import './AliasGame.css';
 
-const ALIAS_WORDS = ['Космос', 'Пицца', 'Гитара', 'Метро', 'Робот', 'Зомби', 'Спорт', 'Кино', 'Ниндзя'];
+const WORDS = ['Космос', 'Пицца', 'Гитара', 'Метро', 'Робот', 'Зомби', 'Спорт', 'Кино', 'Ниндзя'];
 
 const AliasGame = ({ onBack }) => {
   const [stage, setStage] = useState('menu');
@@ -13,8 +12,7 @@ const AliasGame = ({ onBack }) => {
   const [log, setLog] = useState([]);
 
   const nextWord = () => {
-    const filtered = ALIAS_WORDS.filter(w => w !== word);
-    const random = filtered[Math.floor(Math.random() * filtered.length)];
+    const random = WORDS[Math.floor(Math.random() * WORDS.length)];
     setWord(random);
   };
 
@@ -28,64 +26,45 @@ const AliasGame = ({ onBack }) => {
     return () => { if (t) clearInterval(t); };
   }, [stage, time]);
 
-  const startAlias = () => {
-    setScore(0);
-    setTime(60);
-    setLog([]);
-    nextWord();
-    setStage('play');
-  };
-
   if (stage === 'menu') {
     return (
-      <div className="pop-container center">
-        <button className="back-btn-fixed-pop" onClick={onBack}><ArrowLeft size={18}/> НАЗАД</button>
-        <h1 className="pop-logo">ALIAS!</h1>
-        <button className="pop-btn-main" onClick={startAlias}>ИГРАТЬ</button>
+      <div className="alias-wrap pop">
+        <button className="abs-back-pop" onClick={onBack}><ArrowLeft /> Назад</button>
+        <h1 className="alias-title">ALIAS</h1>
+        <button className="pop-btn" onClick={() => { setScore(0); setTime(60); setLog([]); nextWord(); setStage('play'); }}>ИГРАТЬ</button>
       </div>
     );
   }
 
   if (stage === 'play') {
     return (
-      <div className="pop-container play-bg">
-        <div className="pop-header">
-          <div className="pop-timer-pill"><Timer size={16}/> {time}с</div>
-          <div className="pop-score-pill">Очки: {score}</div>
+      <div className="alias-wrap pop yellow">
+        <div className="pop-head">
+          <div className="pill">{time}с</div>
+          <div className="pill">Очки: {score}</div>
         </div>
-        <div className="pop-card-area">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={word}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.15 }}
-              className="pop-word-card"
-            >
-              <h2>{word}</h2>
-            </motion.div>
-          </AnimatePresence>
+        <div className="alias-card-box">
+          <div className="alias-card">
+            <h2>{word}</h2>
+          </div>
         </div>
-        <div className="pop-actions">
-          <button className="pop-action-btn btn-no" onClick={() => { setLog(prev => [...prev, {word, ok: false}]); nextWord(); }}><X size={32}/></button>
-          <button className="pop-action-btn btn-yes" onClick={() => { setScore(s => s + 1); setLog(prev => [...prev, {word, ok: true}]); nextWord(); }}><Check size={32}/></button>
+        <div className="alias-btns">
+          <button className="a-no" onClick={() => { setLog(p => [...p, {w: word, ok: false}]); nextWord(); }}><X size={30}/></button>
+          <button className="a-ok" onClick={() => { setScore(s => s + 1); setLog(p => [...p, {w: word, ok: true}]); nextWord(); }}><Check size={30}/></button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pop-container">
-      <h2 className="pop-res-title">ИТОГИ</h2>
-      <div className="pop-list">
+    <div className="alias-wrap pop">
+      <h2 className="title-res">ИТОГИ</h2>
+      <div className="alias-log">
         {log.map((item, i) => (
-          <div key={i} className={`pop-list-item ${item.ok ? 'is-ok' : 'is-no'}`}>
-            {item.word} <span>{item.ok ? '+1' : '-1'}</span>
-          </div>
+          <div key={i} className={`log-row ${item.ok ? 'c-ok' : 'c-no'}`}>{item.w}</div>
         ))}
       </div>
-      <button className="pop-btn-main" onClick={onBack}>В МЕНЮ</button>
+      <button className="pop-btn" onClick={onBack}>ВЫЙТИ</button>
     </div>
   );
 };
