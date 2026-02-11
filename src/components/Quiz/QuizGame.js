@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-// Иконки в строгом стиле
-import { Brain, ArrowLeft, RotateCcw, Zap, HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+// Иконки, которые подходят под аркадный стиль
+import { Gamepad2, ArrowLeft, RotateCcw, Star, Ghost } from 'lucide-react';
 
 const QUIZ_DATA = [
   {
@@ -21,35 +21,29 @@ const QUIZ_DATA = [
 ];
 
 const QuizGame = ({ onBack }) => {
-  const [stage, setStage] = useState('menu'); // menu, play, result
+  const [stage, setStage] = useState('menu'); 
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
 
   // Обработка ответа
-  // // Исправлена логика подсчета очков и перехода
+  // // Логика подсчета очков через prevState и защита от вылета за пределы массива
   const handleAnswer = (idx) => {
     if (isLocked) return;
-    
     setSelectedIdx(idx);
     setIsLocked(true);
 
-    const isCorrect = idx === QUIZ_DATA[currentQ].correct;
-    
-    if (isCorrect) {
-      setScore(prevScore => prevScore + 1); // Используем функциональный апдейт
+    if (idx === QUIZ_DATA[currentQ].correct) {
+      setScore(prev => prev + 1);
     }
 
-    // Задержка перед следующим шагом
     setTimeout(() => {
-      // Проверяем, есть ли следующий вопрос
       if (currentQ + 1 < QUIZ_DATA.length) {
         setCurrentQ(prev => prev + 1);
         setSelectedIdx(null);
         setIsLocked(false);
       } else {
-        // Если вопросы кончились — переходим к результатам
         setStage('result');
       }
     }, 800);
@@ -63,37 +57,40 @@ const QuizGame = ({ onBack }) => {
     setStage('play');
   };
 
-  // --- СТИЛИ (Brutalist Bauhaus Style) ---
+  // --- СТИЛИ (Arcade Retro Style) ---
   const styles = {
     container: {
-      position: 'fixed', inset: 0, padding: '30px', display: 'flex', flexDirection: 'column',
-      zIndex: 1000, background: '#F0F0F0', color: '#000', fontFamily: '"Arial Black", sans-serif'
+      position: 'fixed', inset: 0, padding: '20px', display: 'flex', flexDirection: 'column',
+      zIndex: 1000, background: '#303EAD', // Классический синий из аркад
+      color: '#fff', fontFamily: '"Press Start 2P", "Courier New", monospace', // Имитация пикселей
     },
-    header: { 
-      borderBottom: '8px solid #000', paddingBottom: '10px', marginBottom: '30px',
-      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end'
+    innerBorder: {
+      flex: 1, border: '6px solid #fff', borderRadius: '10px', padding: '20px',
+      display: 'flex', flexDirection: 'column', boxShadow: 'inset 0 0 0 4px #000'
     },
+    header: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '4px solid #fff', paddingBottom: '10px' },
     qCard: {
-      background: '#fff', border: '8px solid #000', padding: '20px', marginBottom: '30px'
+      background: '#000', border: '4px solid #FFD700', padding: '15px', marginBottom: '20px',
+      boxShadow: '4px 4px 0 #000'
     },
     ansBtn: (idx) => {
-      let bg = '#fff';
+      let borderColor = '#fff';
+      let shadowColor = '#000';
       if (selectedIdx === idx) {
-        bg = idx === QUIZ_DATA[currentQ].correct ? '#00FF00' : '#FF3D00';
+        borderColor = idx === QUIZ_DATA[currentQ].correct ? '#4ADE80' : '#F87171';
+        shadowColor = idx === QUIZ_DATA[currentQ].correct ? '#166534' : '#991B1B';
       }
       return {
-        width: '100%', padding: '15px', marginBottom: '15px', background: bg,
-        border: '6px solid #000', color: '#000', fontSize: '1.2rem', fontWeight: '900',
-        textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between'
+        width: '100%', padding: '15px', marginBottom: '15px', background: '#000',
+        border: `4px solid ${borderColor}`, color: borderColor, fontSize: '0.9rem',
+        fontWeight: 'bold', cursor: 'pointer', textAlign: 'left',
+        boxShadow: `6px 6px 0 ${shadowColor}`, textTransform: 'uppercase'
       };
     },
-    bigBtn: {
-      background: '#FF3D00', color: '#fff', border: '8px solid #000',
-      padding: '20px', fontSize: '1.8rem', fontWeight: '900', cursor: 'pointer',
-      width: '100%', textTransform: 'uppercase'
-    },
-    scoreBadge: {
-      background: '#000', color: '#fff', padding: '5px 15px', fontSize: '1rem'
+    startBtn: {
+      background: '#E11D48', color: '#fff', border: '4px solid #fff',
+      padding: '20px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer',
+      boxShadow: '8px 8px 0 #000', textTransform: 'uppercase'
     }
   };
 
@@ -101,14 +98,13 @@ const QuizGame = ({ onBack }) => {
   if (stage === 'menu') {
     return (
       <div style={styles.container}>
-        <div style={{...styles.header, borderBottom: 'none'}}>
-          <button onClick={onBack} style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', fontWeight: '900'}}>BACK</button>
-        </div>
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-          <h1 style={{fontSize: '5rem', lineHeight: 0.8, margin: '0 0 20px 0', letterSpacing: '-4px'}}>QUIZ<br/>LAB.</h1>
-          <p style={{fontSize: '1.2rem', borderLeft: '8px solid #FF3D00', paddingLeft: '15px', fontWeight: 'bold'}}>ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕСТ №01</p>
-          <div style={{marginTop: '50px'}}>
-            <button style={styles.bigBtn} onClick={() => setStage('play')}>START</button>
+        <div style={styles.innerBorder}>
+          <button onClick={onBack} style={{background: 'none', border: 'none', color: '#fff', cursor: 'pointer'}}><ArrowLeft/></button>
+          <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>
+            <Gamepad2 size={60} color="#FFD700" style={{marginBottom: '20px'}}/>
+            <h1 style={{fontSize: '2rem', marginBottom: '40px', textShadow: '4px 4px 0 #000'}}>SUPER QUIZ</h1>
+            <button style={styles.startBtn} onClick={() => setStage('play')}>PRESS START</button>
+            <p style={{marginTop: '30px', fontSize: '0.7rem', color: '#FFD700'}}>INSERT COIN TO PLAY</p>
           </div>
         </div>
       </div>
@@ -120,36 +116,41 @@ const QuizGame = ({ onBack }) => {
     const q = QUIZ_DATA[currentQ];
     return (
       <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={{fontSize: '2rem'}}>Q{currentQ + 1}</span>
-          <div style={styles.scoreBadge}>SCORE: {score}</div>
-        </div>
+        <div style={styles.innerBorder}>
+          <div style={styles.header}>
+            <span style={{fontSize: '0.7rem'}}>LVL {currentQ + 1}</span>
+            <span style={{fontSize: '0.7rem'}}>PTS: {score * 100}</span>
+          </div>
 
-        <div style={styles.qCard}>
-          <h2 style={{fontSize: '1.6rem', margin: 0, textTransform: 'uppercase'}}>{q.q}</h2>
-        </div>
+          <div style={styles.qCard}>
+            <p style={{fontSize: '0.9rem', lineHeight: '1.5', margin: 0}}>{q.q}</p>
+          </div>
 
-        <div style={{flex: 1}}>
-          {q.a.map((ans, i) => (
-            <button key={i} style={styles.ansBtn(i)} onClick={() => handleAnswer(i)}>
-              {ans}
-            </button>
-          ))}
+          <div style={{flex: 1}}>
+            {q.a.map((ans, i) => (
+              <button key={i} style={styles.ansBtn(i)} onClick={() => handleAnswer(i)}>
+                {`${i + 1}. ${ans}`}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  // 3. РЕЗУЛЬТАТЫ
+  // 3. РЕЗУЛЬТАТ
   return (
-    <div style={{...styles.container, background: '#000', color: '#fff'}}>
-      <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center'}}>
-        <h2 style={{fontSize: '4rem', margin: 0}}>FINISH</h2>
-        <div style={{fontSize: '10rem', color: '#FF3D00', lineHeight: 1}}>{score}</div>
-        <p style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '50px'}}>ОЧКОВ ИЗ {QUIZ_DATA.length}</p>
-        
-        <button style={{...styles.bigBtn, background: '#fff', color: '#000'}} onClick={restart}>RETRY</button>
-        <button onClick={onBack} style={{marginTop: '30px', color: '#fff', background: 'none', border: 'none', textDecoration: 'underline', fontWeight: 'bold'}}>EXIT TO HUB</button>
+    <div style={styles.container}>
+      <div style={{...styles.innerBorder, background: '#000'}}>
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>
+          {score === QUIZ_DATA.length ? <Star size={80} color="#FFD700" /> : <Ghost size={80} color="#fff" />}
+          <h2 style={{fontSize: '1.5rem', margin: '20px 0'}}>GAME OVER</h2>
+          <div style={{fontSize: '2rem', color: '#FFD700', marginBottom: '40px'}}>
+            FINAL SCORE:<br/>{score * 100}
+          </div>
+          <button style={styles.startBtn} onClick={restart}>CONTINUE?</button>
+          <button onClick={onBack} style={{marginTop: '30px', color: '#fff', background: 'none', border: 'none', fontSize: '0.8rem', cursor: 'pointer'}}>EXIT</button>
+        </div>
       </div>
     </div>
   );
