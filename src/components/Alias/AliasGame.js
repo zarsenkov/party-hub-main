@@ -1,43 +1,47 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, X, Check, ArrowLeft, Zap } from 'lucide-react';
+import { Timer, X, Check, ArrowLeft } from 'lucide-react';
 import './AliasGame.css';
 
-const WORDS = ['Космос', 'Пицца', 'Гитара', 'Метро', 'Робот', 'Зомби', 'Спорт', 'Кино'];
+const ALIAS_WORDS = ['Космос', 'Пицца', 'Гитара', 'Метро', 'Робот', 'Зомби', 'Спорт', 'Кино', 'Ниндзя'];
 
 const AliasGame = ({ onBack }) => {
-  const [stage, setStage] = useState('menu'); // menu, play, results
+  const [stage, setStage] = useState('menu');
   const [word, setWord] = useState('');
   const [score, setScore] = useState(0);
   const [time, setTime] = useState(60);
   const [log, setLog] = useState([]);
 
-  const nextWord = useCallback(() => {
-    setWord(prev => {
-      let n = WORDS[Math.floor(Math.random() * WORDS.length)];
-      while (n === prev) n = WORDS[Math.floor(Math.random() * WORDS.length)];
-      return n;
-    });
-  }, []);
+  const nextWord = () => {
+    const filtered = ALIAS_WORDS.filter(w => w !== word);
+    const random = filtered[Math.floor(Math.random() * filtered.length)];
+    setWord(random);
+  };
 
   useEffect(() => {
-    let t;
+    let t = null;
     if (stage === 'play' && time > 0) {
       t = setInterval(() => setTime(prev => prev - 1), 1000);
     } else if (time === 0 && stage === 'play') {
       setStage('results');
     }
-    return () => clearInterval(t);
+    return () => { if (t) clearInterval(t); };
   }, [stage, time]);
+
+  const startAlias = () => {
+    setScore(0);
+    setTime(60);
+    setLog([]);
+    nextWord();
+    setStage('play');
+  };
 
   if (stage === 'menu') {
     return (
       <div className="pop-container center">
-        <button className="back-btn-fixed-pop" onClick={onBack}><ArrowLeft /> Назад</button>
+        <button className="back-btn-fixed-pop" onClick={onBack}><ArrowLeft size={18}/> НАЗАД</button>
         <h1 className="pop-logo">ALIAS!</h1>
-        <button className="pop-btn-main" onClick={() => { setScore(0); setTime(60); setLog([]); nextWord(); setStage('play'); }}>
-          ИГРАТЬ (1 РАУНД)
-        </button>
+        <button className="pop-btn-main" onClick={startAlias}>ИГРАТЬ</button>
       </div>
     );
   }
@@ -46,17 +50,17 @@ const AliasGame = ({ onBack }) => {
     return (
       <div className="pop-container play-bg">
         <div className="pop-header">
-          <div className="pop-timer-pill">{time}с</div>
+          <div className="pop-timer-pill"><Timer size={16}/> {time}с</div>
           <div className="pop-score-pill">Очки: {score}</div>
         </div>
         <div className="pop-card-area">
           <AnimatePresence mode="wait">
             <motion.div 
               key={word}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.15 }}
               className="pop-word-card"
             >
               <h2>{word}</h2>
@@ -64,8 +68,8 @@ const AliasGame = ({ onBack }) => {
           </AnimatePresence>
         </div>
         <div className="pop-actions">
-          <button className="pop-action-btn btn-no" onClick={() => { setLog(prev => [...prev, {word, ok: false}]); nextWord(); }}><X size={35}/></button>
-          <button className="pop-action-btn btn-yes" onClick={() => { setScore(s => s + 1); setLog(prev => [...prev, {word, ok: true}]); nextWord(); }}><Check size={35}/></button>
+          <button className="pop-action-btn btn-no" onClick={() => { setLog(prev => [...prev, {word, ok: false}]); nextWord(); }}><X size={32}/></button>
+          <button className="pop-action-btn btn-yes" onClick={() => { setScore(s => s + 1); setLog(prev => [...prev, {word, ok: true}]); nextWord(); }}><Check size={32}/></button>
         </div>
       </div>
     );
@@ -81,7 +85,7 @@ const AliasGame = ({ onBack }) => {
           </div>
         ))}
       </div>
-      <button className="pop-btn-main" onClick={onBack}>ЗАКОНЧИТЬ</button>
+      <button className="pop-btn-main" onClick={onBack}>В МЕНЮ</button>
     </div>
   );
 };
