@@ -10,7 +10,7 @@ const WORDS = {
   "Предметы": ["Тостер", "Зонтик", "Гитара", "Кактус", "Фонарик"]
 };
 
-export default function GuessWhoGame({ onBack }) {
+export default function WhoamiGame({ onBack }) {
   // // Инициализация состояний
   const [view, setView] = useState('menu'); 
   const [cfg, setCfg] = useState({ cat: "Животные", time: 40 });
