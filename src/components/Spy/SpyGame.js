@@ -1,191 +1,122 @@
 import React, { useState, useEffect } from 'react';
+// Анимация раскрытия карты
 import { motion, AnimatePresence } from 'framer-motion';
-// Подключаем стили
+// Иконки: глаз, замок, время, назад
+import { Eye, EyeOff, ShieldAlert, Timer, ArrowLeft, Play, UserSecret } from 'lucide-react';
 import './SpyGame.css';
 
-// Список локаций
+// Список локаций (можно расширять до бесконечности)
 const LOCATIONS = [
-  "Орбитальная станция", "Подводная лодка", "Ночной клуб", 
-  "Овощебаза", "Театр", "Цирк шапито", "Ресторан", 
-  "Полицейский участок", "Школа", "Больница"
+  "Орбитальная станция", "Пиратский корабль", "Подводная лодка", 
+  "Киностудия", "Психиатрическая больница", "Отель "Гранд Будапешт"", 
+  "Средневековый замок", "База на Марсе", "Цирк-шапито", "Казино"
 ];
 
-export default function SpyGame({ onBack }) {
-  // Состояния игры
-  const [gameState, setGameState] = useState('setup'); // setup, pass, reveal, play, voting, finale
-  const [playerNames, setPlayerNames] = useState(["Агент 001", "Агент 002", "Агент 003"]);
+const SpyGame = ({ onBack }) => {
+  // screen: setup -> distribution -> play -> result
+  const [screen, setScreen] = useState('setup');
+  const [players, setPlayers] = useState(4);
+  const [gameData, setGameData] = useState({ location: '', spyIndex: 0 });
   const [currentPlayer, setCurrentPlayer] = useState(0);
-  const [spyIndex, setSpyIndex] = useState(0);
-  const [location, setLocation] = useState('');
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [isCardOpen, setIsCardOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 минут на обсуждение
 
-  // Логика таймера
+  // --- ЛОГИКА ---
+
+  // Таймер обратного отсчета
   useEffect(() => {
-    let timer;
-    if (gameState === 'play' && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    let t;
+    if (screen === 'play' && timeLeft > 0) {
+      t = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     }
-    return () => clearInterval(timer);
-  }, [gameState, timeLeft]);
+    return () => clearInterval(t);
+  }, [screen, timeLeft]);
 
-  // Добавление игрока
-  const addPlayer = () => {
-    if (playerNames.length < 12) {
-      setPlayerNames([...playerNames, `Агент 00${playerNames.length + 1}`]);
-    }
-  };
-
-  // Удаление игрока
-  const removePlayer = () => {
-    if (playerNames.length > 3) {
-      setPlayerNames(playerNames.slice(0, -1));
-    }
-  };
-
-  // Изменение имени
-  const handleNameChange = (index, newName) => {
-    const newNames = [...playerNames];
-    newNames[index] = newName;
-    setPlayerNames(newNames);
-  };
-
-  // Старт новой игры
-  const startNewGame = () => {
-    const randomSpy = Math.floor(Math.random() * playerNames.length);
+  // Старт игры: выбираем локацию и шпиона
+  const startGame = () => {
     const randomLoc = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
-    setSpyIndex(randomSpy);
-    setLocation(randomLoc);
+    const randomSpy = Math.floor(Math.random() * players);
+    setGameData({ location: randomLoc, spyIndex: randomSpy });
     setCurrentPlayer(0);
-    setTimeLeft(300);
-    setGameState('pass');
+    setIsCardOpen(false);
+    setScreen('distribution');
   };
 
-  // Переключение шагов (Исправлено)
-  const nextStep = () => {
-    if (gameState === 'pass') {
-      setGameState('reveal');
-    } else if (gameState === 'reveal') {
-      if (currentPlayer < playerNames.length - 1) {
-        setCurrentPlayer(p => p + 1);
-        setGameState('pass');
-      } else {
-        setGameState('play');
-      }
+  // Переход к следующему игроку
+  const nextPlayer = () => {
+    setIsCardOpen(false);
+    if (currentPlayer + 1 < players) {
+      setCurrentPlayer(prev => prev + 1);
+    } else {
+      setScreen('play');
     }
   };
 
-  // Красивое время
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+  // Форматирование времени
+  const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
+  // --- ЭКРАНЫ ---
+
+  // 1. Настройка
+  if (screen === 'setup') {
+    return (
+      <div className="spy-container dossier-theme center">
+        <button className="back-fixed" onClick={onBack}><ArrowLeft /> МЕНЮ</button>
+        <div className="spy-folder">
+          <ShieldAlert size={48} className="spy-icon-red" />
+          <h1 className="spy-title">TOP SECRET</h1>
+          <div className="spy-setup-card">
+            <p>АГЕНТОВ В ГРУППЕ: {players}</p>
+            <input type="range" min="3" max="12" value={players} onChange={(e) => setPlayers(Number(e.target.value))} />
+          </div>
+          <button className="spy-btn-start" onClick={startGame}>НАЧАТЬ ОПЕРАЦИЮ</button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Распределение ролей
+  if (screen === 'distribution') {
+    const isSpy = currentPlayer === gameData.spyIndex;
+    return (
+      <div className="spy-container dossier-theme center">
+        <div className="spy-badge">ИГРОК {currentPlayer + 1}</div>
+        <div className="spy-card-box" onClick={() => setIsCardOpen(!isCardOpen)}>
+          <AnimatePresence mode="wait">
+            {!isCardOpen ? (
+              <motion.div key="closed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card-inner closed">
+                <EyeOff size={64} />
+                <p>НАЖМИ, ЧТОБЫ УЗНАТЬ РОЛЬ</p>
+              </motion.div>
+            ) : (
+              <motion.div key="open" initial={{ rotateY: 180, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} className="card-inner open">
+                <div className="stamp">{isSpy ? 'SPY' : 'AGENT'}</div>
+                <h3>{isSpy ? 'ВЫ ШПИОН' : 'ЛОКАЦИЯ:'}</h3>
+                {!isSpy && <h2>{gameData.location}</h2>}
+                <p className="card-hint">Запомни и нажми еще раз</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        {isCardOpen && (
+          <button className="spy-btn-confirm" onClick={nextPlayer}>ПОНЯЛ, ПЕРЕДАЮ ТЕЛЕФОН</button>
+        )}
+      </div>
+    );
+  }
+
+  // 3. Игра (Таймер)
   return (
-    <div className="spy-wrapper">
-      <button className="spy-btn-exit" onClick={onBack}>ЗАКРЫТЬ ДЕЛО</button>
-
-      <AnimatePresence mode="wait">
-        
-        {/* ЭКРАН 1: НАСТРОЙКА */}
-        {gameState === 'setup' && (
-          <motion.div key="setup" className="spy-folder" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <div className="spy-stamp">SECRET</div>
-            <h1 className="spy-title">СПИСОК АГЕНТОВ</h1>
-            <div className="spy-names-list">
-              {playerNames.map((name, idx) => (
-                <div key={idx} className="spy-input-row">
-                  <span className="spy-id">#{idx + 1}</span>
-                  <input 
-                    className="spy-name-input"
-                    value={name}
-                    onChange={(e) => handleNameChange(idx, e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="spy-setup-controls">
-              <button className="spy-round-btn" onClick={removePlayer}>-</button>
-              <span className="spy-count-badge">ГРУППА: {playerNames.length}</span>
-              <button className="spy-round-btn" onClick={addPlayer}>+</button>
-            </div>
-            <button className="spy-btn-confirm" onClick={startNewGame}>НАЧАТЬ ОПЕРАЦИЮ</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 2: ПЕРЕДАЧА ТЕЛЕФОНА */}
-        {gameState === 'pass' && (
-          <motion.div key="pass" className="spy-envelope" initial={{scale:0.8, y: 100}} animate={{scale:1, y: 0}} exit={{scale:0.5, opacity:0}}>
-            <div className="label-top-secret">TOP SECRET</div>
-            <h2>ПЕРЕДАТЬ ЛИЧНО:</h2>
-            <div className="spy-target-name">{playerNames[currentPlayer]}</div>
-            <p className="spy-disclaimer">Убедитесь, что никто не видит экран</p>
-            <button className="spy-btn-confirm" onClick={nextStep}>ОТКРЫТЬ ПАКЕТ</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 3: РОЛЬ */}
-        {gameState === 'reveal' && (
-          <motion.div key="reveal" className="spy-folder" initial={{rotateY: 90}} animate={{rotateY: 0}} exit={{opacity:0}}>
-            <div className="spy-document">
-              <div className="spy-doc-header">ЛИЧНОЕ ДЕЛО №00{currentPlayer + 1}</div>
-              <div className="spy-doc-content">
-                <div className="status-label-box">ВАШ СТАТУС:</div>
-                {currentPlayer === spyIndex ? (
-                  <div className="spy-role-box spy-is-spy">
-                    <span className="spy-role-text">ШПИОН</span>
-                    <p className="spy-subtext">Вычислите локацию!</p>
-                  </div>
-                ) : (
-                  <div className="spy-role-box">
-                    <span className="spy-loc-label">ЛОКАЦИЯ:</span>
-                    <span className="spy-loc-text">{location}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button className="spy-btn-confirm" onClick={nextStep}>УНИЧТОЖИТЬ</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 4: ТАЙМЕР ИГРЫ */}
-        {gameState === 'play' && (
-          <motion.div key="play" className="spy-screen-center" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <div className="spy-timer-display">{formatTime(timeLeft)}</div>
-            <p className="spy-briefing">Операция идет. Задавайте вопросы.</p>
-            <button className="spy-btn-secondary" onClick={() => setGameState('voting')}>К ГОЛОСОВАНИЮ</button>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 5: ГОЛОСОВАНИЕ */}
-        {gameState === 'voting' && (
-          <motion.div key="voting" className="spy-folder" initial={{y: 50}} animate={{y:0}}>
-            <h2 className="spy-title">ГОЛОСОВАНИЕ</h2>
-            <div className="spy-voting-grid">
-              {playerNames.map((name, idx) => (
-                <button key={idx} className="spy-vote-btn" onClick={() => setGameState('finale')}>
-                  {name}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН 6: ФИНАЛ */}
-        {gameState === 'finale' && (
-          <motion.div key="finale" className="spy-folder" initial={{scale: 0.9}} animate={{scale:1}}>
-            <div className="spy-stamp-red">РАСКРЫТО</div>
-            <div className="spy-results-content">
-              <label>ШПИОНОМ БЫЛ(А):</label>
-              <div className="spy-winner-reveal">{playerNames[spyIndex]}</div>
-              <label>ЛОКАЦИЯ:</label>
-              <div className="spy-loc-reveal">{location}</div>
-            </div>
-            <button className="spy-btn-confirm" onClick={() => setGameState('setup')}>НОВОЕ ДЕЛО</button>
-          </motion.div>
-        )}
-
-      </AnimatePresence>
+    <div className="spy-container dossier-theme center">
+      <div className="scan-line"></div>
+      <h2 className="spy-status">ИДЕТ ОБСУЖДЕНИЕ...</h2>
+      <div className={`spy-timer-big ${timeLeft < 30 ? 'critical' : ''}`}>
+        {formatTime(timeLeft)}
+      </div>
+      <p className="spy-instruction">Задавайте вопросы друг другу. <br/> Шпион должен вычислить локацию.</p>
+      <button className="spy-btn-end" onClick={() => setScreen('setup')}>ЗАКОНЧИТЬ</button>
     </div>
   );
-}
+};
+
+export default SpyGame;
