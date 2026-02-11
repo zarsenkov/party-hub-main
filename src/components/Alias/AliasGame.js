@@ -1,254 +1,176 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { ALIAS_DATA } from './words';
+// Анимации для появления слов
+import { motion, AnimatePresence } from 'framer-motion';
+// Иконки в стиле техно
+import { Zap, Users, Play, RotateCcw, Check, X, Settings, Trophy, ArrowLeft } from 'lucide-react';
 import './AliasGame.css';
 
-export default function AliasGame({ onBack }) {
-  const [phase, setPhase] = useState('setup'); 
-  const [teams, setTeams] = useState([
-    { id: 1, name: 'Тролли', score: 0 },
-    { id: 2, name: 'Обезьяны', score: 0 }
-  ]);
-  const [settings, setSettings] = useState({ 
-    time: 60, 
-    rounds: 5, 
-    categories: ['standard'] 
-  });
-  const [currentRound, setCurrentRound] = useState(1);
-  const [currentTeamIdx, setCurrentTeamIdx] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [currentWord, setCurrentWord] = useState('');
-  const [roundResults, setRoundResults] = useState([]);
+// База слов (можно расширять)
+const WORDS_COLLECTION = [
+    "Синхрофазотрон", "Криптовалюта", "Инстаграм", "Космонавт", "Метро", 
+    "Апокалипсис", "Гармония", "Шаурма", "Детектив", "Пирамида"
+];
 
-  // --- ЛОГИКА ---
-  const toggleCategory = (key) => {
-    setSettings(prev => {
-      const isSelected = prev.categories.includes(key);
-      if (isSelected && prev.categories.length > 1) {
-        return { ...prev, categories: prev.categories.filter(c => c !== key) };
-      } else if (!isSelected) {
-        return { ...prev, categories: [...prev.categories, key] };
-      }
-      return prev;
-    });
-  };
+const AliasGame = ({ onBack }) => {
+    // Состояния: setup, ready, play, results, winner
+    const [gameState, setGameState] = useState('setup');
+    const [settings, setSettings] = useState({ time: 60, goal: 30, penalty: true });
+    const [teams, setTeams] = useState([
+        { id: 1, name: 'НЕОН', score: 0 },
+        { id: 2, name: 'КВАНТ', score: 0 }
+    ]);
+    const [currentTeam, setCurrentTeam] = useState(0);
+    const [timeLeft, setTimeLeft] = useState(60);
+    const [currentWords, setCurrentWords] = useState([]); // Список слов текущего раунда
+    const [wordIndex, setWordIndex] = useState(0);
 
-  const getRandomWord = () => {
-    const pool = settings.categories.flatMap(cat => ALIAS_DATA[cat].words);
-    return pool[Math.floor(Math.random() * pool.length)];
-  };
+    // Таймер раунда
+    // // Запускает обратный отсчет, если мы в режиме 'play'
+    useEffect(() => {
+        let timer;
+        if (gameState === 'play' && timeLeft > 0) {
+            timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+        } else if (timeLeft === 0 && gameState === 'play') {
+            setGameState('results');
+        }
+        return () => clearInterval(timer);
+    }, [gameState, timeLeft]);
 
-  const startRound = () => {
-    setPhase('game');
-    setTimeLeft(settings.time);
-    setRoundResults([]);
-    setCurrentWord(getRandomWord());
-  };
+    // Генерация слов для раунда
+    // // Перемешивает базу и сбрасывает индекс
+    const prepareRound = () => {
+        const shuffled = [...WORDS_COLLECTION].sort(() => Math.random() - 0.5);
+        setCurrentWords(shuffled.map(w => ({ text: w, status: null })));
+        setWordIndex(0);
+        setTimeLeft(settings.time);
+        setGameState('play');
+    };
 
-  useEffect(() => {
-    let interval;
-    if (phase === 'game' && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    } else if (timeLeft === 0 && phase === 'game') {
-      setPhase('summary');
+    // Ответ: Угадано (true) или Пропуск (false)
+    // // Записывает результат в массив слов и переходит к следующему
+    const handleAnswer = (isCorrect) => {
+        const updated = [...currentWords];
+        updated[wordIndex].status = isCorrect ? 'correct' : 'skipped';
+        setCurrentWords(updated);
+        setWordIndex(i => i + 1);
+    };
+
+    // Подсчет итогов раунда
+    // // Считает +1 за угаданное и -1 за пропуск (если включен штраф)
+    const applyResults = () => {
+        const roundPoints = currentWords.reduce((acc, w) => {
+            if (w.status === 'correct') return acc + 1;
+            if (w.status === 'skipped' && settings.penalty) return acc - 1;
+            return acc;
+        }, 0);
+
+        const newTeams = [...teams];
+        newTeams[currentTeam].score += roundScore(roundPoints);
+        setTeams(newTeams);
+
+        // Проверка победы
+        if (newTeams[currentTeam].score >= settings.goal) {
+            setGameState('winner');
+        } else {
+            setCurrentTeam(currentTeam === 0 ? 1 : 0);
+            setGameState('ready');
+        }
+    };
+
+    // Вспомогательная функция, чтобы счет не уходил в минус (опционально)
+    const roundScore = (p) => Math.max(-100, p);
+
+    // --- ЭКРАНЫ ---
+
+    // 1. Настройка
+    if (gameState === 'setup') {
+        return (
+            <div className="alias-neon setup-screen">
+                <button className="back-link" onClick={onBack}><ArrowLeft size={20}/> НАЗАД</button>
+                <div className="neon-logo"><Zap size={40} className="zap-icon"/> ALIAS</div>
+                <div className="settings-grid">
+                    <div className="setting-card">
+                        <label>ЦЕЛЬ: {settings.goal} ОЧКОВ</label>
+                        <input type="range" min="10" max="100" step="10" value={settings.goal} 
+                               onChange={e => setSettings({...settings, goal: +e.target.value})} />
+                    </div>
+                    <div className="setting-card">
+                        <label>ВРЕМЯ: {settings.time}с</label>
+                        <input type="range" min="30" max="90" step="15" value={settings.time} 
+                               onChange={e => setSettings({...settings, time: +e.target.value})} />
+                    </div>
+                </div>
+                <button className="neon-btn main-action" onClick={() => setGameState('ready')}>ПОДКЛЮЧИТЬСЯ</button>
+            </div>
+        );
     }
-    return () => clearInterval(interval);
-  }, [phase, timeLeft]);
 
-  const handleAction = (isCorrect) => {
-    setRoundResults(prev => [...prev, { word: currentWord, status: isCorrect ? 'ok' : 'skip' }]);
-    if (navigator.vibrate) navigator.vibrate(isCorrect ? 40 : 20);
-    setCurrentWord(getRandomWord());
-  };
-
-  const applyScores = () => {
-    const correctCount = roundResults.filter(r => r.status === 'ok').length;
-    const newTeams = [...teams];
-    newTeams[currentTeamIdx].score += correctCount;
-    setTeams(newTeams);
-
-    if (currentTeamIdx < teams.length - 1) {
-      setCurrentTeamIdx(currentTeamIdx + 1);
-      setPhase('ready');
-    } else {
-      if (currentRound >= settings.rounds) {
-        setPhase('victory');
-      } else {
-        setCurrentRound(currentRound + 1);
-        setCurrentTeamIdx(0);
-        setPhase('ready');
-      }
+    // 2. Готовность команды
+    if (gameState === 'ready') {
+        return (
+            <div className="alias-neon center">
+                <Users size={50} className="glow-icon" />
+                <p className="ready-text">ГОТОВИТСЯ КОМАНДА</p>
+                <h1 className="team-display">{teams[currentTeam].name}</h1>
+                <button className="neon-btn pulse" onClick={prepareRound}>СТАРТ</button>
+            </div>
+        );
     }
-  };
 
-  const resetToSettings = () => {
-    setTeams(teams.map(t => ({ ...t, score: 0 })));
-    setCurrentRound(1);
-    setCurrentTeamIdx(0);
-    setPhase('setup');
-  };
-
-  // --- ЭКРАНЫ ---
-
-  if (phase === 'setup') {
-    return (
-      <div className="alias-full-app">
-        <button className="alias-close-btn" onClick={onBack}>✕</button>
-        <h1 className="alias-main-title">НАСТРОЙКИ</h1>
-        
-        <div className="alias-scroll-content">
-          <button className="alias-btn-special" onClick={() => alert("Онлайн скоро!")}>ИГРАТЬ ОНЛАЙН 🌐</button>
-
-          <div className="alias-white-card">
-            <label className="alias-mini-label">КОМАНДЫ</label>
-            {teams.map(t => (
-              <div key={t.id} className="alias-input-wrapper">
-                <input className="alias-field" value={t.name} onChange={(e) => setTeams(teams.map(tm => tm.id === t.id ? {...tm, name: e.target.value} : tm))} />
-                {teams.length > 2 && <button className="alias-btn-delete" onClick={() => setTeams(teams.filter(tm => tm.id !== t.id))}>✕</button>}
-              </div>
-            ))}
-            {teams.length < 6 && <button className="alias-btn-add-team" onClick={() => setTeams([...teams, {id: Date.now(), name: `Команда ${teams.length+1}`, score: 0}])}>+ ДОБАВИТЬ</button>}
-          </div>
-
-          <div className="alias-white-card">
-            <label className="alias-mini-label">КАТЕГОРИИ</label>
-            <div className="alias-grid-cats">
-              {Object.keys(ALIAS_DATA).map(key => (
-                <button 
-                  key={key} 
-                  className={`alias-cat-pill ${settings.categories.includes(key) ? 'active' : ''}`}
-                  onClick={() => toggleCategory(key)}
-                >
-                  {ALIAS_DATA[key].name}
-                </button>
-              ))}
+    // 3. Игра (Play)
+    if (gameState === 'play') {
+        return (
+            <div className="alias-neon play-screen">
+                <div className="neon-header">
+                    <div className="neon-timer">{timeLeft}</div>
+                    <div className="neon-score">{teams[currentTeam].name}: {teams[currentTeam].score}</div>
+                </div>
+                <div className="word-portal">
+                    <AnimatePresence mode="wait">
+                        <motion.div 
+                            key={wordIndex}
+                            initial={{ scale: 0, rotate: -180 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            exit={{ scale: 2, opacity: 0 }}
+                            className="neon-word-card"
+                        >
+                            {currentWords[wordIndex]?.text}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+                <div className="neon-controls">
+                    <button className="ctrl-btn x-btn" onClick={() => handleAnswer(false)}><X size={35}/></button>
+                    <button className="ctrl-btn ok-btn" onClick={() => handleAnswer(true)}><Check size={35}/></button>
+                </div>
             </div>
-          </div>
+        );
+    }
 
-          <div className="alias-white-card">
-            <label className="alias-mini-label">РАУНДЫ: {settings.rounds} | ВРЕМЯ: {settings.time}с</label>
-            <input type="range" className="alias-range" min="1" max="10" value={settings.rounds} onChange={e => setSettings({...settings, rounds: Number(e.target.value)})} />
-            <div style={{height: '15px'}}></div>
-            <input type="range" className="alias-range" min="10" max="90" step="10" value={settings.time} onChange={e => setSettings({...settings, time: Number(e.target.value)})} />
-          </div>
-        </div>
-
-        <button className="alias-btn-giant" onClick={() => setPhase('ready')}>ПОЕХАЛИ</button>
-      </div>
-    );
-  }
-
-  if (phase === 'ready') {
-    return (
-      <div className="alias-full-app">
-        <button className="alias-close-btn" onClick={() => setPhase('setup')}>✕</button>
-        <div className="alias-ready-header">РАУНД {currentRound}/{settings.rounds}</div>
-        
-        <div className="alias-score-container">
-          {teams.map((t, idx) => (
-            <div key={t.id} className={`alias-score-row ${idx === currentTeamIdx ? 'active' : ''}`}>
-              <span>{t.name}</span>
-              <b>{t.score}</b>
+    // 4. Результаты раунда
+    if (gameState === 'results') {
+        return (
+            <div className="alias-neon results-screen">
+                <h2 className="neon-title-sm">ИТОГИ СЕССИИ</h2>
+                <div className="words-scroll">
+                    {currentWords.filter(w => w.status).map((w, i) => (
+                        <div key={i} className={`word-row ${w.status}`}>
+                            {w.text} <span>{w.status === 'correct' ? '+1' : '-1'}</span>
+                        </div>
+                    ))}
+                </div>
+                <button className="neon-btn" onClick={applyResults}>ПРИНЯТЬ ДАННЫЕ</button>
             </div>
-          ))}
-        </div>
+        );
+    }
 
-        <div className="alias-ready-msg">
-          <p>ПРИГОТОВИТЬСЯ:</p>
-          <h2>{teams[currentTeamIdx].name}</h2>
-        </div>
-
-        <button className="alias-btn-giant" onClick={startRound}>Я ГОТОВ</button>
-      </div>
-    );
-  }
-
-  if (phase === 'game') {
+    // 5. Победитель
     return (
-      <div className="alias-full-app" style={{background: '#fff'}}>
-        <button className="alias-close-btn" onClick={() => { if(window.confirm("Выйти в настройки?")) setPhase('setup') }}>✕</button>
-        
-        <div className="alias-game-hud">
-          <div className="alias-timer-box">{timeLeft}</div>
-          <div className="alias-hud-text">
-            <b>{teams[currentTeamIdx].name}</b>
-            <small>РАУНД {currentRound}</small>
-          </div>
+        <div className="alias-neon center">
+            <Trophy size={80} className="winner-icon" />
+            <h1 className="winner-name">{teams[currentTeam].name} WIN</h1>
+            <button className="neon-btn" onClick={onBack}>В МЕНЮ</button>
         </div>
-
-        <div className="alias-card-viewport">
-          <SwipeCard key={currentWord} word={currentWord} onResult={handleAction} />
-        </div>
-
-        <div className="alias-game-footer">
-          <button className="alias-btn-action skip" onClick={() => handleAction(false)}>ПРОПУСТИТЬ</button>
-          <button className="alias-btn-action ok" onClick={() => handleAction(true)}>УГАДАЛ</button>
-        </div>
-      </div>
     );
-  }
+};
 
-  if (phase === 'summary') {
-    return (
-      <div className="alias-full-app">
-        <h1 className="alias-main-title">ИТОГИ ХОДА</h1>
-        <div className="alias-summary-total">+{roundResults.filter(r => r.status === 'ok').length}</div>
-        <div className="alias-summary-list">
-          {roundResults.map((res, i) => (
-            <div key={i} className={`alias-summary-item ${res.status}`} onClick={() => {
-                const upd = [...roundResults];
-                upd[i].status = upd[i].status === 'ok' ? 'skip' : 'ok';
-                setRoundResults(upd);
-            }}>
-              <span>{res.word}</span>
-              <div className="alias-dot-status"></div>
-            </div>
-          ))}
-        </div>
-        <button className="alias-btn-giant" onClick={applyScores}>ДАЛЕЕ</button>
-      </div>
-    );
-  }
-
-  if (phase === 'victory') {
-    const winner = [...teams].sort((a,b) => b.score - a.score)[0];
-    return (
-      <div className="alias-full-app">
-        <div className="alias-victory-box">
-          <div className="alias-cup">🏆</div>
-          <h1 className="alias-main-title">ФИНАЛ</h1>
-          <h2 className="alias-winner-name">{winner.name}</h2>
-          <p className="alias-winner-score">{winner.score} ОЧКОВ</p>
-          <button className="alias-btn-giant" style={{marginTop: '40px'}} onClick={resetToSettings}>В НАСТРОЙКИ</button>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-function SwipeCard({ word, onResult }) {
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-150, 150], [-25, 25]);
-  const background = useTransform(x, [-120, 0, 120], ["#FF6B6B", "#FFFFFF", "#26DE81"]);
-
-  return (
-    <div className="alias-card-wrapper">
-       <div className="alias-card-hint h-left">ПАС</div>
-       <div className="alias-card-hint h-right">ОК</div>
-       <motion.div
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        style={{ x, rotate, background }}
-        onDragEnd={(_, info) => {
-            if (info.offset.x > 80) onResult(true);
-            else if (info.offset.x < -80) onResult(false);
-        }}
-        className="alias-main-card"
-        >
-        {word}
-        </motion.div>
-    </div>
-  );
-}
+export default AliasGame;
