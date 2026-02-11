@@ -6,15 +6,18 @@ meta:
     version: "20"
 build:
   skip: false
-  # ИЗМЕНЕНИЯ:
-  # 1. Используем 'npm install' вместо 'npm ci' (работает даже без lock-файла)
-  # 2. Добавляем 'CI=false', чтобы React не падал от мелких предупреждений
+  # Сборка проекта (оставляем как было, она работает)
   additionalCommands: npm install && CI=false npm run build
 run:
   persistenceMount: /data
-  # Запускаем через скрипт, который мы прописали в package.json
-  scriptName: start-server
-  scriptArguments: null
-  nodeArguments: null
-  containerPort: 80
+  # ВАЖНОЕ ИЗМЕНЕНИЕ 1:
+  # Мы не используем scriptName. Мы пишем команду запуска напрямую.
+  # -s build: раздавать папку build
+  # -l 3000: слушать порт 3000 (это безопаснее, чем 80)
+  command: npx serve -s build -l 3000
+  
+  # ВАЖНОЕ ИЗМЕНЕНИЕ 2:
+  # Говорим Амвере, что внутри контейнера сайт работает на 3000 порту.
+  # Амвера сама перенаправит на него внешний трафик.
+  containerPort: 3000
 serviceType: compute
