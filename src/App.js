@@ -7,6 +7,7 @@ import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
+import FiveLettersGame from './components/FiveLetters/FiveLettersGame';
 
 
 // Твой CSS файл
@@ -67,7 +68,7 @@ const GAMES = [
     icon: '📝',
     desc: 'Ежедневная головоломка: угадай слово из 5 букв.',
     footer: '1 ИГРОК',
-    ready: false
+    ready: true
   },
   {
     id: 'city-quest',
@@ -138,6 +139,12 @@ export default function App() {
   if (activeGame === 'whoami') {
     return <WhoAmIGame onBack={() => setActiveGame(null)} />;
   }
+  
+    // Если открыта игра 5 БУКВ
+  if (activeGame === '5-letters') {
+    return <FiveLettersGame onBack={() => setActiveGame(null)} />;
+  }
+
   
   
   // Основной лендинг
