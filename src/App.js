@@ -6,7 +6,7 @@ import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
-import WhoamiGame from './components/WhoAmi';
+import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
 
 
 // Твой CSS файл
@@ -134,9 +134,9 @@ export default function App() {
     return <QuizGame onBack={() => setActiveGame(null)} />;
   }
   
-  // Если открыта игра Квиз
+  // Если открыта игра КТО Я
   if (activeGame === 'whoami') {
-    return <WhoAmiGame onBack={() => setActiveGame(null)} />;
+    return <WhoAmIGame onBack={() => setActiveGame(null)} />;
   }
   
   
