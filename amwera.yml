@@ -4,12 +4,8 @@ meta:
     name: npm
     version: 20
 build:
-  # // Установка зависимостей
   install: npm install
-  # // Сборка React проекта
   command: npm run build
 run:
-  # // Папка, которую нужно отдавать пользователям
   directory: build
-  # // Команда для запуска сервера (нужна для SPA приложений)
   command: npx serve -s .
