@@ -8,7 +8,7 @@ import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
 import FiveLettersGame from './components/FiveLetters/FiveLettersGame';
-
+import CityGuide from './components/CityGuide/CityGuide';
 
 // Твой CSS файл
 import './App.css';
