@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-// Иконки
-import { Brain, ArrowLeft, RotateCcw, Zap, Target } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+// Иконки в строгом стиле
+import { Brain, ArrowLeft, RotateCcw, Zap, HelpCircle } from 'lucide-react';
 
 const QUIZ_DATA = [
   {
@@ -21,71 +21,79 @@ const QUIZ_DATA = [
 ];
 
 const QuizGame = ({ onBack }) => {
-  const [stage, setStage] = useState('menu');
+  const [stage, setStage] = useState('menu'); // menu, play, result
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
 
-  // Обработка клика по ответу
-  // // Фиксирует выбор и переключает вопрос через секунду
+  // Обработка ответа
+  // // Исправлена логика подсчета очков и перехода
   const handleAnswer = (idx) => {
     if (isLocked) return;
+    
     setSelectedIdx(idx);
     setIsLocked(true);
 
-    if (idx === QUIZ_DATA[currentQ].correct) {
-      setScore(s => s + 1);
+    const isCorrect = idx === QUIZ_DATA[currentQ].correct;
+    
+    if (isCorrect) {
+      setScore(prevScore => prevScore + 1); // Используем функциональный апдейт
     }
 
+    // Задержка перед следующим шагом
     setTimeout(() => {
+      // Проверяем, есть ли следующий вопрос
       if (currentQ + 1 < QUIZ_DATA.length) {
         setCurrentQ(prev => prev + 1);
         setSelectedIdx(null);
         setIsLocked(false);
       } else {
+        // Если вопросы кончились — переходим к результатам
         setStage('result');
       }
-    }, 1000);
+    }, 800);
   };
 
-  // Стили в стиле Ретро-Футуризма (Synthwave)
+  const restart = () => {
+    setScore(0);
+    setCurrentQ(0);
+    setSelectedIdx(null);
+    setIsLocked(false);
+    setStage('play');
+  };
+
+  // --- СТИЛИ (Brutalist Bauhaus Style) ---
   const styles = {
     container: {
-      position: 'fixed', inset: 0, padding: '20px', display: 'flex', flexDirection: 'column',
-      zIndex: 1000, background: '#0d0221', color: '#fb00ff', fontFamily: '"Courier New", monospace',
-      overflow: 'hidden'
+      position: 'fixed', inset: 0, padding: '30px', display: 'flex', flexDirection: 'column',
+      zIndex: 1000, background: '#F0F0F0', color: '#000', fontFamily: '"Arial Black", sans-serif'
     },
-    // Эффект светящейся сетки на фоне
-    gridBg: {
-      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundImage: 'linear-gradient(rgba(251, 0, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(251, 0, 255, 0.1) 1px, transparent 1px)',
-      backgroundSize: '40px 40px', transform: 'perspective(500px) rotateX(60deg)',
-      transformOrigin: 'center top', zIndex: -1, opacity: 0.5
+    header: { 
+      borderBottom: '8px solid #000', paddingBottom: '10px', marginBottom: '30px',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end'
     },
-    header: { display: 'flex', justifyContent: 'space-between', marginBottom: '30px', textShadow: '0 0 10px #fb00ff' },
     qCard: {
-      background: 'rgba(13, 2, 33, 0.8)', border: '2px solid #00f2ff', borderRadius: '4px',
-      padding: '25px', marginBottom: '30px', boxShadow: '0 0 20px #00f2ff',
-      position: 'relative'
+      background: '#fff', border: '8px solid #000', padding: '20px', marginBottom: '30px'
     },
     ansBtn: (idx) => {
-      let color = '#00f2ff'; // Дефолтный голубой
+      let bg = '#fff';
       if (selectedIdx === idx) {
-        color = idx === QUIZ_DATA[currentQ].correct ? '#39ff14' : '#ff003c';
+        bg = idx === QUIZ_DATA[currentQ].correct ? '#00FF00' : '#FF3D00';
       }
       return {
-        width: '100%', padding: '15px', marginBottom: '15px', background: 'transparent',
-        border: `2px solid ${color}`, color: color, fontSize: '1rem', fontWeight: 'bold',
-        cursor: 'pointer', textTransform: 'uppercase', textAlign: 'left',
-        boxShadow: selectedIdx === idx ? `0 0 15px ${color}` : 'none',
-        transition: 'all 0.2s', clipPath: 'polygon(90% 0, 100% 30%, 100% 100%, 0 100%, 0 0)'
+        width: '100%', padding: '15px', marginBottom: '15px', background: bg,
+        border: '6px solid #000', color: '#000', fontSize: '1.2rem', fontWeight: '900',
+        textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between'
       };
     },
-    startBtn: {
-      background: 'transparent', border: '3px solid #fb00ff', color: '#fb00ff',
-      padding: '20px 40px', fontSize: '1.5rem', fontWeight: '900', cursor: 'pointer',
-      boxShadow: '0 0 20px #fb00ff', textTransform: 'uppercase'
+    bigBtn: {
+      background: '#FF3D00', color: '#fff', border: '8px solid #000',
+      padding: '20px', fontSize: '1.8rem', fontWeight: '900', cursor: 'pointer',
+      width: '100%', textTransform: 'uppercase'
+    },
+    scoreBadge: {
+      background: '#000', color: '#fff', padding: '5px 15px', fontSize: '1rem'
     }
   };
 
@@ -93,13 +101,15 @@ const QuizGame = ({ onBack }) => {
   if (stage === 'menu') {
     return (
       <div style={styles.container}>
-        <div style={styles.gridBg}></div>
-        <button onClick={onBack} style={{background: 'none', border: 'none', color: '#00f2ff', cursor: 'pointer'}}><ArrowLeft/></button>
-        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-          <Zap size={80} color="#fb00ff" style={{filter: 'drop-shadow(0 0 15px #fb00ff)', marginBottom: '20px'}}/>
-          <h1 style={{fontSize: '3.5rem', margin: 0, textAlign: 'center'}}>NEO<br/>QUIZ</h1>
-          <p style={{color: '#00f2ff', margin: '20px 0'}}>ВХОД В СИСТЕМУ ЗНАНИЙ...</p>
-          <button style={styles.startBtn} onClick={() => setStage('play')}>START</button>
+        <div style={{...styles.header, borderBottom: 'none'}}>
+          <button onClick={onBack} style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', fontWeight: '900'}}>BACK</button>
+        </div>
+        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+          <h1 style={{fontSize: '5rem', lineHeight: 0.8, margin: '0 0 20px 0', letterSpacing: '-4px'}}>QUIZ<br/>LAB.</h1>
+          <p style={{fontSize: '1.2rem', borderLeft: '8px solid #FF3D00', paddingLeft: '15px', fontWeight: 'bold'}}>ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕСТ №01</p>
+          <div style={{marginTop: '50px'}}>
+            <button style={styles.bigBtn} onClick={() => setStage('play')}>START</button>
+          </div>
         </div>
       </div>
     );
@@ -110,21 +120,19 @@ const QuizGame = ({ onBack }) => {
     const q = QUIZ_DATA[currentQ];
     return (
       <div style={styles.container}>
-        <div style={styles.gridBg}></div>
         <div style={styles.header}>
-          <span>DATA_CHUNK: {currentQ + 1}</span>
-          <span>SCORE: {score}</span>
+          <span style={{fontSize: '2rem'}}>Q{currentQ + 1}</span>
+          <div style={styles.scoreBadge}>SCORE: {score}</div>
         </div>
 
         <div style={styles.qCard}>
-          <div style={{position: 'absolute', top: -10, left: 10, background: '#0d0221', padding: '0 10px', fontSize: '0.8rem', color: '#00f2ff'}}>QUESTION_LOG</div>
-          <h2 style={{margin: 0, color: '#fff', fontSize: '1.2rem', lineHeight: 1.5}}>{q.q}</h2>
+          <h2 style={{fontSize: '1.6rem', margin: 0, textTransform: 'uppercase'}}>{q.q}</h2>
         </div>
 
-        <div>
+        <div style={{flex: 1}}>
           {q.a.map((ans, i) => (
             <button key={i} style={styles.ansBtn(i)} onClick={() => handleAnswer(i)}>
-              {`> ${ans}`}
+              {ans}
             </button>
           ))}
         </div>
@@ -132,16 +140,16 @@ const QuizGame = ({ onBack }) => {
     );
   }
 
-  // 3. ИТОГИ
+  // 3. РЕЗУЛЬТАТЫ
   return (
-    <div style={styles.container}>
-      <div style={styles.gridBg}></div>
-      <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-        <Target size={100} color="#00f2ff" style={{filter: 'drop-shadow(0 0 20px #00f2ff)'}}/>
-        <h2 style={{fontSize: '2rem', marginTop: '30px'}}>MISS_COMPLETED</h2>
-        <div style={{fontSize: '4rem', color: '#fff', margin: '20px 0'}}>{score}/{QUIZ_DATA.length}</div>
-        <button style={styles.startBtn} onClick={restart}>REBOOT</button>
-        <button onClick={onBack} style={{marginTop: '30px', background: 'none', border: 'none', color: '#00f2ff', cursor: 'pointer', fontWeight: 'bold'}}>ВЫЙТИ В ХАБ</button>
+    <div style={{...styles.container, background: '#000', color: '#fff'}}>
+      <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center'}}>
+        <h2 style={{fontSize: '4rem', margin: 0}}>FINISH</h2>
+        <div style={{fontSize: '10rem', color: '#FF3D00', lineHeight: 1}}>{score}</div>
+        <p style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '50px'}}>ОЧКОВ ИЗ {QUIZ_DATA.length}</p>
+        
+        <button style={{...styles.bigBtn, background: '#fff', color: '#000'}} onClick={restart}>RETRY</button>
+        <button onClick={onBack} style={{marginTop: '30px', color: '#fff', background: 'none', border: 'none', textDecoration: 'underline', fontWeight: 'bold'}}>EXIT TO HUB</button>
       </div>
     </div>
   );
