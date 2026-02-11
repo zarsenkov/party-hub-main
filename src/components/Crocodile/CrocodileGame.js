@@ -1,183 +1,134 @@
 import React, { useState, useEffect } from 'react';
-// Библиотека для анимаций
+// Импортируем только нужные иконки
+import { Timer, Trophy, Play, RotateCcw, X, Check, ArrowLeft } from 'lucide-react';
+// Плавные анимации карточек
 import { motion, AnimatePresence } from 'framer-motion';
-// Иконки
-import { Timer, Trophy, Users, ArrowLeft, X, Check, Play, Settings } from 'lucide-react';
 import './CrocodileGame.css';
 
-const WORDS_LIBRARY = {
-  easy: ['Банан', 'Обезьяна', 'Пальма', 'Змея', 'Лиана', 'Слон', 'Кокос', 'Попугай', 'Солнце', 'Трава'],
-  medium: ['Фотоаппарат', 'Мачете', 'Водопад', 'Исследователь', 'Рюкзак', 'Джунгли', 'Леопард', 'Тукан'],
-  hard: ['Эндемик', 'Мимикрия', 'Биоразнообразие', 'Инкубация', 'Пангея', 'Экспедиция', 'Артефакт']
+// Максимально полная база слов
+const WORDS = {
+  easy: ['Кошка', 'Телефон', 'Арбуз', 'Зеркало', 'Гитара', 'Корона', 'Лампа', 'Книга'],
+  medium: ['Кинотеатр', 'Стоматолог', 'Пылесос', 'Бумеранг', 'Сковорода', 'Шахматы'],
+  hard: ['Адреналин', 'Гравитация', 'Сарказм', 'Ностальгия', 'Синхронизация']
 };
 
 const CrocodileGame = ({ onBack }) => {
-  // --- СОСТОЯНИЯ ---
-  const [screen, setScreen] = useState('setup'); 
-  const [difficulty, setDifficulty] = useState('easy');
-  const [settings, setSettings] = useState({ time: 60, rounds: 3 }); // Настройка раундов здесь
-  const [currentRound, setCurrentRound] = useState(1);
-  const [currentTeam, setCurrentTeam] = useState(0);
-  const [score, setScore] = useState([0, 0]); 
-  const [currentWord, setCurrentWord] = useState('');
-  const [timeLeft, setTimeLeft] = useState(60);
+  // Базовые настройки состояний
+  const [stage, setStage] = useState('menu'); // menu, play, result, final
+  const [diff, setDiff] = useState('easy');
+  const [word, setWord] = useState('');
+  const [score, setScore] = useState(0);
+  const [time, setTime] = useState(60);
+  const [round, setRound] = useState(1);
 
-  const teamNames = ['Команда Лиан', 'Команда Ягуаров'];
-
-  // --- ТАЙМЕР ---
+  // Логика таймера
+  // // Следит за временем и переключает на экран итогов при 0
   useEffect(() => {
-    let timer;
-    if (screen === 'play' && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    } else if (timeLeft === 0 && screen === 'play') {
-      setScreen('results');
+    let interval;
+    if (stage === 'play' && time > 0) {
+      interval = setInterval(() => setTime(t => t - 1), 1000);
+    } else if (time === 0) {
+      setStage('result');
     }
-    return () => clearInterval(timer);
-  }, [screen, timeLeft]);
+    return () => clearInterval(interval);
+  }, [stage, time]);
 
-  // --- ЛОГИКА ---
-
-  // Выбор слова
-  // // Берет случайное слово из библиотеки по ключу сложности
-  const nextWord = () => {
-    const list = WORDS_LIBRARY[difficulty];
-    setCurrentWord(list[Math.floor(Math.random() * list.length)]);
+  // Выбор нового слова
+  // // Берет случайный элемент из выбранной категории сложности
+  const getRandomWord = () => {
+    const list = WORDS[diff];
+    const newWord = list[Math.floor(Math.random() * list.length)];
+    setWord(newWord);
   };
 
-  const startRound = () => {
-    nextWord();
-    setTimeLeft(settings.time);
-    setScreen('play');
+  // Старт игры
+  // // Сбрасывает счетчики и запускает первый раунд
+  const startGame = () => {
+    setScore(0);
+    setTime(60);
+    setRound(1);
+    getRandomWord();
+    setStage('play');
   };
 
-  const handleAction = (isWin) => {
-    if (isWin) {
-      const newScore = [...score];
-      newScore[currentTeam] += 1;
-      setScore(newScore);
-    }
-    nextWord();
+  // Обработка кнопки "Угадано"
+  // // Прибавляет балл и сразу дает новое слово
+  const handleSuccess = () => {
+    setScore(s => s + 1);
+    getRandomWord();
   };
 
-  // Переход хода (Логика завершения игры)
-  // // Проверяет, был ли это последний раунд для последней команды
-  const handleNext = () => {
-    if (currentTeam === 1) { 
-      if (currentRound >= settings.rounds) {
-        setScreen('final'); // Если лимит раундов исчерпан — финал
-      } else {
-        setCurrentRound(r => r + 1);
-        setCurrentTeam(0);
-        setScreen('ready');
-      }
-    } else {
-      setCurrentTeam(1);
-      setScreen('ready');
-    }
+  // Обработка кнопки "Пропустить"
+  // // Просто меняет слово без начисления баллов
+  const handleSkip = () => {
+    getRandomWord();
   };
 
   // --- ЭКРАНЫ ---
 
-  // Экран настроек
-  if (screen === 'setup') {
+  // 1. ГЛАВНОЕ МЕНЮ ИГРЫ
+  if (stage === 'menu') {
     return (
-      <div className="jungle-ui">
-        <button className="j-back" onClick={onBack}><ArrowLeft /></button>
-        <h1 className="j-title">КРОКОДИЛ</h1>
-        <div className="j-card-setup">
-          <div className="j-option">
-            <span className="j-label"><Settings size={14}/> СЛОЖНОСТЬ</span>
-            <div className="j-tabs">
-              {['easy', 'medium', 'hard'].map(d => (
-                <button key={d} className={difficulty === d ? 'active' : ''} onClick={() => setDifficulty(d)}>
-                  {d === 'easy' ? 'Легко' : d === 'medium' ? 'Норм' : 'Хард'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* НОВОЕ: Настройка количества раундов */}
-          <div className="j-option">
-            <span className="j-label"><Trophy size={14}/> РАУНДОВ: {settings.rounds}</span>
-            <input type="range" min="1" max="10" step="1" value={settings.rounds} onChange={e => setSettings({...settings, rounds: +e.target.value})} />
-          </div>
-
-          <div className="j-option">
-            <span className="j-label"><Timer size={14}/> ВРЕМЯ: {settings.time}с</span>
-            <input type="range" min="30" max="120" step="10" value={settings.time} onChange={e => setSettings({...settings, time: +e.target.value})} />
+      <div className="croc-container jungle-theme">
+        <button className="croc-back" onClick={onBack}><ArrowLeft /></button>
+        <h1 className="croc-logo">CROC!</h1>
+        <div className="croc-setup">
+          <p className="croc-label">СЛОЖНОСТЬ</p>
+          <div className="croc-diff-selector">
+            {Object.keys(WORDS).map(k => (
+              <button key={k} className={diff === k ? 'active' : ''} onClick={() => setDiff(k)}>
+                {k === 'easy' ? 'Изи' : k === 'medium' ? 'Мид' : 'Хард'}
+              </button>
+            ))}
           </div>
         </div>
-        <button className="j-btn-prime" onClick={() => setScreen('rules')}>ДАЛЕЕ</button>
+        <button className="croc-main-btn" onClick={startGame}><Play size={20}/> ИГРАТЬ</button>
       </div>
     );
   }
 
-  // Экран "Готовность"
-  if (screen === 'ready') {
+  // 2. ИГРОВОЙ ПРОЦЕСС
+  if (stage === 'play') {
     return (
-      <div className="jungle-ui center">
-        <div className="j-badge">РАУНД {currentRound} ИЗ {settings.rounds}</div>
-        <Users size={48} color="#ffe600" />
-        <p className="j-pre-title">Очередь команды:</p>
-        <h2 className="j-team-name">{teamNames[currentTeam]}</h2>
-        <button className="j-btn-prime highlight" onClick={startRound}><Play fill="currentColor" size={16}/> НАЧАТЬ</button>
-      </div>
-    );
-  }
-
-  // Игровой экран (Play)
-  if (screen === 'play') {
-    return (
-      <div className="jungle-ui">
-        <div className="j-game-header">
-          <div className={`j-timer-box ${timeLeft < 10 ? 'urgent' : ''}`}>{timeLeft}</div>
-          <div className="j-round-mini">Раунд {currentRound}/{settings.rounds}</div>
-          <div className="j-current-score">Счет: {score[currentTeam]}</div>
+      <div className="croc-container play-mode jungle-theme">
+        <div className="croc-top">
+          <div className={`croc-timer ${time < 10 ? 'low' : ''}`}><Timer size={18}/> {time}с</div>
+          <div className="croc-score">ОЧКИ: {score}</div>
         </div>
-        <div className="j-word-area">
+        <div className="croc-card-wrap">
           <AnimatePresence mode="wait">
             <motion.div 
-              key={currentWord}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="j-word-card"
+              key={word}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.2, opacity: 0 }}
+              className="croc-card"
             >
-              <h3>{currentWord}</h3>
+              <h2>{word}</h2>
             </motion.div>
           </AnimatePresence>
         </div>
-        <div className="j-game-controls">
-          <button className="j-ctrl-btn skip" onClick={() => handleAction(false)}><X /></button>
-          <button className="j-ctrl-btn check" onClick={() => handleAction(true)}><Check /></button>
+        <div className="croc-actions">
+          <button className="btn-skip" onClick={handleSkip}><X size={30}/></button>
+          <button className="btn-ok" onClick={handleSuccess}><Check size={30}/></button>
         </div>
       </div>
     );
   }
 
-  // Финальный экран и Итоги
+  // 3. ИТОГИ РАУНДА
   return (
-    <div className="jungle-ui center">
-      <Trophy size={64} color="#ffe600" className="j-icon-anim" />
-      <h2 className="j-title">{screen === 'final' ? 'ИГРА ОКОНЧЕНА' : 'ИТОГИ РАУНДА'}</h2>
-      
-      {screen === 'final' && (
-        <div className="j-winner-announce">
-          {score[0] === score[1] ? 'НИЧЬЯ!' : `ПОБЕДИЛИ ${score[0] > score[1] ? teamNames[0] : teamNames[1]}!`}
-        </div>
-      )}
-
-      <div className="j-score-board">
-        {teamNames.map((name, i) => (
-          <div key={i} className={`j-score-row ${screen === 'final' && score[i] === Math.max(...score) ? 'winner' : ''}`}>
-            <span>{name}</span>
-            <span className="val">{score[i]}</span>
-          </div>
-        ))}
+    <div className="croc-container result-mode jungle-theme">
+      <Trophy size={80} color="#ffe600" className="trophy-anim" />
+      <h1 className="res-title">ВРЕМЯ ВЫШЛО!</h1>
+      <div className="res-score-box">
+        <p>ВАШ РЕЗУЛЬТАТ:</p>
+        <h2>{score}</h2>
       </div>
-      <button className="j-btn-prime" onClick={screen === 'final' ? onBack : handleNext}>
-        {screen === 'final' ? 'В МЕНЮ' : 'СЛЕДУЮЩИЙ ХОД'}
-      </button>
+      <div className="res-btns">
+        <button className="btn-retry" onClick={startGame}><RotateCcw /> ЕЩЕ РАЗ</button>
+        <button className="btn-exit" onClick={onBack}>В МЕНЮ</button>
+      </div>
     </div>
   );
 };
