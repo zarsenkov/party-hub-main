@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { ALIAS_WORDS } from './words';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { ALIAS_DATA } from './words';
 import './AliasGame.css';
 
 export default function AliasGame({ onBack }) {
@@ -10,7 +10,11 @@ export default function AliasGame({ onBack }) {
     { id: 1, name: 'Тролли', score: 0 },
     { id: 2, name: 'Обезьяны', score: 0 }
   ]);
-  const [settings, setSettings] = useState({ time: 60, rounds: 5 });
+  const [settings, setSettings] = useState({ 
+    time: 60, 
+    rounds: 5, 
+    category: 'standard' 
+  });
   const [currentRound, setCurrentRound] = useState(1);
   const [currentTeamIdx, setCurrentTeamIdx] = useState(0);
   
@@ -19,6 +23,13 @@ export default function AliasGame({ onBack }) {
   const [roundResults, setRoundResults] = useState([]); 
 
   // --- ЛОГИКА ---
+  const resetGameTotal = () => {
+    setTeams(teams.map(t => ({ ...t, score: 0 })));
+    setCurrentRound(1);
+    setCurrentTeamIdx(0);
+    setPhase('setup');
+  };
+
   const updateTeamName = (id, name) => {
     setTeams(teams.map(t => t.id === id ? { ...t, name } : t));
   };
@@ -40,7 +51,10 @@ export default function AliasGame({ onBack }) {
     setCurrentWord(getRandomWord());
   };
 
-  const getRandomWord = () => ALIAS_WORDS[Math.floor(Math.random() * ALIAS_WORDS.length)];
+  const getRandomWord = () => {
+    const pool = ALIAS_DATA[settings.category].words;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
 
   // Таймер
   useEffect(() => {
@@ -73,18 +87,15 @@ export default function AliasGame({ onBack }) {
   };
 
   const applyScores = () => {
-    const points = roundResults.filter(r => r.status === 'ok').length; // Считаем только правильные
+    const points = roundResults.filter(r => r.status === 'ok').length;
     const newTeams = [...teams];
     newTeams[currentTeamIdx].score += points;
     setTeams(newTeams);
 
-    // Логика смены хода и раундов
     if (currentTeamIdx < teams.length - 1) {
-      // Следующая команда в этом же раунде
       setCurrentTeamIdx(currentTeamIdx + 1);
       setPhase('ready');
     } else {
-      // Все команды сходили, проверяем финал
       if (currentRound >= settings.rounds) {
         setPhase('victory');
       } else {
@@ -120,6 +131,21 @@ export default function AliasGame({ onBack }) {
           </div>
 
           <div className="alias-card">
+            <p className="alias-label">КАТЕГОРИЯ СЛОВ</p>
+            <div className="alias-category-grid">
+              {Object.keys(ALIAS_DATA).map(key => (
+                <button 
+                  key={key}
+                  className={`alias-cat-btn ${settings.category === key ? 'active' : ''}`}
+                  onClick={() => setSettings({...settings, category: key})}
+                >
+                  {ALIAS_DATA[key].name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="alias-card">
             <p className="alias-label">РАУНДОВ: <b>{settings.rounds}</b></p>
             <input type="range" min="1" max="10" value={settings.rounds} onChange={(e) => setSettings({...settings, rounds: Number(e.target.value)})} />
             
@@ -152,6 +178,7 @@ export default function AliasGame({ onBack }) {
         <div className="alias-next-player-box">
           <p>Сейчас очередь:</p>
           <h2>{teams[currentTeamIdx].name}</h2>
+          <small>{ALIAS_DATA[settings.category].name}</small>
         </div>
         <button className="alias-btn primary" onClick={startRound}>Я ГОТОВ</button>
       </div>
@@ -161,6 +188,7 @@ export default function AliasGame({ onBack }) {
   if (phase === 'game') {
     return (
       <div className="alias-container game-bg">
+        <button className="alias-exit-btn" onClick={() => setPhase('setup')}>✕</button>
         <div className="alias-game-header">
           <div className="alias-timer">{timeLeft}</div>
           <div className="alias-game-info">
@@ -210,12 +238,12 @@ export default function AliasGame({ onBack }) {
       <div className="alias-container victory-bg">
         <h1 className="alias-title">ФИНАЛ</h1>
         <div className="alias-victory-card clay-card">
-          <div className="victory-icon">🏆</div>
-          <p>ПОБЕДИТЕЛЬ</p>
+          <div className="victory-icon">👑</div>
+          <p>ЧЕМПИОНЫ</p>
           <h2>{winner.name}</h2>
           <div className="victory-score">{winner.score} очков</div>
         </div>
-        <button className="alias-btn primary" onClick={() => window.location.reload()}>В МЕНЮ</button>
+        <button className="alias-btn primary" onClick={resetGameTotal}>НОВАЯ ИГРА</button>
       </div>
     );
   }
@@ -224,27 +252,30 @@ export default function AliasGame({ onBack }) {
 }
 
 function SwipeCard({ word, onResult }) {
-  const y = useMotionValue(0);
-  const rotate = useTransform(y, [-200, 200], [-15, 15]);
-  const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-150, 150], [-20, 20]);
   const background = useTransform(
-    y,
+    x,
     [-100, 0, 100],
     ["#FEB2B2", "#FFFFFF", "#9AE6B4"]
   );
 
   return (
     <motion.div
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      style={{ y, rotate, opacity, background }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      style={{ x, rotate, background }}
       onDragEnd={(_, info) => {
-        if (info.offset.y > 100) onResult(true);
-        else if (info.offset.y < -100) onResult(false);
+        if (info.offset.x > 100) onResult(true);
+        else if (info.offset.x < -100) onResult(false);
       }}
       className="alias-swipe-card"
     >
       {word}
+      <div className="alias-swipe-hints">
+        <span>← ПАС</span>
+        <span>ОК →</span>
+      </div>
     </motion.div>
   );
 }
