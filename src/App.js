@@ -71,14 +71,12 @@ const GAMES = [
     ready: true
   },
   {
-    id: 'city-quest',
-    className: 'city-quest', // Желтый
-    title: 'ГОРОДА РФ',
-    icon: '🇷🇺',
-    desc: 'Проверь, как хорошо ты знаешь географию своей страны.',
-    footer: '1-4 ИГРОКА',
-    ready: false
-  },
+  id: 'city-guide',
+  title: 'РФ-АРХИВ',
+  icon: '🇷🇺',
+  desc: 'Небанальные места в городах России: бары, секретные локации, ивенты.',
+  ready: true
+},
   {
     id: 'bunker',
     className: 'danetki', // Фиолетовый
@@ -145,7 +143,8 @@ export default function App() {
     return <FiveLettersGame onBack={() => setActiveGame(null)} />;
   }
 
-  
+  if (activeGame === 'city-guide') return <CityGuide onBack={() => setActiveGame(null)} />;
+
   
   // Основной лендинг
   return (
