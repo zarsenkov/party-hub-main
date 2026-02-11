@@ -6,6 +6,7 @@ import AliasGame from './components/Alias/AliasGame';
 import CrocodileGame from './components/Crocodile/CrocodileGame';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
+import WhoamiGame from './components/WhoAmiGame';
 
 
 // Твой CSS файл
@@ -132,6 +133,12 @@ export default function App() {
   if (activeGame === 'quiz') {
     return <QuizGame onBack={() => setActiveGame(null)} />;
   }
+  
+  // Если открыта игра Квиз
+  if (activeGame === 'whoami') {
+    return <WhoAmiGame onBack={() => setActiveGame(null)} />;
+  }
+  
   
   // Основной лендинг
   return (
