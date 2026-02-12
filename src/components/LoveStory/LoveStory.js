@@ -1,334 +1,110 @@
+import React, { useState, useEffect } from 'react';
 
-// LoveStory.js
-import React, { useState, useEffect, useRef } from 'react';
-// // Импортируем онлайн-компонент из соседнего файла
-import OnlineLoveStory from './OnlineLoveStory';
-
-// === КОНСТАНТЫ И БАНК СЛОВ ===
-const WORD_BANKS = {
-  animals: ['Кот', 'Собака', 'Слон', 'Жираф', 'Лев', 'Тигр', 'Медведь', 'Волк', 'Лиса', 'Заяц', 'Крокодил', 'Акула', 'Орел', 'Пингвин', 'Кит', 'Дельфин', 'Обезьяна', 'Коала', 'Зебра', 'Лошадь'],
-  food: ['Пицца', 'Бургер', 'Суши', 'Тако', 'Паста', 'Торт', 'Пончик', 'Печенье', 'Мороженое', 'Яблоко', 'Банан', 'Апельсин', 'Клубника', 'Арбуз', 'Сыр', 'Хлеб', 'Яйцо', 'Молоко', 'Масло', 'Салат'],
-  movies: ['Аватар', 'Титаник', 'Матрица', 'Интерстеллар', 'Один дома', 'Назад в будущее', 'Звёздные войны', 'Завтрак у Тиффани', 'Король лев', 'Зелёная миля', 'Крик', 'Шрек', 'Ледниковый период', 'Рапунцель', 'Гарри Поттер', 'Спайдермен', 'Железный человек', 'Минионы', 'Ну погоди', 'Плиточка'],
-  sports: ['Футбол', 'Баскетбол', 'Теннис', 'Волейбол', 'Хоккей', 'Бокс', 'Карате', 'Йога', 'Плавание', 'Бег', 'Велосипед', 'Серфинг', 'Сноуборд', 'Лыжи', 'Гимнастика', 'Штанга', 'Танцы', 'Дзюдо', 'Фехтование', 'Гольф'],
-  professions: ['Врач', 'Учитель', 'Пилот', 'Повар', 'Полицейский', 'Пожарный', 'Строитель', 'Художник', 'Музыкант', 'Актер', 'Писатель', 'Журналист', 'Фотограф', 'Парикмахер', 'Сантехник', 'Электрик', 'Плотник', 'Дизайнер', 'Программист', 'Бизнесмен'],
-  countries: ['США', 'Россия', 'Япония', 'Франция', 'Англия', 'Испания', 'Италия', 'Германия', 'Китай', 'Индия', 'Бразилия', 'Канада', 'Австралия', 'Мексика', 'Швейцария', 'Голландия', 'Греция', 'Турция', 'Таиланд', 'Индонезия'],
-  mixed: ['Кот', 'Пицца', 'Аватар', 'Футбол', 'Врач', 'США', 'Собака', 'Бургер', 'Титаник', 'Баскетбол', 'Учитель', 'Россия', 'Слон', 'Суши', 'Матрица', 'Теннис', 'Пилот', 'Япония', 'Жираф', 'Торт']
-};
-
-const LoveStory = () => {
-  // === СОСТОЯНИЕ (STATE) ===
-  const [screen, setScreen] = useState('menu'); 
-  const [selectedCategories, setSelectedCategories] = useState(new Set());
-  const [words, setWords] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [gameLog, setGameLog] = useState([]);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+// // Компонент MemoryGame — игра на поиск парных карточек
+const MemoryGame = () => {
+  // === КОНСТАНТЫ ===
+  // // Список эмодзи для карточек (можно заменить на пути к картинкам)
+  const EMOJIS = ['❤️', '🥂', '🏠', '✈️', '💍', '🍕', '🎬', '🎁'];
   
-  // // Новое состояние для переключения между Оффлайн и Онлайн файлами
-  const [isOnlineMode, setIsOnlineMode] = useState(false);
+  // === СОСТОЯНИЕ (STATE) ===
+  const [cards, setCards] = useState([]); // // Массив объектов карточек
+  const [flippedCards, setFlippedCards] = useState([]); // // Индексы открытых карточек
+  const [matchedPairs, setMatchedPairs] = useState([]); // // Найденные пары
+  const [moves, setMoves] = useState(0); // // Количество ходов
+  const [isWon, setIsWon] = useState(false); // // Статус победы
 
-  // Настройки формы
-  const [teamName, setTeamName] = useState('Команда 1');
-  const [roundsInput, setRoundsInput] = useState(5);
-  const [timeInput, setTimeInput] = useState(60);
-  const [customWords, setCustomWords] = useState('Кот,Дом,Любовь,Музыка,Звезда,Танец,Радость,Река,Гора,Книга,Цветок,Небо,Огонь,Вода,Луна,Солнце,Ветер,Дерево,Птица,Рыба');
-  const [isCustomMode, setIsCustomMode] = useState(false);
+  // === ИНИЦИАЛИЗАЦИЯ ИГРЫ ===
+  // // Функция для создания и перемешивания колоды
+  const initGame = () => {
+    const deck = [...EMOJIS, ...EMOJIS]
+      .sort(() => Math.random() - 0.5)
+      .map((emoji, index) => ({ id: index, content: emoji, isFlipped: false }));
+    
+    setCards(deck);
+    setFlippedCards([]);
+    setMatchedPairs([]);
+    setMoves(0);
+    setIsWon(false);
+  };
 
-  const timerRef = useRef(null);
-
-  // === ТАЙМЕР ===
+  // // Запуск игры при первом рендере
   useEffect(() => {
-    if (screen === 'game' && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && screen === 'game') {
-      endGame();
+    initGame();
+  }, []);
+
+  // === ЛОГИКА ХОДА ===
+  // // Обработка клика по карточке
+  const handleCardClick = (index) => {
+    // // Игнорируем клик, если карточка уже открыта или если уже открыты две другие
+    if (flippedCards.length === 2 || matchedPairs.includes(index) || flippedCards.includes(index)) {
+      return;
     }
-    return () => clearInterval(timerRef.current);
-  }, [screen, timeLeft]);
 
-  // === НАВИГАЦИЯ И ЛОГИКА ===
+    const newFlipped = [...flippedCards, index];
+    setFlippedCards(newFlipped);
 
-  const goToHome = () => {
-    window.location.href = 'https://lovecouple.ru';
-  };
-
-  const backToMenu = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setScore(0);
-    setCurrentIndex(0);
-    setIsConfirmModalOpen(false); 
-    setScreen('menu');
-  };
-
-  const toggleCategory = (cat) => {
-    const newCats = new Set(selectedCategories);
-    if (newCats.has(cat)) newCats.delete(cat);
-    else newCats.add(cat);
-    setSelectedCategories(newCats);
-  };
-
-  const nextAfterCategories = () => {
-    let combined = [];
-    selectedCategories.forEach(cat => {
-      combined = [...combined, ...WORD_BANKS[cat]];
-    });
-    setWords(combined);
-    setIsCustomMode(false);
-    setScreen('setup');
-  };
-
-  const chooseCustom = () => {
-    setWords([]);
-    setIsCustomMode(true);
-    setScreen('setup');
-  };
-
-  const startGame = () => {
-    let finalWords = [...words];
-    if (isCustomMode) {
-      finalWords = customWords.split(',').map(w => w.trim()).filter(w => w.length > 0);
-    }
-    if (finalWords.length === 0) return alert('Введи хотя бы одно слово!');
-    setWords(finalWords.sort(() => Math.random() - 0.5));
-    setTimeLeft(timeInput);
-    setScore(0);
-    setGameLog([]);
-    setCurrentIndex(0);
-    setScreen('game');
-  };
-
-  const handleGuessed = () => {
-    const currentWord = words[currentIndex];
-    setGameLog(prev => [...prev, { word: currentWord, ok: true }]);
-    setScore(score + 1);
-    moveToNextWord();
-  };
-
-  const handleSkip = () => {
-    const currentWord = words[currentIndex];
-    setGameLog(prev => [...prev, { word: currentWord, ok: false }]);
-    moveToNextWord();
-  };
-
-  const moveToNextWord = () => {
-    if (currentIndex + 1 >= roundsInput || currentIndex + 1 >= words.length) {
-      endGame();
-    } else {
-      setCurrentIndex(prev => prev + 1);
+    // // Если открыли вторую карточку — проверяем совпадение
+    if (newFlipped.length === 2) {
+      setMoves(prev => prev + 1);
+      const [firstIndex, secondIndex] = newFlipped;
+      
+      if (cards[firstIndex].content === cards[secondIndex].content) {
+        // // Если совпали — добавляем в список найденных
+        setMatchedPairs(prev => {
+          const updated = [...prev, firstIndex, secondIndex];
+          if (updated.length === cards.length) setIsWon(true);
+          return updated;
+        });
+        setFlippedCards([]);
+      } else {
+        // // Если не совпали — закрываем через секунду
+        setTimeout(() => setFlippedCards([]), 1000);
+      }
     }
   };
-
-  const endGame = () => {
-    clearInterval(timerRef.current);
-    setScreen('results');
-  };
-
-  // // ЕСЛИ ВКЛЮЧЕН ОНЛАЙН РЕЖИМ — ПОКАЗЫВАЕМ ДРУГОЙ ФАЙЛ
-  if (isOnlineMode) {
-    return <OnlineLoveStory onBack={() => setIsOnlineMode(false)} />;
-  }
 
   return (
-    <div id="app" style={{ height: '100%', width: '100%', display: 'flex' }}>
+    <div className="game-container">
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; width: 100%; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
-        .container { position: fixed; inset: 0; padding: 16px; display: flex; flex-direction: column; z-index: 1000; color: #fff; overflow: hidden; }
-        .container.blue { background: #3FB6FF; }
-        .container.pink { background: #FF3D7F; }
-        .container.white { background: #fff; color: #000; overflow-y: auto; }
-        .btn-back-home { background: #000; color: #fff; border: none; padding: 10px 15px; border-radius: 10px; width: fit-content; font-weight: bold; display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; flex-shrink: 0; }
-        .btn-menu { background: #000; color: #fff; border: 3px solid #000; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; cursor: pointer; box-shadow: 4px 4px 0 #000; }
-        .pill { border: 4px solid #000; padding: 10px 20px; border-radius: 50px; font-weight: 900; box-shadow: 4px 4px 0 #000; display: flex; align-items: center; gap: 8px; }
-        .pill.timer { background: #3FB6FF; color: #fff; }
-        .pill.timer.warning { background: #FF5C5C; animation: pulse 0.6s infinite; }
-        .pill.score { background: #FFD32D; color: #000; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .card { background: #fff; border: 6px solid #000; border-radius: 24px; padding: 28px 16px; text-align: center; margin: 16px 0; box-shadow: 10px 10px 0 #000; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #000; position: relative; min-height: 180px; }
-        .card-label { position: absolute; top: -16px; left: 16px; background: #FFD32D; border: 3px solid #000; padding: 4px 12px; font-weight: 900; color: #000; font-size: 11px; }
-        .word-display { font-size: 2.2rem; font-weight: 900; text-transform: uppercase; line-height: 1.1; word-break: break-word; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; flex-shrink: 0; }
-        .btn-action { border: 4px solid #000; padding: 16px; border-radius: 16px; box-shadow: 6px 6px 0 #000; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 1.3rem; }
-        .btn-skip { background: #FF5C5C; color: #fff; }
-        .btn-guess { background: #58E08E; color: #fff; }
-        .menu-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .menu-title { background: #fff; padding: 12px 24px; border: 6px solid #000; box-shadow: 8px 8px 0 #000; transform: rotate(-3deg); margin-bottom: 24px; }
-        .menu-title h1 { font-size: 3rem; font-weight: 950; color: #000; }
-        .btn-main { background: #FFD32D; color: #000; padding: 18px; border: 4px solid #000; border-radius: 16px; font-weight: 900; font-size: 1.2rem; box-shadow: 8px 8px 0 #000; cursor: pointer; width: 100%; max-width: 300px; margin-bottom: 15px; }
-        .btn-online-link { background: #3FB6FF; color: #fff; border: 4px solid #000; padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; box-shadow: 4px 4px 0 #000; text-transform: uppercase; font-size: 0.9rem; }
-        .source-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 24px 0; }
-        .btn-source { background: #fff; border: 6px solid #000; border-radius: 16px; padding: 24px 16px; cursor: pointer; box-shadow: 8px 8px 0 #000; display: flex; flex-direction: column; align-items: center; color: #000; font-weight: 900; text-transform: uppercase; }
-        .btn-category { background: #fff; border: 4px solid #000; border-radius: 12px; padding: 12px 14px; font-weight: 700; color: #000; cursor: pointer; text-align: left; box-shadow: 4px 4px 0 #000; }
-        .btn-category.selected { background: #58E08E; font-weight: 900; }
-        .settings-container { background: #fff; color: #000; border-radius: 16px; padding: 16px; border: 4px solid #000; box-shadow: 8px 8px 0 #000; }
-        .setting-input { width: 100%; padding: 10px; background: #F5F5F5; border: 3px solid #000; border-radius: 10px; font-weight: 600; }
-        .log-item { padding: 10px; border-bottom: 2px solid #ddd; display: flex; justify-content: space-between; font-weight: 800; text-transform: uppercase; }
-        .log-success { color: #2ecc71; }
-        .log-fail { color: #ff4747; }
-        @media (min-width: 768px) {
-            .menu-title h1 { font-size: 5rem; }
-            .word-display { font-size: 4rem; }
-            .source-grid { grid-template-columns: 1fr 1fr; }
-        }
+        .game-container { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #FFF0F5; min-height: 100vh; padding: 20px; }
+        .stats { margin-bottom: 20px; font-weight: bold; color: #D63384; font-size: 1.2rem; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 400px; width: 100%; }
+        .card { height: 80px; background: #FF3D7F; border: 3px solid #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; box-shadow: 4px 4px 0 #000; transition: transform 0.2s; position: relative; }
+        .card.flipped { background: #fff; transform: rotateY(180deg); }
+        .card.matched { background: #58E08E; cursor: default; }
+        .win-message { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 100; }
+        .btn-restart { margin-top: 15px; padding: 10px 20px; background: #FFD32D; border: 3px solid #000; font-weight: 900; border-radius: 10px; cursor: pointer; box-shadow: 4px 4px 0 #000; }
       `}</style>
 
-      {/* МЕНЮ */}
-      {screen === 'menu' && (
-        <div className="container blue">
-          <button className="btn-back-home" onClick={goToHome}>← ВЫХОД</button>
-          <div className="menu-content">
-            <div className="menu-title"><h1>ALIAS</h1></div>
-            <p style={{ fontWeight: 800, marginBottom: '32px' }}>ОБЪЯСНИ КАК МОЖНО БОЛЬШЕ СЛОВ!</p>
-            
-            {/* // Основная кнопка оффлайн игры */}
-            <button className="btn-main" onClick={() => setScreen('source')}>ИГРАТЬ РЯДОМ 🏠</button>
-            
-            {/* // Новая кнопка перехода в Онлайн режим */}
-            <button className="btn-online-link" onClick={() => setIsOnlineMode(true)}>🌐 ИГРАТЬ ПО СЕТИ (BETA)</button>
-          </div>
-        </div>
-      )}
+      <h1 style={{ fontWeight: 900, marginBottom: '10px' }}>MEMORY LOVE</h1>
+      <div className="stats">Ходов: {moves} | Пары: {matchedPairs.length / 2} / {EMOJIS.length}</div>
 
-      {/* ВЫБОР ИСТОЧНИКА (ТОЛЬКО ОФФЛАЙН) */}
-      {screen === 'source' && (
-        <div className="container pink">
-          <button className="btn-back-home" onClick={() => setScreen('menu')}>← НАЗАД</button>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px', transform: 'rotate(-2deg)', display: 'inline-block' }}>
-              <h2 style={{ color: '#000', fontWeight: 900 }}>ОФФЛАЙН РЕЖИМ</h2>
-            </div>
-          </div>
-          <div className="source-grid">
-            <button className="btn-source" onClick={() => setScreen('bank')}>
-              <div style={{ fontSize: '2.5rem' }}>📚</div> БАНК СЛОВ
-            </button>
-            <button className="btn-source" onClick={chooseCustom}>
-              <div style={{ fontSize: '2.5rem' }}>✏️</div> СВОИ СЛОВА
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="grid">
+        {cards.map((card, index) => {
+          const isFlipped = flippedCards.includes(index) || matchedPairs.includes(index);
+          const isMatched = matchedPairs.includes(index);
 
-      {/* БАНК СЛОВ */}
-      {screen === 'bank' && (
-        <div className="container blue">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <button className="btn-back-home" style={{ marginBottom: 0 }} onClick={() => setScreen('source')}>← НАЗАД</button>
-            <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px' }}>
-              <h2 style={{ color: '#000', fontWeight: 900 }}>КАТЕГОРИИ</h2>
+          return (
+            <div 
+              key={card.id} 
+              className={`card ${isFlipped ? 'flipped' : ''} ${isMatched ? 'matched' : ''}`}
+              onClick={() => handleCardClick(index)}
+            >
+              {isFlipped ? card.content : '?'}
             </div>
-            {selectedCategories.size > 0 && (
-              <button className="btn-back-home" style={{ marginBottom: 0 }} onClick={nextAfterCategories}>ДАЛЕЕ →</button>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
-            {Object.keys(WORD_BANKS).map(cat => (
-              <button 
-                key={cat}
-                className={`btn-category ${selectedCategories.has(cat) ? 'selected' : ''}`}
-                onClick={() => toggleCategory(cat)}
-              >
-                {cat === 'animals' && '🐾 Животные'}
-                {cat === 'food' && '🍕 Еда'}
-                {cat === 'movies' && '🎬 Фильмы'}
-                {cat === 'sports' && '⚽ Спорт'}
-                {cat === 'professions' && '👔 Профессии'}
-                {cat === 'countries' && '🌍 Страны'}
-                {cat === 'mixed' && '🎯 Микс'}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      {/* НАСТРОЙКИ */}
-      {screen === 'setup' && (
-        <div className="container pink">
-          <button className="btn-back-home" onClick={() => setScreen('source')}>← НАЗАД</button>
-          <div className="settings-container">
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>👥 КОМАНДА</label>
-              <input className="setting-input" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
-            </div>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>🔢 СЛОВ В РАУНДЕ</label>
-              <input type="number" className="setting-input" value={roundsInput} onChange={(e) => setRoundsInput(parseInt(e.target.value))} />
-            </div>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>⏱️ ВРЕМЯ (СЕК)</label>
-              <input type="number" className="setting-input" value={timeInput} onChange={(e) => setTimeInput(parseInt(e.target.value))} />
-            </div>
-            {isCustomMode && (
-              <div>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>📝 СЛОВА (через запятую)</label>
-                <textarea className="setting-input" style={{ minHeight: '80px' }} value={customWords} onChange={(e) => setCustomWords(e.target.value)} />
-              </div>
-            )}
-          </div>
-          <button className="btn-main" style={{ marginTop: '16px', maxWidth: '100%' }} onClick={startGame}>СТАРТ 🎮</button>
-        </div>
-      )}
-
-      {/* ИГРА */}
-      {screen === 'game' && (
-        <div className="container pink">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div className={`pill timer ${timeLeft <= 10 ? 'warning' : ''}`}>
-              <span>⏱️</span> <span>{timeLeft}</span>
-            </div>
-            <div className="pill score">ОЧКИ: {score}</div>
-            <button className="btn-menu" onClick={() => setIsConfirmModalOpen(true)}>МЕНЮ</button>
-          </div>
-          <div className="card">
-            <div className="card-label">СЛОВО:</div>
-            <div className="word-display">{words[currentIndex] || 'ЗАГРУЗКА...'}</div>
-          </div>
-          <div className="btn-grid">
-            <button className="btn-action btn-skip" onClick={handleSkip}>✕</button>
-            <button className="btn-action btn-guess" onClick={handleGuessed}>✓</button>
-          </div>
-        </div>
-      )}
-
-      {/* РЕЗУЛЬТАТЫ */}
-      {screen === 'results' && (
-        <div className="container white">
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '2.5rem' }}>🏆</div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 950 }}>ИТОГИ: {score}</h2>
-          </div>
-          <div style={{ flex: 1, border: '4px solid #000', borderRadius: '16px', padding: '10px', background: '#F0F0F0', overflowY: 'auto', marginBottom: '16px' }}>
-            {gameLog.map((item, idx) => (
-              <div key={idx} className="log-item">
-                <span>{item.word}</span>
-                <span className={item.ok ? 'log-success' : 'log-fail'}>{item.ok ? '✓' : '✕'}</span>
-              </div>
-            ))}
-          </div>
-          <button className="btn-main" style={{ width: '100%', maxWidth: '100%' }} onClick={backToMenu}>↻ МЕНЮ</button>
-          <button className="btn-back-home" style={{ width: '100%', marginTop: '10px' }} onClick={goToHome}>← ДОМОЙ</button>
-        </div>
-      )}
-
-      {/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ВЫХОДА */}
-      {isConfirmModalOpen && (
-        <div className="container white" style={{ alignItems: 'center', justifyContent: 'center', zIndex: 2000, background: 'rgba(0,0,0,0.4)' }}>
-          <div style={{ background: '#fff', border: '6px solid #000', borderRadius: '20px', padding: '24px', boxShadow: '12px 12px 0 #000', maxWidth: '300px', textAlign: 'center' }}>
-            <h3 style={{ fontWeight: 900, marginBottom: '12px' }}>Выйти в МЕНЮ?</h3>
-            <p style={{ color: '#666', marginBottom: '20px' }}>Прогресс раунда будет потерян</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <button className="btn-main" style={{ background: '#FF5C5C', padding: '14px', fontSize: '1rem', boxShadow: '4px 4px 0 #000' }} onClick={backToMenu}>ДА</button>
-              <button className="btn-main" style={{ background: '#58E08E', padding: '14px', fontSize: '1rem', boxShadow: '4px 4px 0 #000' }} onClick={() => setIsConfirmModalOpen(false)}>НЕТ</button>
-            </div>
-          </div>
+      {isWon && (
+        <div className="win-message">
+          <h2 style={{ fontSize: '2rem' }}>ВЫ — ИДЕАЛЬНАЯ ПАРА! ❤️</h2>
+          <p>Все совпадения найдены за {moves} ходов</p>
+          <button className="btn-restart" onClick={initGame}>ЕЩЕ РАЗ ↻</button>
         </div>
       )}
     </div>
   );
 };
 
-export default LoveStory;
+export default MemoryGame;
