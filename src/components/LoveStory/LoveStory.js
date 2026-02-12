@@ -51,16 +51,21 @@ const LoveStory = () => {
     window.location.href = 'https://lovecouple.ru';
   };
 
-  // // Сброс состояния и возврат в меню
-  const backToMenu = () => {
-    clearInterval(timerRef.current);
-    setScore(0);
-    setGameLog([]);
-    setCurrentIndex(0);
-    setWords([]);
-    setSelectedCategories(new Set());
-    setScreen('menu');
-  };
+// Функция для сброса состояния игры и возврата в главное меню
+const backToMenu = () => {
+  // Останавливаем таймер, если он запущен
+  if (timerRef.current) clearInterval(timerRef.current);
+  
+  // Сбрасываем прогресс игры
+  setScore(0);
+  setCurrentIndex(0);
+  
+  // ВАЖНО: Закрываем модальное окно, чтобы оно не появилось снова
+  setIsConfirmModalOpen(false); 
+  
+  // Переключаем экран на меню
+  setScreen('menu');
+};
 
   // // Выбор категорий
   const toggleCategory = (cat) => {
