@@ -318,21 +318,24 @@ const LoveStory = () => {
         </div>
       )}
 
-      {/* МОДАЛЬНОЕ ОКНО */}
-      {isConfirmModalOpen && (
-        <div className="container white" style={{ alignItems: 'center', justifyContent: 'center', z-index: 2000, background: 'rgba(255,255,255,0.8)' }}>
-          <div style={{ background: '#fff', border: '6px solid #000', borderRadius: '20px', padding: '24px', boxShadow: '12px 12px 0 #000', maxWidth: '300px', textAlign: 'center' }}>
-            <h3 style={{ fontWeight: 900, marginBottom: '12px' }}>Выйти в МЕНЮ?</h3>
-            <p style={{ color: '#666', marginBottom: '20px' }}>Текущий результат будет потерян</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <button className="btn-main" style={{ background: '#FF5C5C', padding: '14px' }} onClick={backToMenu}>ДА</button>
-              <button className="btn-main" style={{ background: '#58E08E', padding: '14px' }} onClick={() => setIsConfirmModalOpen(false)}>НЕТ</button>
-            </div>
-          </div>
-        </div>
-      )}
+{/* МОДАЛЬНОЕ ОКНО */}
+{isConfirmModalOpen && (
+  // Исправлено: z-index заменен на zIndex
+  <div className="container white" style={{ alignItems: 'center', justifyContent: 'center', zIndex: 2000, background: 'rgba(255,255,255,0.8)' }}>
+    <div style={{ background: '#fff', border: '6px solid #000', borderRadius: '20px', padding: '24px', boxShadow: '12px 12px 0 #000', maxWidth: '300px', textAlign: 'center' }}>
+      {/* Заголовок модального окна */}
+      <h3 style={{ fontWeight: 900, marginBottom: '12px' }}>Выйти в МЕНЮ?</h3>
+      {/* Описание последствий */}
+      <p style={{ color: '#666', marginBottom: '20px' }}>Текущий результат будет потерян</p>
+      {/* Кнопки подтверждения и отмены */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {/* Кнопка выхода */}
+        <button className="btn-main" style={{ background: '#FF5C5C', padding: '14px' }} onClick={backToMenu}>ДА</button>
+        {/* Кнопка возврата к игре */}
+        <button className="btn-main" style={{ background: '#58E08E', padding: '14px' }} onClick={() => setIsConfirmModalOpen(false)}>НЕТ</button>
+      </div>
     </div>
-  );
-};
+  </div>
+)}
 
 export default LoveStory;
