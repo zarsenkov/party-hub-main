@@ -112,18 +112,47 @@ const backToMenu = () => {
     setScreen('game');
   };
 
-  // // Кнопка "Угадано"
+// // Кнопка "Угадано"
   const handleGuessed = () => {
+    // Получаем текущее слово для лога
     const currentWord = words[currentIndex];
+    // Добавляем слово в историю раунда как угаданное
     setGameLog(prev => [...prev, { word: currentWord, ok: true }]);
-    setScore(prev => prev + 1);
+    
+    // Новые значения для синхронизации
+    const newScore = score + 1;
+    const nextIndex = currentIndex + 1;
+
+    // Обновляем локальное состояние
+    setScore(newScore);
+    
+    // Если включен онлайн, отправляем данные партнеру
+    if (gameMode === 'online') {
+      // Отправляем на сервер новый счет и индекс следующего слова
+      syncWithPartner(newScore, nextIndex);
+    }
+
+    // Переходим к следующему слову
     moveToNextWord();
   };
 
   // // Кнопка "Пропустить"
   const handleSkip = () => {
+    // Получаем текущее слово для лога
     const currentWord = words[currentIndex];
+    // Добавляем слово в историю как пропущенное (ok: false)
     setGameLog(prev => [...prev, { word: currentWord, ok: false }]);
+    
+    // Индекс следующего слова
+    const nextIndex = currentIndex + 1;
+
+    // Если включен онлайн, уведомляем партнера, что мы пропустили слово
+    if (gameMode === 'online') {
+      // Счет (score) не меняется, только индекс слова
+      syncWithPartner(score, nextIndex);
+    }
+
+    // Переходим к следующему слову
     moveToNextWord();
   };
 
