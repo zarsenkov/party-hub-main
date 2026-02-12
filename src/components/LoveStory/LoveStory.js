@@ -11,7 +11,7 @@ const WORD_BANKS = {
   mixed: ['Кот', 'Пицца', 'Аватар', 'Футбол', 'Врач', 'США', 'Собака', 'Бургер', 'Титаник', 'Баскетбол', 'Учитель', 'Россия', 'Слон', 'Суши', 'Матрица', 'Теннис', 'Пилот', 'Япония', 'Жираф', 'Торт']
 };
 
-const AliasGame = () => {
+const LoveStory = () => {
   // === СОСТОЯНИЕ (STATE) ===
   const [screen, setScreen] = useState('menu'); // Управление экранами
   const [selectedCategories, setSelectedCategories] = useState(new Set());
@@ -335,4 +335,4 @@ const AliasGame = () => {
   );
 };
 
-export default AliasGame;
+export default LoveStory;
