@@ -21,6 +21,7 @@ const LoveStory = () => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [gameLog, setGameLog] = useState([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [gameMode, setGameMode] = useState('offline');
 
   // Настройки формы
   const [teamName, setTeamName] = useState('Команда 1');
@@ -202,25 +203,44 @@ const backToMenu = () => {
         </div>
       )}
 
-      {/* ВЫБОР ИСТОЧНИКА */}
-      {screen === 'source' && (
-        <div className="container pink">
-          <button className="btn-back-home" onClick={() => setScreen('menu')}>← НАЗАД</button>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px', transform: 'rotate(-2deg)', display: 'inline-block' }}>
-              <h2 style={{ color: '#000', fontWeight: 900 }}>ВЫБЕРИ ИСТОЧНИК</h2>
-            </div>
-          </div>
-          <div className="source-grid">
-            <button className="btn-source" onClick={() => setScreen('bank')}>
-              <div style={{ fontSize: '2.5rem' }}>📚</div> БАНК СЛОВ
-            </button>
-            <button className="btn-source" onClick={chooseCustom}>
-              <div style={{ fontSize: '2.5rem' }}>✏️</div> СВОИ СЛОВА
-            </button>
-          </div>
-        </div>
-      )}
+{/* ВЫБОР ИСТОЧНИКА */}
+{screen === 'source' && (
+  <div className="container pink">
+    <button className="btn-back-home" onClick={() => setScreen('menu')}>← НАЗАД</button>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px', transform: 'rotate(-2deg)', display: 'inline-block' }}>
+        <h2 style={{ color: '#000', fontWeight: 900 }}>ВЫБЕРИ РЕЖИМ</h2>
+      </div>
+    </div>
+
+    {/* Кнопки переключения режима */}
+    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', margin: '20px 0' }}>
+      <button 
+        className="btn-category" 
+        style={{ background: gameMode === 'offline' ? '#58E08E' : '#fff', flex: 1, textAlign: 'center' }}
+        onClick={() => setGameMode('offline')}
+      >
+        🏠 ОФФЛАЙН (РЯДОМ)
+      </button>
+      <button 
+        className="btn-category" 
+        style={{ background: gameMode === 'online' ? '#3FB6FF' : '#fff', flex: 1, textAlign: 'center', color: gameMode === 'online' ? '#fff' : '#000' }}
+        onClick={() => setGameMode('online')}
+      >
+        🌐 ОНЛАЙН (ДИСТАНТ)
+      </button>
+    </div>
+
+    <div className="source-grid">
+      <button className="btn-source" onClick={() => setScreen('bank')}>
+        <div style={{ fontSize: '2.5rem' }}>📚</div> {gameMode === 'online' ? 'СОЗДАТЬ КОМНАТУ' : 'БАНК СЛОВ'}
+      </button>
+      <button className="btn-source" onClick={chooseCustom}>
+        <div style={{ fontSize: '2.5rem' }}>✏️</div> {gameMode === 'online' ? 'ВВЕСТИ ID КОМНАТЫ' : 'СВОИ СЛОВА'}
+      </button>
+    </div>
+  </div>
+)}
 
       {/* БАНК СЛОВ */}
       {screen === 'bank' && (
