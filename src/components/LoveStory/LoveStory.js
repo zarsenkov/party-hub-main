@@ -1,4 +1,8 @@
+
+// LoveStory.js
 import React, { useState, useEffect, useRef } from 'react';
+// // Импортируем онлайн-компонент из соседнего файла
+import OnlineLoveStory from './OnlineLoveStory';
 
 // === КОНСТАНТЫ И БАНК СЛОВ ===
 const WORD_BANKS = {
@@ -13,7 +17,7 @@ const WORD_BANKS = {
 
 const LoveStory = () => {
   // === СОСТОЯНИЕ (STATE) ===
-  const [screen, setScreen] = useState('menu'); // Управление экранами
+  const [screen, setScreen] = useState('menu'); 
   const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [words, setWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -21,7 +25,9 @@ const LoveStory = () => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [gameLog, setGameLog] = useState([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [gameMode, setGameMode] = useState('offline');
+  
+  // // Новое состояние для переключения между Оффлайн и Онлайн файлами
+  const [isOnlineMode, setIsOnlineMode] = useState(false);
 
   // Настройки формы
   const [teamName, setTeamName] = useState('Команда 1');
@@ -34,7 +40,6 @@ const LoveStory = () => {
 
   // === ТАЙМЕР ===
   useEffect(() => {
-    // // Запускает и очищает интервал при изменении состояния экрана
     if (screen === 'game' && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
@@ -47,28 +52,18 @@ const LoveStory = () => {
 
   // === НАВИГАЦИЯ И ЛОГИКА ===
 
-  // // Переход на внешний сайт
   const goToHome = () => {
     window.location.href = 'https://lovecouple.ru';
   };
 
-// Функция для сброса состояния игры и возврата в главное меню
-const backToMenu = () => {
-  // Останавливаем таймер, если он запущен
-  if (timerRef.current) clearInterval(timerRef.current);
-  
-  // Сбрасываем прогресс игры
-  setScore(0);
-  setCurrentIndex(0);
-  
-  // ВАЖНО: Закрываем модальное окно, чтобы оно не появилось снова
-  setIsConfirmModalOpen(false); 
-  
-  // Переключаем экран на меню
-  setScreen('menu');
-};
+  const backToMenu = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setScore(0);
+    setCurrentIndex(0);
+    setIsConfirmModalOpen(false); 
+    setScreen('menu');
+  };
 
-  // // Выбор категорий
   const toggleCategory = (cat) => {
     const newCats = new Set(selectedCategories);
     if (newCats.has(cat)) newCats.delete(cat);
@@ -76,7 +71,6 @@ const backToMenu = () => {
     setSelectedCategories(newCats);
   };
 
-  // // Переход к настройкам после выбора банка
   const nextAfterCategories = () => {
     let combined = [];
     selectedCategories.forEach(cat => {
@@ -87,23 +81,18 @@ const backToMenu = () => {
     setScreen('setup');
   };
 
-  // // Переход к настройкам в ручном режиме
   const chooseCustom = () => {
     setWords([]);
     setIsCustomMode(true);
     setScreen('setup');
   };
 
-  // // Запуск игрового процесса
   const startGame = () => {
     let finalWords = [...words];
     if (isCustomMode) {
       finalWords = customWords.split(',').map(w => w.trim()).filter(w => w.length > 0);
     }
-
     if (finalWords.length === 0) return alert('Введи хотя бы одно слово!');
-    if (finalWords.length < roundsInput) return alert(`Нужно как минимум ${roundsInput} слов!`);
-
     setWords(finalWords.sort(() => Math.random() - 0.5));
     setTimeLeft(timeInput);
     setScore(0);
@@ -112,73 +101,39 @@ const backToMenu = () => {
     setScreen('game');
   };
 
-// // Кнопка "Угадано"
   const handleGuessed = () => {
-    // Получаем текущее слово для лога
     const currentWord = words[currentIndex];
-    // Добавляем слово в историю раунда как угаданное
     setGameLog(prev => [...prev, { word: currentWord, ok: true }]);
-    
-    // Новые значения для синхронизации
-    const newScore = score + 1;
-    const nextIndex = currentIndex + 1;
-
-    // Обновляем локальное состояние
-    setScore(newScore);
-    
-    // Если включен онлайн, отправляем данные партнеру
-    if (gameMode === 'online') {
-      // Отправляем на сервер новый счет и индекс следующего слова
-      syncWithPartner(newScore, nextIndex);
-    }
-
-    // Переходим к следующему слову
+    setScore(score + 1);
     moveToNextWord();
   };
 
-  // // Кнопка "Пропустить"
   const handleSkip = () => {
-    // Получаем текущее слово для лога
     const currentWord = words[currentIndex];
-    // Добавляем слово в историю как пропущенное (ok: false)
     setGameLog(prev => [...prev, { word: currentWord, ok: false }]);
-    
-    // Индекс следующего слова
-    const nextIndex = currentIndex + 1;
-
-    // Если включен онлайн, уведомляем партнера, что мы пропустили слово
-    if (gameMode === 'online') {
-      // Счет (score) не меняется, только индекс слова
-      syncWithPartner(score, nextIndex);
-    }
-
-    // Переходим к следующему слову
     moveToNextWord();
   };
 
-  // // Переключение на следующее слово
   const moveToNextWord = () => {
-    if (currentIndex + 1 >= roundsInput) {
+    if (currentIndex + 1 >= roundsInput || currentIndex + 1 >= words.length) {
       endGame();
     } else {
       setCurrentIndex(prev => prev + 1);
     }
   };
 
-  // // Завершение игры
   const endGame = () => {
     clearInterval(timerRef.current);
     setScreen('results');
   };
 
-  // === СТИЛИ (Перенесены из тега style) ===
-  const styles = {
-    // В React стили лучше оставить в CSS файле, но для "одного файла" используем объект или внедренный <style>
-  };
+  // // ЕСЛИ ВКЛЮЧЕН ОНЛАЙН РЕЖИМ — ПОКАЗЫВАЕМ ДРУГОЙ ФАЙЛ
+  if (isOnlineMode) {
+    return <OnlineLoveStory onBack={() => setIsOnlineMode(false)} />;
+  }
 
   return (
     <div id="app" style={{ height: '100%', width: '100%', display: 'flex' }}>
-      {/* Внедрение оригинальных стилей */}
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; width: 100%; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
@@ -203,7 +158,8 @@ const backToMenu = () => {
         .menu-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         .menu-title { background: #fff; padding: 12px 24px; border: 6px solid #000; box-shadow: 8px 8px 0 #000; transform: rotate(-3deg); margin-bottom: 24px; }
         .menu-title h1 { font-size: 3rem; font-weight: 950; color: #000; }
-        .btn-main { background: #FFD32D; color: #000; padding: 18px; border: 4px solid #000; border-radius: 16px; font-weight: 900; font-size: 1.2rem; box-shadow: 8px 8px 0 #000; cursor: pointer; }
+        .btn-main { background: #FFD32D; color: #000; padding: 18px; border: 4px solid #000; border-radius: 16px; font-weight: 900; font-size: 1.2rem; box-shadow: 8px 8px 0 #000; cursor: pointer; width: 100%; max-width: 300px; margin-bottom: 15px; }
+        .btn-online-link { background: #3FB6FF; color: #fff; border: 4px solid #000; padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; box-shadow: 4px 4px 0 #000; text-transform: uppercase; font-size: 0.9rem; }
         .source-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 24px 0; }
         .btn-source { background: #fff; border: 6px solid #000; border-radius: 16px; padding: 24px 16px; cursor: pointer; box-shadow: 8px 8px 0 #000; display: flex; flex-direction: column; align-items: center; color: #000; font-weight: 900; text-transform: uppercase; }
         .btn-category { background: #fff; border: 4px solid #000; border-radius: 12px; padding: 12px 14px; font-weight: 700; color: #000; cursor: pointer; text-align: left; box-shadow: 4px 4px 0 #000; }
@@ -226,50 +182,36 @@ const backToMenu = () => {
           <button className="btn-back-home" onClick={goToHome}>← ВЫХОД</button>
           <div className="menu-content">
             <div className="menu-title"><h1>ALIAS</h1></div>
-            <p style={{ fontWeight: 800, marginBottom: '32px' }}>ОБЪЯСНИ КАК МОЖНО БОЛЬШЕ СЛОВ ЗА {timeInput} СЕКУНД!</p>
-            <button className="btn-main" onClick={() => setScreen('source')}>ПОЕХАЛИ! 🚀</button>
+            <p style={{ fontWeight: 800, marginBottom: '32px' }}>ОБЪЯСНИ КАК МОЖНО БОЛЬШЕ СЛОВ!</p>
+            
+            {/* // Основная кнопка оффлайн игры */}
+            <button className="btn-main" onClick={() => setScreen('source')}>ИГРАТЬ РЯДОМ 🏠</button>
+            
+            {/* // Новая кнопка перехода в Онлайн режим */}
+            <button className="btn-online-link" onClick={() => setIsOnlineMode(true)}>🌐 ИГРАТЬ ПО СЕТИ (BETA)</button>
           </div>
         </div>
       )}
 
-{/* ВЫБОР ИСТОЧНИКА */}
-{screen === 'source' && (
-  <div className="container pink">
-    <button className="btn-back-home" onClick={() => setScreen('menu')}>← НАЗАД</button>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px', transform: 'rotate(-2deg)', display: 'inline-block' }}>
-        <h2 style={{ color: '#000', fontWeight: 900 }}>ВЫБЕРИ РЕЖИМ</h2>
-      </div>
-    </div>
-
-    {/* Кнопки переключения режима */}
-    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', margin: '20px 0' }}>
-      <button 
-        className="btn-category" 
-        style={{ background: gameMode === 'offline' ? '#58E08E' : '#fff', flex: 1, textAlign: 'center' }}
-        onClick={() => setGameMode('offline')}
-      >
-        🏠 ОФФЛАЙН (РЯДОМ)
-      </button>
-      <button 
-        className="btn-category" 
-        style={{ background: gameMode === 'online' ? '#3FB6FF' : '#fff', flex: 1, textAlign: 'center', color: gameMode === 'online' ? '#fff' : '#000' }}
-        onClick={() => setGameMode('online')}
-      >
-        🌐 ОНЛАЙН (ДИСТАНТ)
-      </button>
-    </div>
-
-    <div className="source-grid">
-      <button className="btn-source" onClick={() => setScreen('bank')}>
-        <div style={{ fontSize: '2.5rem' }}>📚</div> {gameMode === 'online' ? 'СОЗДАТЬ КОМНАТУ' : 'БАНК СЛОВ'}
-      </button>
-      <button className="btn-source" onClick={chooseCustom}>
-        <div style={{ fontSize: '2.5rem' }}>✏️</div> {gameMode === 'online' ? 'ВВЕСТИ ID КОМНАТЫ' : 'СВОИ СЛОВА'}
-      </button>
-    </div>
-  </div>
-)}
+      {/* ВЫБОР ИСТОЧНИКА (ТОЛЬКО ОФФЛАЙН) */}
+      {screen === 'source' && (
+        <div className="container pink">
+          <button className="btn-back-home" onClick={() => setScreen('menu')}>← НАЗАД</button>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px', transform: 'rotate(-2deg)', display: 'inline-block' }}>
+              <h2 style={{ color: '#000', fontWeight: 900 }}>ОФФЛАЙН РЕЖИМ</h2>
+            </div>
+          </div>
+          <div className="source-grid">
+            <button className="btn-source" onClick={() => setScreen('bank')}>
+              <div style={{ fontSize: '2.5rem' }}>📚</div> БАНК СЛОВ
+            </button>
+            <button className="btn-source" onClick={chooseCustom}>
+              <div style={{ fontSize: '2.5rem' }}>✏️</div> СВОИ СЛОВА
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* БАНК СЛОВ */}
       {screen === 'bank' && (
@@ -313,7 +255,7 @@ const backToMenu = () => {
               <input className="setting-input" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>🔢 РАУНДОВ</label>
+              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>🔢 СЛОВ В РАУНДЕ</label>
               <input type="number" className="setting-input" value={roundsInput} onChange={(e) => setRoundsInput(parseInt(e.target.value))} />
             </div>
             <div style={{ marginBottom: '14px' }}>
@@ -322,12 +264,12 @@ const backToMenu = () => {
             </div>
             {isCustomMode && (
               <div>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>📝 СЛОВА</label>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>📝 СЛОВА (через запятую)</label>
                 <textarea className="setting-input" style={{ minHeight: '80px' }} value={customWords} onChange={(e) => setCustomWords(e.target.value)} />
               </div>
             )}
           </div>
-          <button className="btn-main" style={{ marginTop: '16px' }} onClick={startGame}>СТАРТ 🎮</button>
+          <button className="btn-main" style={{ marginTop: '16px', maxWidth: '100%' }} onClick={startGame}>СТАРТ 🎮</button>
         </div>
       )}
 
@@ -367,32 +309,26 @@ const backToMenu = () => {
               </div>
             ))}
           </div>
-          <button className="btn-main" style={{ width: '100%' }} onClick={backToMenu}>↻ МЕНЮ</button>
+          <button className="btn-main" style={{ width: '100%', maxWidth: '100%' }} onClick={backToMenu}>↻ МЕНЮ</button>
           <button className="btn-back-home" style={{ width: '100%', marginTop: '10px' }} onClick={goToHome}>← ДОМОЙ</button>
         </div>
       )}
 
-{/* МОДАЛЬНОЕ ОКНО */}
-{isConfirmModalOpen && (
-  // Исправлено: z-index заменен на zIndex
-  <div className="container white" style={{ alignItems: 'center', justifyContent: 'center', zIndex: 2000, background: 'rgba(255,255,255,0.8)' }}>
-    <div style={{ background: '#fff', border: '6px solid #000', borderRadius: '20px', padding: '24px', boxShadow: '12px 12px 0 #000', maxWidth: '300px', textAlign: 'center' }}>
-      {/* Заголовок модального окна */}
-      <h3 style={{ fontWeight: 900, marginBottom: '12px' }}>Выйти в МЕНЮ?</h3>
-      {/* Описание последствий */}
-      <p style={{ color: '#666', marginBottom: '20px' }}>Текущий результат будет потерян</p>
-      {/* Кнопки подтверждения и отмены */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        {/* Кнопка выхода */}
-        <button className="btn-main" style={{ background: '#FF5C5C', padding: '14px' }} onClick={backToMenu}>ДА</button>
-        {/* Кнопка возврата к игре */}
-        <button className="btn-main" style={{ background: '#58E08E', padding: '14px' }} onClick={() => setIsConfirmModalOpen(false)}>НЕТ</button>
-      </div>
+      {/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ВЫХОДА */}
+      {isConfirmModalOpen && (
+        <div className="container white" style={{ alignItems: 'center', justifyContent: 'center', zIndex: 2000, background: 'rgba(0,0,0,0.4)' }}>
+          <div style={{ background: '#fff', border: '6px solid #000', borderRadius: '20px', padding: '24px', boxShadow: '12px 12px 0 #000', maxWidth: '300px', textAlign: 'center' }}>
+            <h3 style={{ fontWeight: 900, marginBottom: '12px' }}>Выйти в МЕНЮ?</h3>
+            <p style={{ color: '#666', marginBottom: '20px' }}>Прогресс раунда будет потерян</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button className="btn-main" style={{ background: '#FF5C5C', padding: '14px', fontSize: '1rem', boxShadow: '4px 4px 0 #000' }} onClick={backToMenu}>ДА</button>
+              <button className="btn-main" style={{ background: '#58E08E', padding: '14px', fontSize: '1rem', boxShadow: '4px 4px 0 #000' }} onClick={() => setIsConfirmModalOpen(false)}>НЕТ</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-</div>
-);
+  );
 };
 
 export default LoveStory;
