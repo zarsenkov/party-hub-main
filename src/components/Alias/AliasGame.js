@@ -49,15 +49,17 @@ const AliasGame = () => {
   // === НАВИГАЦИЯ ===
   const goToHome = () => window.location.href = 'https://lovecouple.ru';
 
-  const backToMenu = () => {
-    stopTimer();
-    setScore(0);
-    setLog([]);
-    setCurrentIndex(0);
-    setWords([]);
-    setSelectedCategories(new Set());
-    setScreen('menu');
-  };
+// // Функция возврата в главное меню с очисткой всех состояний
+const backToMenu = () => {
+  stopTimer(); // // Останавливаем таймер
+  setScore(0); // // Сбрасываем очки
+  setLog([]); // // Чистим историю слов
+  setCurrentIndex(0); // // Сбрасываем индекс слова
+  setWords([]); // // Очищаем массив слов
+  setSelectedCategories(new Set()); // // Сбрасываем выбранные категории
+  setIsConfirmModalOpen(false); // // ОБЯЗАТЕЛЬНО: закрываем модальное окно, чтобы оно не всплыло в меню
+  setScreen('menu'); // // Переходим на экран меню
+};
 
   const backToSource = () => {
     stopTimer();
