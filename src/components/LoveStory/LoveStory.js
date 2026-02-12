@@ -337,5 +337,8 @@ const LoveStory = () => {
     </div>
   </div>
 )}
+</div>
+);
+};
 
 export default LoveStory;
