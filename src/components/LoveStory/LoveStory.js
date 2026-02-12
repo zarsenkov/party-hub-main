@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './AliasGame.css';
+import './LoveStory.css';
 
 // // Объект с наборами слов по категориям
 const WORD_BANKS = {
