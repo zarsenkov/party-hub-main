@@ -1,317 +1,336 @@
-import React, { useEffect } from 'react';
-import './LoveStory.css';
+import React, { useState, useEffect, useRef } from 'react';
 
-// // Перенос компонента без изменения логики
+// === КОНСТАНТЫ И БАНК СЛОВ ===
+const WORD_BANKS = {
+  animals: ['Кот', 'Собака', 'Слон', 'Жираф', 'Лев', 'Тигр', 'Медведь', 'Волк', 'Лиса', 'Заяц', 'Крокодил', 'Акула', 'Орел', 'Пингвин', 'Кит', 'Дельфин', 'Обезьяна', 'Коала', 'Зебра', 'Лошадь'],
+  food: ['Пицца', 'Бургер', 'Суши', 'Тако', 'Паста', 'Торт', 'Пончик', 'Печенье', 'Мороженое', 'Яблоко', 'Банан', 'Апельсин', 'Клубника', 'Арбуз', 'Сыр', 'Хлеб', 'Яйцо', 'Молоко', 'Масло', 'Салат'],
+  movies: ['Аватар', 'Титаник', 'Матрица', 'Интерстеллар', 'Один дома', 'Назад в будущее', 'Звёздные войны', 'Завтрак у Тиффани', 'Король лев', 'Зелёная миля', 'Крик', 'Шрек', 'Ледниковый период', 'Рапунцель', 'Гарри Поттер', 'Спайдермен', 'Железный человек', 'Минионы', 'Ну погоди', 'Плиточка'],
+  sports: ['Футбол', 'Баскетбол', 'Теннис', 'Волейбол', 'Хоккей', 'Бокс', 'Карате', 'Йога', 'Плавание', 'Бег', 'Велосипед', 'Серфинг', 'Сноуборд', 'Лыжи', 'Гимнастика', 'Штанга', 'Танцы', 'Дзюдо', 'Фехтование', 'Гольф'],
+  professions: ['Врач', 'Учитель', 'Пилот', 'Повар', 'Полицейский', 'Пожарный', 'Строитель', 'Художник', 'Музыкант', 'Актер', 'Писатель', 'Журналист', 'Фотограф', 'Парикмахер', 'Сантехник', 'Электрик', 'Плотник', 'Дизайнер', 'Программист', 'Бизнесмен'],
+  countries: ['США', 'Россия', 'Япония', 'Франция', 'Англия', 'Испания', 'Италия', 'Германия', 'Китай', 'Индия', 'Бразилия', 'Канада', 'Австралия', 'Мексика', 'Швейцария', 'Голландия', 'Греция', 'Турция', 'Таиланд', 'Индонезия'],
+  mixed: ['Кот', 'Пицца', 'Аватар', 'Футбол', 'Врач', 'США', 'Собака', 'Бургер', 'Титаник', 'Баскетбол', 'Учитель', 'Россия', 'Слон', 'Суши', 'Матрица', 'Теннис', 'Пилот', 'Япония', 'Жираф', 'Торт']
+};
+
 const AliasGame = () => {
-  // // Инициализация логики из твоего скрипта при загрузке компонента
+  // === СОСТОЯНИЕ (STATE) ===
+  const [screen, setScreen] = useState('menu'); // Управление экранами
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
+  const [words, setWords] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [gameLog, setGameLog] = useState([]);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  // Настройки формы
+  const [teamName, setTeamName] = useState('Команда 1');
+  const [roundsInput, setRoundsInput] = useState(5);
+  const [timeInput, setTimeInput] = useState(60);
+  const [customWords, setCustomWords] = useState('Кот,Дом,Любовь,Музыка,Звезда,Танец,Радость,Река,Гора,Книга,Цветок,Небо,Огонь,Вода,Луна,Солнце,Ветер,Дерево,Птица,Рыба');
+  const [isCustomMode, setIsCustomMode] = useState(false);
+
+  const timerRef = useRef(null);
+
+  // === ТАЙМЕР ===
   useEffect(() => {
-    // === БАНК СЛОВ ===
-    const wordBanks = {
-      animals: ['Кот', 'Собака', 'Слон', 'Жираф', 'Лев', 'Тигр', 'Медведь', 'Волк', 'Лиса', 'Заяц', 'Крокодил', 'Акула', 'Орел', 'Пингвин', 'Кит', 'Дельфин', 'Обезьяна', 'Коала', 'Зебра', 'Лошадь'],
-      food: ['Пицца', 'Бургер', 'Суши', 'Тако', 'Паста', 'Торт', 'Пончик', 'Печенье', 'Мороженое', 'Яблоко', 'Банан', 'Апельсин', 'Клубника', 'Арбуз', 'Сыр', 'Хлеб', 'Яйцо', 'Молоко', 'Масло', 'Салат'],
-      movies: ['Аватар', 'Титаник', 'Матрица', 'Интерстеллар', 'Один дома', 'Назад в будущее', 'Звёздные войны', 'Завтрак у Тиффани', 'Король лев', 'Зелёная миля', 'Крик', 'Шрек', 'Ледниковный период', 'Рапунцель', 'Гарри Поттер', 'Спайдермен', 'Железный человек', 'Минионы', 'Ну погоди', 'Плиточка'],
-      sports: ['Футбол', 'Баскетбол', 'Теннис', 'Волейбол', 'Хоккей', 'Бокс', 'Карате', 'Йога', 'Плавание', 'Бег', 'Велосипед', 'Серфинг', 'Сноуборд', 'Лыжи', 'Гимнастика', 'Штанга', 'Танцы', 'Дзюдо', 'Фехтование', 'Гольф'],
-      professions: ['Врач', 'Учитель', 'Пилот', 'Повар', 'Полицейский', 'Пожарный', 'Строитель', 'Художник', 'Музыкант', 'Актер', 'Писатель', 'Журналист', 'Фотограф', 'Парикмахер', 'Сантехник', 'Электрик', 'Плотник', 'Дизайнер', 'Программист', 'Бизнесмен'],
-      countries: ['США', 'Россия', 'Япония', 'Франция', 'Англия', 'Испания', 'Италия', 'Германия', 'Китай', 'Индия', 'Бразилия', 'Канада', 'Австралия', 'Мексика', 'Швейцария', 'Голландия', 'Греция', 'Турция', 'Таиланд', 'Индонезия'],
-      mixed: ['Кот', 'Пицца', 'Аватар', 'Футбол', 'Врач', 'США', 'Собака', 'Бургер', 'Титаник', 'Баскетбол', 'Учитель', 'Россия', 'Слон', 'Суши', 'Матрица', 'Теннис', 'Пилот', 'Япония', 'Жираф', 'Торт']
-    };
-
-    // === СОСТОЯНИЕ ===
-    const gameState = {
-      words: [],
-      currentIndex: 0,
-      score: 0,
-      log: [],
-      totalRounds: 5,
-      roundTime: 60,
-      timeLeft: 60,
-      timerInterval: null,
-      isRunning: false
-    };
-
-    // === НАВИГАЦИЯ ===
-    // // Функция показа экранов
-    window.showScreen = (screenId) => {
-      document.querySelectorAll('[id$="-screen"]').forEach(el => el.classList.add('hidden'));
-      document.getElementById(screenId).classList.remove('hidden');
-    };
-
-    // // Функция выхода
-    window.goToHome = () => {
-      window.location.href = 'https://lovecouple.ru';
-    };
-
-    // // Возврат в меню
-    window.backToMenu = () => {
-      window.stopTimer();
-      gameState.score = 0;
-      gameState.log = [];
-      gameState.currentIndex = 0;
-      window.showScreen('menu-screen');
-    };
-
-    // // Выбор источника
-    window.chooseSource = () => {
-      window.showScreen('source-screen');
-    };
-
-    // // Назад к источнику
-    window.backToSource = () => {
-      window.stopTimer();
-      window.showScreen('source-screen');
-    };
-
-    // // Выбор банка слов
-    window.chooseBank = () => {
-      window.showScreen('bank-screen');
-    };
-
-    // // Выбор своих слов
-    window.chooseCustom = () => {
-      document.getElementById('words-group').style.display = 'block';
-      window.showScreen('setup-screen');
-    };
-
-    // // Выбор категории
-    window.selectCategory = (categoryKey) => {
-      gameState.words = [...wordBanks[categoryKey]];
-      document.getElementById('words-group').style.display = 'none';
-      window.showScreen('setup-screen');
-    };
-
-    // === ЗАПУСК ИГРЫ ===
-    // // Функция старта раунда
-    window.startGame = () => {
-      const rounds = parseInt(document.getElementById('rounds-input').value);
-      const time = parseInt(document.getElementById('time-input').value);
-      const wordsText = document.getElementById('words-input').value;
-
-      if (gameState.words.length === 0) {
-        const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
-        if (words.length === 0) {
-          alert('Введи хотя бы одно слово!');
-          return;
-        }
-        gameState.words = words;
-      }
-
-      if (gameState.words.length < rounds) {
-        alert(`Нужно как минимум ${rounds} слов!`);
-        return;
-      }
-
-      gameState.words = gameState.words.sort(() => Math.random() - 0.5);
-      gameState.totalRounds = rounds;
-      gameState.roundTime = time;
-      gameState.timeLeft = time;
-      gameState.score = 0;
-      gameState.log = [];
-      gameState.currentIndex = 0;
-      gameState.isRunning = true;
-
-      window.showScreen('game-screen');
-      window.displayWord();
-      window.startTimer();
-    };
-
-    // === ОТОБРАЖЕНИЕ СЛОВА ===
-    // // Отрисовка текущего слова
-    window.displayWord = () => {
-      if (gameState.currentIndex >= gameState.totalRounds) {
-        window.endGame();
-        return;
-      }
-      const word = gameState.words[gameState.currentIndex];
-      document.getElementById('word-display').textContent = word;
-      document.getElementById('score-display').textContent = gameState.score;
-      document.getElementById('timer-display').textContent = gameState.timeLeft;
-    };
-
-    // === ТАЙМЕР ===
-    // // Запуск обратного отсчета
-    window.startTimer = () => {
-      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
-      gameState.timerInterval = setInterval(() => {
-        gameState.timeLeft--;
-        document.getElementById('timer-display').textContent = gameState.timeLeft;
-        const timerPill = document.getElementById('timer-pill');
-        if (gameState.timeLeft <= 10) {
-          timerPill.classList.add('warning');
-        } else {
-          timerPill.classList.remove('warning');
-        }
-        if (gameState.timeLeft <= 0) {
-          window.endGame();
-        }
+    // // Запускает и очищает интервал при изменении состояния экрана
+    if (screen === 'game' && timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
       }, 1000);
-    };
+    } else if (timeLeft === 0 && screen === 'game') {
+      endGame();
+    }
+    return () => clearInterval(timerRef.current);
+  }, [screen, timeLeft]);
 
-    // // Остановка таймера
-    window.stopTimer = () => {
-      if (gameState.timerInterval) {
-        clearInterval(gameState.timerInterval);
-        gameState.timerInterval = null;
-      }
-    };
+  // === НАВИГАЦИЯ И ЛОГИКА ===
 
-    // === ДЕЙСТВИЯ ===
-    // // Обработка угаданного слова
-    window.guessed = () => {
-      if (!gameState.isRunning) return;
-      const word = gameState.words[gameState.currentIndex];
-      gameState.log.push({ word, ok: true });
-      gameState.score++;
-      document.getElementById('score-display').textContent = gameState.score;
-      window.nextWord();
-    };
+  // // Переход на внешний сайт
+  const goToHome = () => {
+    window.location.href = 'https://lovecouple.ru';
+  };
 
-    // // Обработка пропуска слова
-    window.skip = () => {
-      if (!gameState.isRunning) return;
-      const word = gameState.words[gameState.currentIndex];
-      gameState.log.push({ word, ok: false });
-      window.nextWord();
-    };
+  // // Сброс состояния и возврат в меню
+  const backToMenu = () => {
+    clearInterval(timerRef.current);
+    setScore(0);
+    setGameLog([]);
+    setCurrentIndex(0);
+    setWords([]);
+    setSelectedCategories(new Set());
+    setScreen('menu');
+  };
 
-    // // Переход к следующему слову
-    window.nextWord = () => {
-      gameState.currentIndex++;
-      if (gameState.currentIndex >= gameState.totalRounds) {
-        window.endGame();
-      } else {
-        window.displayWord();
-      }
-    };
+  // // Выбор категорий
+  const toggleCategory = (cat) => {
+    const newCats = new Set(selectedCategories);
+    if (newCats.has(cat)) newCats.delete(cat);
+    else newCats.add(cat);
+    setSelectedCategories(newCats);
+  };
 
-    // // Завершение игры и показ результатов
-    window.endGame = () => {
-      gameState.isRunning = false;
-      window.stopTimer();
-      document.getElementById('final-score').textContent = gameState.score;
-      const logHtml = gameState.log.map(item => 
-        `<div class="log-item">
-          <span>${item.word}</span>
-          <span class="${item.ok ? 'log-success' : 'log-fail'}">
-            ${item.ok ? '✓' : '✕'}
-          </span>
-        </div>`
-      ).join('');
-      document.getElementById('results-log').innerHTML = logHtml;
-      window.showScreen('results-screen');
-    };
+  // // Переход к настройкам после выбора банка
+  const nextAfterCategories = () => {
+    let combined = [];
+    selectedCategories.forEach(cat => {
+      combined = [...combined, ...WORD_BANKS[cat]];
+    });
+    setWords(combined);
+    setIsCustomMode(false);
+    setScreen('setup');
+  };
 
-    // Чистим интервалы при размонтировании
-    return () => window.stopTimer();
-  }, []);
+  // // Переход к настройкам в ручном режиме
+  const chooseCustom = () => {
+    setWords([]);
+    setIsCustomMode(true);
+    setScreen('setup');
+  };
+
+  // // Запуск игрового процесса
+  const startGame = () => {
+    let finalWords = [...words];
+    if (isCustomMode) {
+      finalWords = customWords.split(',').map(w => w.trim()).filter(w => w.length > 0);
+    }
+
+    if (finalWords.length === 0) return alert('Введи хотя бы одно слово!');
+    if (finalWords.length < roundsInput) return alert(`Нужно как минимум ${roundsInput} слов!`);
+
+    setWords(finalWords.sort(() => Math.random() - 0.5));
+    setTimeLeft(timeInput);
+    setScore(0);
+    setGameLog([]);
+    setCurrentIndex(0);
+    setScreen('game');
+  };
+
+  // // Кнопка "Угадано"
+  const handleGuessed = () => {
+    const currentWord = words[currentIndex];
+    setGameLog(prev => [...prev, { word: currentWord, ok: true }]);
+    setScore(prev => prev + 1);
+    moveToNextWord();
+  };
+
+  // // Кнопка "Пропустить"
+  const handleSkip = () => {
+    const currentWord = words[currentIndex];
+    setGameLog(prev => [...prev, { word: currentWord, ok: false }]);
+    moveToNextWord();
+  };
+
+  // // Переключение на следующее слово
+  const moveToNextWord = () => {
+    if (currentIndex + 1 >= roundsInput) {
+      endGame();
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  // // Завершение игры
+  const endGame = () => {
+    clearInterval(timerRef.current);
+    setScreen('results');
+  };
+
+  // === СТИЛИ (Перенесены из тега style) ===
+  const styles = {
+    // В React стили лучше оставить в CSS файле, но для "одного файла" используем объект или внедренный <style>
+  };
 
   return (
-    <div id="app">
+    <div id="app" style={{ height: '100%', width: '100%', display: 'flex' }}>
+      {/* Внедрение оригинальных стилей */}
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; width: 100%; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+        .container { position: fixed; inset: 0; padding: 16px; display: flex; flex-direction: column; z-index: 1000; color: #fff; overflow: hidden; }
+        .container.blue { background: #3FB6FF; }
+        .container.pink { background: #FF3D7F; }
+        .container.white { background: #fff; color: #000; overflow-y: auto; }
+        .btn-back-home { background: #000; color: #fff; border: none; padding: 10px 15px; border-radius: 10px; width: fit-content; font-weight: bold; display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; flex-shrink: 0; }
+        .btn-menu { background: #000; color: #fff; border: 3px solid #000; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; cursor: pointer; box-shadow: 4px 4px 0 #000; }
+        .pill { border: 4px solid #000; padding: 10px 20px; border-radius: 50px; font-weight: 900; box-shadow: 4px 4px 0 #000; display: flex; align-items: center; gap: 8px; }
+        .pill.timer { background: #3FB6FF; color: #fff; }
+        .pill.timer.warning { background: #FF5C5C; animation: pulse 0.6s infinite; }
+        .pill.score { background: #FFD32D; color: #000; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .card { background: #fff; border: 6px solid #000; border-radius: 24px; padding: 28px 16px; text-align: center; margin: 16px 0; box-shadow: 10px 10px 0 #000; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #000; position: relative; min-height: 180px; }
+        .card-label { position: absolute; top: -16px; left: 16px; background: #FFD32D; border: 3px solid #000; padding: 4px 12px; font-weight: 900; color: #000; font-size: 11px; }
+        .word-display { font-size: 2.2rem; font-weight: 900; text-transform: uppercase; line-height: 1.1; word-break: break-word; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; flex-shrink: 0; }
+        .btn-action { border: 4px solid #000; padding: 16px; border-radius: 16px; box-shadow: 6px 6px 0 #000; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 1.3rem; }
+        .btn-skip { background: #FF5C5C; color: #fff; }
+        .btn-guess { background: #58E08E; color: #fff; }
+        .menu-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .menu-title { background: #fff; padding: 12px 24px; border: 6px solid #000; box-shadow: 8px 8px 0 #000; transform: rotate(-3deg); margin-bottom: 24px; }
+        .menu-title h1 { font-size: 3rem; font-weight: 950; color: #000; }
+        .btn-main { background: #FFD32D; color: #000; padding: 18px; border: 4px solid #000; border-radius: 16px; font-weight: 900; font-size: 1.2rem; box-shadow: 8px 8px 0 #000; cursor: pointer; }
+        .source-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 24px 0; }
+        .btn-source { background: #fff; border: 6px solid #000; border-radius: 16px; padding: 24px 16px; cursor: pointer; box-shadow: 8px 8px 0 #000; display: flex; flex-direction: column; align-items: center; color: #000; font-weight: 900; text-transform: uppercase; }
+        .btn-category { background: #fff; border: 4px solid #000; border-radius: 12px; padding: 12px 14px; font-weight: 700; color: #000; cursor: pointer; text-align: left; box-shadow: 4px 4px 0 #000; }
+        .btn-category.selected { background: #58E08E; font-weight: 900; }
+        .settings-container { background: #fff; color: #000; border-radius: 16px; padding: 16px; border: 4px solid #000; box-shadow: 8px 8px 0 #000; }
+        .setting-input { width: 100%; padding: 10px; background: #F5F5F5; border: 3px solid #000; border-radius: 10px; font-weight: 600; }
+        .log-item { padding: 10px; border-bottom: 2px solid #ddd; display: flex; justify-content: space-between; font-weight: 800; text-transform: uppercase; }
+        .log-success { color: #2ecc71; }
+        .log-fail { color: #ff4747; }
+        @media (min-width: 768px) {
+            .menu-title h1 { font-size: 5rem; }
+            .word-display { font-size: 4rem; }
+            .source-grid { grid-template-columns: 1fr 1fr; }
+        }
+      `}</style>
+
       {/* МЕНЮ */}
-      <div id="menu-screen" className="container blue">
-        <button className="btn-back-home" onClick={() => window.goToHome()}>← ВЫХОД</button>
-        <div className="menu-content">
-          <div className="menu-title"><h1>ALIAS</h1></div>
-          <p className="menu-subtitle">ОБЪЯСНИ КАК МОЖНО БОЛЬШЕ СЛОВ ЗА 60 СЕКУНД!</p>
-          <button className="btn-main" onClick={() => window.chooseSource()}>ПОЕХАЛИ! 🚀</button>
+      {screen === 'menu' && (
+        <div className="container blue">
+          <button className="btn-back-home" onClick={goToHome}>← ВЫХОД</button>
+          <div className="menu-content">
+            <div className="menu-title"><h1>ALIAS</h1></div>
+            <p style={{ fontWeight: 800, marginBottom: '32px' }}>ОБЪЯСНИ КАК МОЖНО БОЛЬШЕ СЛОВ ЗА {timeInput} СЕКУНД!</p>
+            <button className="btn-main" onClick={() => setScreen('source')}>ПОЕХАЛИ! 🚀</button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ВЫБОР ИСТОЧНИКА */}
-      <div id="source-screen" className="container pink hidden">
-        <button className="btn-back-home" onClick={() => window.backToMenu()}>← НАЗАД</button>
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div className="title-wrapper">
-            <h2 className="title-text">ВЫБЕРИ ИСТОЧНИК</h2>
+      {screen === 'source' && (
+        <div className="container pink">
+          <button className="btn-back-home" onClick={() => setScreen('menu')}>← НАЗАД</button>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px', transform: 'rotate(-2deg)', display: 'inline-block' }}>
+              <h2 style={{ color: '#000', fontWeight: 900 }}>ВЫБЕРИ ИСТОЧНИК</h2>
+            </div>
+          </div>
+          <div className="source-grid">
+            <button className="btn-source" onClick={() => setScreen('bank')}>
+              <div style={{ fontSize: '2.5rem' }}>📚</div> БАНК СЛОВ
+            </button>
+            <button className="btn-source" onClick={chooseCustom}>
+              <div style={{ fontSize: '2.5rem' }}>✏️</div> СВОИ СЛОВА
+            </button>
           </div>
         </div>
-        <div className="source-grid">
-          <button className="btn-source" onClick={() => window.chooseBank()}>
-            <div className="source-icon">📚</div> БАНК СЛОВ
-          </button>
-          <button className="btn-source" onClick={() => window.chooseCustom()}>
-            <div className="source-icon">✏️</div> СВОИ СЛОВА
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* БАНК СЛОВ */}
-      <div id="bank-screen" className="container blue hidden">
-        <button className="btn-back-home" onClick={() => window.backToSource()}>← НАЗАД</button>
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div className="title-wrapper-static">
-            <h2 className="title-text">КАТЕГОРИИ</h2>
+      {screen === 'bank' && (
+        <div className="container blue">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <button className="btn-back-home" style={{ marginBottom: 0 }} onClick={() => setScreen('source')}>← НАЗАД</button>
+            <div style={{ background: '#fff', padding: '8px 20px', border: '6px solid #000', borderRadius: '12px' }}>
+              <h2 style={{ color: '#000', fontWeight: 900 }}>КАТЕГОРИИ</h2>
+            </div>
+            {selectedCategories.size > 0 && (
+              <button className="btn-back-home" style={{ marginBottom: 0 }} onClick={nextAfterCategories}>ДАЛЕЕ →</button>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
+            {Object.keys(WORD_BANKS).map(cat => (
+              <button 
+                key={cat}
+                className={`btn-category ${selectedCategories.has(cat) ? 'selected' : ''}`}
+                onClick={() => toggleCategory(cat)}
+              >
+                {cat === 'animals' && '🐾 Животные'}
+                {cat === 'food' && '🍕 Еда'}
+                {cat === 'movies' && '🎬 Фильмы'}
+                {cat === 'sports' && '⚽ Спорт'}
+                {cat === 'professions' && '👔 Профессии'}
+                {cat === 'countries' && '🌍 Страны'}
+                {cat === 'mixed' && '🎯 Микс'}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="categories-list">
-          <button className="btn-category" onClick={() => window.selectCategory('animals')}>🐾 Животные</button>
-          <button className="btn-category" onClick={() => window.selectCategory('food')}>🍕 Еда</button>
-          <button className="btn-category" onClick={() => window.selectCategory('movies')}>🎬 Фильмы</button>
-          <button className="btn-category" onClick={() => window.selectCategory('sports')}>⚽ Спорт</button>
-          <button className="btn-category" onClick={() => window.selectCategory('professions')}>👔 Профессии</button>
-          <button className="btn-category" onClick={() => window.selectCategory('countries')}>🌍 Страны</button>
-          <button className="btn-category" onClick={() => window.selectCategory('mixed')}>🎯 Микс</button>
-        </div>
-      </div>
+      )}
 
       {/* НАСТРОЙКИ */}
-      <div id="setup-screen" className="container pink hidden">
-        <button className="btn-back-home" onClick={() => window.backToSource()}>← НАЗАД</button>
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div className="title-wrapper-rotated">
-            <h2 className="title-text">НАСТРОЙКИ</h2>
+      {screen === 'setup' && (
+        <div className="container pink">
+          <button className="btn-back-home" onClick={() => setScreen('source')}>← НАЗАД</button>
+          <div className="settings-container">
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>👥 КОМАНДА</label>
+              <input className="setting-input" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
+            </div>
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>🔢 РАУНДОВ</label>
+              <input type="number" className="setting-input" value={roundsInput} onChange={(e) => setRoundsInput(parseInt(e.target.value))} />
+            </div>
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>⏱️ ВРЕМЯ (СЕК)</label>
+              <input type="number" className="setting-input" value={timeInput} onChange={(e) => setTimeInput(parseInt(e.target.value))} />
+            </div>
+            {isCustomMode && (
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '13px' }}>📝 СЛОВА</label>
+                <textarea className="setting-input" style={{ minHeight: '80px' }} value={customWords} onChange={(e) => setCustomWords(e.target.value)} />
+              </div>
+            )}
           </div>
+          <button className="btn-main" style={{ marginTop: '16px' }} onClick={startGame}>СТАРТ 🎮</button>
         </div>
-        <div className="settings-container">
-          <div className="setting-group">
-            <label className="setting-label">👥 КОМАНДА</label>
-            <input id="team-name-input" type="text" className="setting-input" defaultValue="Команда 1" />
-          </div>
-          <div className="setting-group">
-            <label className="setting-label">🔢 РАУНДОВ</label>
-            <input id="rounds-input" type="number" className="setting-input" defaultValue="5" min="1" max="10" />
-          </div>
-          <div className="setting-group">
-            <label className="setting-label">⏱️ ВРЕМЯ (СЕК)</label>
-            <input id="time-input" type="number" className="setting-input" defaultValue="60" min="30" max="180" />
-          </div>
-          <div className="setting-group" id="words-group" style={{ display: 'none' }}>
-            <label className="setting-label">📝 СЛОВА</label>
-            <textarea id="words-input" className="setting-input" style={{ resize: 'vertical', minHeight: '100px' }} defaultValue="Кот,Дом,Любовь,Музыка,Звезда,Танец,Радость,Река,Гора,Книга,Цветок,Небо,Огонь,Вода,Луна,Солнце,Ветер,Дерево,Птица,Рыба" />
-          </div>
-        </div>
-        <button className="btn-main" style={{ width: '100%', marginTop: '20px' }} onClick={() => window.startGame()}>СТАРТ 🎮</button>
-      </div>
+      )}
 
       {/* ИГРА */}
-      <div id="game-screen" className="container pink hidden">
-        <div className="header">
-          <div className="pill timer" id="timer-pill">
-            <span>⏱️</span> <span id="timer-display">60</span>
+      {screen === 'game' && (
+        <div className="container pink">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div className={`pill timer ${timeLeft <= 10 ? 'warning' : ''}`}>
+              <span>⏱️</span> <span>{timeLeft}</span>
+            </div>
+            <div className="pill score">ОЧКИ: {score}</div>
+            <button className="btn-menu" onClick={() => setIsConfirmModalOpen(true)}>МЕНЮ</button>
           </div>
-          <div className="pill score">
-            ОЧКИ: <span id="score-display">0</span>
+          <div className="card">
+            <div className="card-label">СЛОВО:</div>
+            <div className="word-display">{words[currentIndex] || 'ЗАГРУЗКА...'}</div>
+          </div>
+          <div className="btn-grid">
+            <button className="btn-action btn-skip" onClick={handleSkip}>✕</button>
+            <button className="btn-action btn-guess" onClick={handleGuessed}>✓</button>
           </div>
         </div>
-        <div className="card">
-          <div className="card-label">СЛОВО:</div>
-          <div className="word-display" id="word-display">ЗАГРУЗКА...</div>
-        </div>
-        <div className="btn-grid">
-          <button className="btn-action btn-skip" onClick={() => window.skip()}>✕</button>
-          <button className="btn-action btn-guess" onClick={() => window.guessed()}>✓</button>
-        </div>
-      </div>
+      )}
 
       {/* РЕЗУЛЬТАТЫ */}
-      <div id="results-screen" className="container white hidden">
-        <div className="results-header">
-          <div className="results-icon">🏆</div>
-          <h2 className="results-score">ИТОГИ: <span id="final-score">0</span></h2>
+      {screen === 'results' && (
+        <div className="container white">
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <div style={{ fontSize: '2.5rem' }}>🏆</div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 950 }}>ИТОГИ: {score}</h2>
+          </div>
+          <div style={{ flex: 1, border: '4px solid #000', borderRadius: '16px', padding: '10px', background: '#F0F0F0', overflowY: 'auto', marginBottom: '16px' }}>
+            {gameLog.map((item, idx) => (
+              <div key={idx} className="log-item">
+                <span>{item.word}</span>
+                <span className={item.ok ? 'log-success' : 'log-fail'}>{item.ok ? '✓' : '✕'}</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn-main" style={{ width: '100%' }} onClick={backToMenu}>↻ МЕНЮ</button>
+          <button className="btn-back-home" style={{ width: '100%', marginTop: '10px' }} onClick={goToHome}>← ДОМОЙ</button>
         </div>
-        <div className="results-log" id="results-log"></div>
-        <button className="btn-main" style={{ width: '100%' }} onClick={() => window.backToMenu()}> ↻ МЕНЮ </button>
-        <button className="btn-back-home" style={{ width: '100%', marginTop: '10px' }} onClick={() => window.goToHome()}>← ДОМОЙ</button>
-      </div>
+      )}
+
+      {/* МОДАЛЬНОЕ ОКНО */}
+      {isConfirmModalOpen && (
+        <div className="container white" style={{ alignItems: 'center', justifyContent: 'center', z-index: 2000, background: 'rgba(255,255,255,0.8)' }}>
+          <div style={{ background: '#fff', border: '6px solid #000', borderRadius: '20px', padding: '24px', boxShadow: '12px 12px 0 #000', maxWidth: '300px', textAlign: 'center' }}>
+            <h3 style={{ fontWeight: 900, marginBottom: '12px' }}>Выйти в МЕНЮ?</h3>
+            <p style={{ color: '#666', marginBottom: '20px' }}>Текущий результат будет потерян</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button className="btn-main" style={{ background: '#FF5C5C', padding: '14px' }} onClick={backToMenu}>ДА</button>
+              <button className="btn-main" style={{ background: '#58E08E', padding: '14px' }} onClick={() => setIsConfirmModalOpen(false)}>НЕТ</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
