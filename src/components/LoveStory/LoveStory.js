@@ -1,111 +1,291 @@
-import React, { useState } from 'react';
-import './LoveStory.css';
+import React, { useState, useEffect } from 'react';
 import { STORIES } from './LoveData';
+import './LoveStory.css';
 
-export default function LoveStory({ onBack }) {
-  // // Имена сбрасываются при инициализации (каждый раз при входе)
-  const [names, setNames] = useState({ p1: "", p2: "" });
-  const [showSetup, setShowSetup] = useState(true);
-  const [activeStory, setActiveStory] = useState(null);
-  const [stepIdx, setStepIdx] = useState(0);
-
-  // // Сброс данных и выход в главное меню
-  const handleFullExit = () => {
-    setNames({ p1: "", p2: "" });
-    setShowSetup(true);
-    setActiveStory(null);
-    onBack();
-  };
-
-  // // Склонение в родительный падеж (Кого? Чего?)
-  const getGenitive = (name) => {
-    if (!name) return "";
-    let n = name.trim();
-    const last = n.slice(-1).toLowerCase();
-    const prev = n.slice(-2, -1).toLowerCase();
-
-    if (n.toLowerCase().endsWith('ий')) return n.slice(0, -2) + 'ия';
-    if (n.toLowerCase().endsWith('ей')) return n.slice(0, -2) + 'ея';
-    if (last === 'а') return "жчшщгкх".includes(prev) ? n.slice(0, -1) + 'и' : n.slice(0, -1) + 'ы';
-    if (last === 'я') return n.slice(0, -1) + 'и';
-    if ("бвгджзклмнпрстфхцчшщ".includes(last)) return n + 'а';
-    if (last === 'ь') return n.slice(0, -1) + 'я';
-    return n;
-  };
-
-  const formatText = (text) => {
-    return text
-      .replace(/{name1}/g, names.p1)
-      .replace(/{name2}/g, names.p2)
-      .replace(/{name1_gen}/g, getGenitive(names.p1))
-      .replace(/{name2_gen}/g, getGenitive(names.p2));
-  };
-
-  // // ЭКРАН 1: ВВОД ИМЕН (Магический Неоморфизм)
-  if (showSetup) {
-    return (
-      <div className="app-shell" style={{background: '#fff0f3'}}>
-        <div className="npc-block" style={{paddingTop: '60px'}}>
-           <div className="amalia-avatar">🌸</div>
-           <h2 style={{fontFamily: 'Unbounded', fontSize: '1.2rem', textAlign: 'center'}}>КТО ИГРАЕТ?</h2>
-        </div>
-        <div className="clay-box" style={{margin: '30px 20px'}}>
-            <input className="joy-input" placeholder="Имя первого" style={{marginBottom: '10px'}}
-                   value={names.p1} onChange={e => setNames({...names, p1: e.target.value})} />
-            <input className="joy-input" placeholder="Имя второго" style={{marginBottom: '25px'}}
-                   value={names.p2} onChange={e => setNames({...names, p2: e.target.value})} />
-            <button className="btn-clay primary" onClick={() => {
-                if (names.p1.trim() && names.p2.trim()) setShowSetup(false);
-                else alert("Введите имена героев 🌸");
-            }}>ВОЙТИ В ИСТОРИЮ</button>
-            <button onClick={onBack} style={{marginTop: '20px', background: 'none', border: 'none', color: '#ff8fa3', width: '100%', fontWeight: 'bold'}}>НАЗАД</button>
-        </div>
-      </div>
-    );
+// Функция склонения имен в родительный падеж (русская грамматика)
+const getGenitive = (name) => {
+  if (!name) return '';
+  
+  const lastName = name.trim();
+  const lastChar = lastName.slice(-1).toLowerCase();
+  const lastTwo = lastName.slice(-2).toLowerCase();
+  
+  // Правила склонения
+  if (lastChar === 'а' || lastChar === 'я') {
+    // Женские имена на -а/-я: Ольга -> Ольги, Мария -> Марии
+    if (lastChar === 'а') return lastName.slice(0, -1) + 'ы';
+    if (lastChar === 'я') return lastName.slice(0, -1) + 'и';
   }
-
-  // // ЭКРАН 2: ВЫБОР СЮЖЕТА (ЛОББИ)
-  if (!activeStory) {
-    return (
-      <div className="app-shell" style={{background: '#fff0f3', overflowY: 'auto'}}>
-        <div style={{padding: '30px 20px'}}>
-            <button className="btn-mini" onClick={handleFullExit}>✕</button>
-            <h1 style={{fontFamily: 'Unbounded', margin: '25px 0', fontSize: '1.8rem'}}>СЮЖЕТЫ</h1>
-            <div style={{display: 'grid', gap: '20px'}}>
-                {Object.entries(STORIES).map(([id, s]) => (
-                    <div key={id} className="clay-box" onClick={() => {setActiveStory(id); setStepIdx(0);}} style={{cursor: 'pointer'}}>
-                        <h3 style={{fontFamily: 'Unbounded', color: s.color, marginBottom: '5px'}}>{s.title}</h3>
-                        <p style={{fontSize: '0.85rem', opacity: 0.7}}>{s.desc}</p>
-                    </div>
-                ))}
-            </div>
-        </div>
-      </div>
-    );
+  
+  if (lastChar === 'й' || lastChar === 'ь') {
+    // Мужские имена на -й/-ь: Евгений -> Евгения, Игорь -> Игоря
+    return lastName.slice(0, -1) + 'я';
   }
+  
+  // Мужские имена на согласную: Максим -> Максима
+  return lastName + 'а';
+};
 
-  // // ЭКРАН 3: ИГРОВОЙ ПРОЦЕСС
-  const story = STORIES[activeStory];
-  const step = story.steps[stepIdx];
+// Функция замены плейсхолдеров в тексте
+const replacePlaceholders = (text, name1, name2) => {
+  if (!text) return '';
+  return text
+    .replace(/{name1_gen}/g, getGenitive(name1))
+    .replace(/{name2_gen}/g, getGenitive(name2))
+    .replace(/{name1}/g, name1)
+    .replace(/{name2}/g, name2);
+};
+
+function LoveStory() {
+  // Основные состояния
+  const [screen, setScreen] = useState('landing'); // landing | registration | lobby | quest | final
+  const [name1, setName1] = useState('');
+  const [name2, setName2] = useState('');
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [answers, setAnswers] = useState([]);
+
+  // Сброс имён при размонтировании или возврате на главную
+  useEffect(() => {
+    return () => {
+      setName1('');
+      setName2('');
+    };
+  }, []);
+
+  const handleExitToLanding = () => {
+    // Политика Clean Start: полный сброс состояния
+    setScreen('landing');
+    setName1('');
+    setName2('');
+    setSelectedStory(null);
+    setCurrentStepIndex(0);
+    setAnswers([]);
+  };
+
+  const handleStartRegistration = () => {
+    setScreen('registration');
+  };
+
+  const handleRegistrationSubmit = (e) => {
+    e.preventDefault();
+    if (name1.trim() && name2.trim()) {
+      setScreen('lobby');
+    }
+  };
+
+  const handleStorySelect = (storyKey) => {
+    setSelectedStory(storyKey);
+    setCurrentStepIndex(0);
+    setAnswers([]);
+    setScreen('quest');
+  };
+
+  const handleAnswer = (answer) => {
+    setAnswers([...answers, answer]);
+    
+    const story = STORIES[selectedStory];
+    if (currentStepIndex < story.steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    } else {
+      setScreen('final');
+    }
+  };
+
+  const handleRestart = () => {
+    setCurrentStepIndex(0);
+    setAnswers([]);
+    setScreen('lobby');
+  };
+
+  // Получаем текущий шаг
+  const currentStory = selectedStory ? STORIES[selectedStory] : null;
+  const currentStep = currentStory ? currentStory.steps[currentStepIndex] : null;
 
   return (
-    <div className="app-shell" style={{background: story.bg}}>
-      <div className="npc-block" style={{paddingTop: '40px'}}>
-          <div className="amalia-avatar">✨</div>
-          <div style={{fontSize: '0.8rem', fontWeight: 'bold', color: story.color}}>ШАГ {stepIdx + 1} / {story.steps.length}</div>
-      </div>
-      <div className="clay-box" style={{margin: '30px 20px', minHeight: '240px', display: 'flex', alignItems: 'center', textAlign: 'center'}}>
-          <p style={{fontSize: '1.3rem', fontWeight: '700', width: '100%', color: '#4a3a3d'}}>{formatText(step.text)}</p>
-      </div>
-      <div style={{padding: '0 20px'}}>
-          <button className="btn-clay primary" style={{backgroundColor: story.color}} onClick={() => {
-              if (stepIdx < story.steps.length - 1) setStepIdx(stepIdx + 1);
-              else setActiveStory(null);
-          }}>
-              {stepIdx === story.steps.length - 1 ? "ЗАВЕРШИТЬ" : "ДАЛЬШЕ"}
+    <div className="love-story-app">
+      
+      {/* ЭКРАН 1: LANDING (Главная страница) */}
+      {screen === 'landing' && (
+        <div className="screen landing-screen">
+          <div className="amalia-intro">
+            <div className="amalia-avatar">✨</div>
+            <p className="amalia-text">
+              Привет! Я — Амалия, ваш проводник в мир историй для двоих. 
+              Готовы к приключению?
+            </p>
+          </div>
+          
+          <h1 className="main-title">Love Story Online</h1>
+          <p className="subtitle">Интерактивные квесты для пар</p>
+          
+          <button 
+            className="cta-button"
+            onClick={handleStartRegistration}
+          >
+            Начать путешествие
           </button>
-          <button onClick={() => setActiveStory(null)} style={{marginTop: '15px', background: 'none', border: 'none', color: '#888', width: '100%'}}>К выбору истории</button>
-      </div>
+        </div>
+      )}
+
+      {/* ЭКРАН 2: REGISTRATION (Ввод имён) */}
+      {screen === 'registration' && (
+        <div className="screen registration-screen">
+          <button className="back-button" onClick={handleExitToLanding}>
+            ← Назад
+          </button>
+          
+          <div className="amalia-intro">
+            <div className="amalia-avatar">🌸</div>
+            <p className="amalia-text">
+              Давайте знакомиться! Как зовут вас двоих?
+            </p>
+          </div>
+
+          <form className="registration-form" onSubmit={handleRegistrationSubmit}>
+            <div className="input-group">
+              <label>Первый игрок</label>
+              <input
+                type="text"
+                value={name1}
+                onChange={(e) => setName1(e.target.value)}
+                placeholder="Введите имя"
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Второй игрок</label>
+              <input
+                type="text"
+                value={name2}
+                onChange={(e) => setName2(e.target.value)}
+                placeholder="Введите имя"
+                required
+              />
+            </div>
+
+            <button type="submit" className="cta-button">
+              Продолжить
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ЭКРАН 3: LOBBY (Выбор истории) */}
+      {screen === 'lobby' && (
+        <div className="screen lobby-screen">
+          <button className="back-button" onClick={handleExitToLanding}>
+            ← На главную
+          </button>
+
+          <div className="amalia-intro">
+            <div className="amalia-avatar">💖</div>
+            <p className="amalia-text">
+              Отлично, {name1} и {name2}! Выберите вашу историю:
+            </p>
+          </div>
+
+          <div className="stories-grid">
+            {Object.entries(STORIES).map(([key, story]) => (
+              <div 
+                key={key}
+                className="story-card"
+                onClick={() => handleStorySelect(key)}
+              >
+                <div className="story-icon">{story.icon}</div>
+                <h3 className="story-title">{story.title}</h3>
+                <p className="story-description">{story.description}</p>
+                <div className="story-meta">
+                  <span>⏱ {story.duration}</span>
+                  <span>{story.category}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ЭКРАН 4: QUEST (Игровой процесс) */}
+      {screen === 'quest' && currentStep && (
+        <div className="screen quest-screen">
+          <div className="quest-header">
+            <button className="back-button" onClick={handleRestart}>
+              ← К выбору истории
+            </button>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill"
+                style={{ 
+                  width: `${((currentStepIndex + 1) / currentStory.steps.length) * 100}%` 
+                }}
+              />
+            </div>
+            <span className="step-counter">
+              Шаг {currentStepIndex + 1} / {currentStory.steps.length}
+            </span>
+          </div>
+
+          <div className="quest-content">
+            {/* Амалия с нарративом */}
+            <div className="amalia-narration">
+              <div className="amalia-avatar">🌸</div>
+              <div className="narration-text">
+                {replacePlaceholders(currentStep.narration, name1, name2)}
+              </div>
+            </div>
+
+            {/* Вопрос */}
+            <div className="question-card">
+              <h3 className="question-text">
+                {replacePlaceholders(currentStep.question, name1, name2)}
+              </h3>
+
+              <div className="options-list">
+                {currentStep.options.map((option, index) => (
+                  <button
+                    key={index}
+                    className="option-button"
+                    onClick={() => handleAnswer(option)}
+                  >
+                    {replacePlaceholders(option, name1, name2)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ЭКРАН 5: FINAL (Завершение) */}
+      {screen === 'final' && (
+        <div className="screen final-screen">
+          <div className="amalia-intro">
+            <div className="amalia-avatar">✨</div>
+            <p className="amalia-text">
+              Браво, {name1} и {name2}! Вы прошли историю 
+              «{currentStory?.title}». Надеюсь, это было волшебно!
+            </p>
+          </div>
+
+          <div className="final-stats">
+            <h2>Ваше путешествие завершено</h2>
+            <p>Пройдено шагов: {answers.length}</p>
+            <p>История: {currentStory?.title}</p>
+          </div>
+
+          <div className="final-actions">
+            <button className="cta-button" onClick={handleRestart}>
+              Выбрать другую историю
+            </button>
+            <button className="secondary-button" onClick={handleExitToLanding}>
+              Завершить игру
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default LoveStory;
