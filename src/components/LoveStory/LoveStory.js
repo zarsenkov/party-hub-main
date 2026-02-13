@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CATEGORIES, CARDS } from './cardsData';
 
 // // Функция для склонения имен по падежам (сохранена логика оригинала)
-const declineName = (name: string, caseType: string) => {
+const declineName = (name, caseType) => {
   if (!name) return name;
   name = name.trim();
   const lower = name.toLowerCase();
@@ -34,7 +34,7 @@ const declineName = (name: string, caseType: string) => {
 };
 
 // // Функция замены тегов [1:nom] и т.д. на реальные имена с учетом падежа
-const interpolate = (text: string, n1: string, n2: string) => {
+const interpolate = (text, n1, n2) => {
   return text
     .replace(/\[1:nom\]/g, n1).replace(/\[1:gen\]/g, declineName(n1, 'genitive'))
     .replace(/\[1:dat\]/g, declineName(n1, 'dative')).replace(/\[1:inst\]/g, declineName(n1, 'instrumental'))
@@ -49,9 +49,9 @@ const MomentsApp = () => {
   const [loading, setLoading] = useState(true); // Состояние экрана загрузки
   const [screen, setScreen] = useState('names'); // Текущий экран: names, categories, game, favs
   const [names, setNames] = useState({ name1: '', name2: '' }); // Имена игроков
-  const [currentCat, setCurrentCat] = useState<string | null>(null); // Выбранная категория
+  const [currentCat, setCurrentCat] = useState(null); // Выбранная категория (убрали <string | null>)
   const [cardIdx, setCardIdx] = useState(0); // Индекс текущей карточки
-  const [favorites, setFavorites] = useState<any[]>([]); // Список избранного
+  const [favorites, setFavorites] = useState([]); // Список избранного (убрали <any[]>)
 
   // // Эффект для имитации загрузки при старте
   useEffect(() => {
@@ -66,7 +66,7 @@ const MomentsApp = () => {
   };
 
   // // Добавление/удаление из избранного
-  const toggleFav = (card: any) => {
+  const toggleFav = (card) => {
     const text = interpolate(card.text, names.name1, names.name2);
     const exists = favorites.find(f => f.text === text);
     if (exists) {
@@ -203,7 +203,7 @@ const MomentsApp = () => {
   );
 };
 
-// // Стили пастельной темы (CSS-in-JS для простоты переноса)
+// // Стили пастельной темы
 const pastelStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap');
   
@@ -249,17 +249,24 @@ const pastelStyles = `
     font-weight: bold; cursor: pointer; margin-top: 15px;
   }
 
-  .categories-container { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 400px; }
+  .categories-container { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 400px; padding: 20px; margin: 0 auto; }
   .category-card { cursor: pointer; text-align: center; }
   
+  .game-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; width: 100%; }
+  .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   .card-stack { width: 100%; max-width: 360px; min-height: 300px; display: flex; }
   .card { width: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .card-text { font-size: 20px; text-align: center; line-height: 1.6; }
   
   .card-actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 360px; }
   .btn-card { flex: 1; padding: 12px; border-radius: 10px; border: none; background: #ffd9f0; color: #6b5b7a; cursor: pointer; }
+  .btn-card:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  .favorites-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
+  .favorites-list { padding: 20px; overflow-y: auto; }
   .favorite-card { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%; }
   .favorite-remove-btn { border: none; background: #ffd9f0; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+  .empty-favorites { text-align: center; padding: 40px; color: #a89aba; }
 `;
 
 export default MomentsApp;
