@@ -1,149 +1,190 @@
 import React, { useState, useEffect } from 'react';
-// Иконки для атмосферы спецслужб
-import { ShieldAlert, EyeOff, User, Search, ArrowLeft, Clock, Fingerprint } from 'lucide-react';
+import { SPY_LOCATIONS } from './spyData';
 
-const LOCATIONS = ["Орбитальная станция", "Пиратский корабль", "Подводная лодка", "Казино", "Посольство", "База на Марсе", "Цирк", "Отель Гранд"];
+// // Иконка глаза (для скрытия/показа роли)
+const EyeIcon = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
 
-const SpyGame = ({ onBack }) => {
-  const [stage, setStage] = useState('setup'); // setup, distribution, play
-  const [players, setPlayers] = useState(4);
-  const [gameData, setGameData] = useState({ location: '', spyIndex: 0 });
+const SpyGame = () => {
+  const [screen, setScreen] = useState('setup'); // // setup, deal, play
+  const [players, setPlayers] = useState(3);
+  const [spies, setSpies] = useState(1);
+  const [roles, setRoles] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
-  const [isRevealed, setIsRevealed] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [showRole, setShowRole] = useState(false);
+  const [location, setLocation] = useState('');
+  const [timeLeft, setTimeLeft] = useState(300); // // 5 минут на раунд
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // Логика таймера для обсуждения
-  useEffect(() => {
-    let timer = null;
-    if (stage === 'play' && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+  // // Инициализация игры
+  const prepareGame = () => {
+    const loc = SPY_LOCATIONS[Math.floor(Math.random() * SPY_LOCATIONS.length)];
+    setLocation(loc);
+
+    // // Создаем массив ролей
+    let newRoles = new Array(players).fill('player');
+    for (let i = 0; i < spies; i++) {
+      newRoles[i] = 'spy';
     }
-    return () => { if (timer) clearInterval(timer); };
-  }, [stage, timeLeft]);
-
-  // Старт операции
-  // // Рандом локации и выбор "крота"
-  const startOperation = () => {
-    const loc = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
-    const spy = Math.floor(Math.random() * players);
-    setGameData({ location: loc, spyIndex: spy });
+    // // Перемешиваем роли
+    newRoles = newRoles.sort(() => Math.random() - 0.5);
+    
+    setRoles(newRoles);
     setCurrentPlayer(0);
-    setIsRevealed(false);
-    setStage('distribution');
+    setShowRole(false);
+    setScreen('deal');
   };
 
-  const nextAgent = () => {
-    setIsRevealed(false);
-    if (currentPlayer + 1 < players) {
-      setCurrentPlayer(prev => prev + 1);
-    } else {
-      setStage('play');
+  // // Таймер
+  useEffect(() => {
+    let timer;
+    if (isTimerRunning && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    } else if (timeLeft === 0) {
+      setIsTimerRunning(false);
     }
-  };
+    return () => clearInterval(timer);
+  }, [isTimerRunning, timeLeft]);
 
-  const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  return (
+    <div className="spy-root">
+      <style>{spyStyles}</style>
 
-  // --- СТИЛИ (Noir / Top Secret) ---
-  const styles = {
-    container: {
-      position: 'fixed', inset: 0, padding: '20px', display: 'flex', flexDirection: 'column',
-      zIndex: 1000, background: '#0a0a0a', color: '#d1d1d1', fontFamily: '"Courier New", Courier, monospace'
-    },
-    header: { borderBottom: '2px solid #333', paddingBottom: '10px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between' },
-    folder: {
-      flex: 1, border: '1px solid #333', background: '#111', borderRadius: '4px',
-      padding: '20px', position: 'relative', display: 'flex', flexDirection: 'column',
-      boxShadow: 'inset 0 0 50px #000'
-    },
-    stamp: {
-      position: 'absolute', top: '20px', right: '20px', border: '4px solid #8b0000',
-      color: '#8b0000', padding: '5px 15px', fontWeight: 'bold', fontSize: '1.5rem',
-      transform: 'rotate(15deg)', textTransform: 'uppercase', opacity: 0.8
-    },
-    setupBox: { margin: '40px 0', textAlign: 'center' },
-    slider: { width: '100%', margin: '20px 0', accentColor: '#8b0000' },
-    cardArea: {
-      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', border: '1px dashed #444', margin: '20px 0', cursor: 'pointer'
-    },
-    btnSpy: {
-      background: '#8b0000', color: '#fff', border: 'none', padding: '18px',
-      fontSize: '1.1rem', fontWeight: 'bold', letterSpacing: '2px', cursor: 'pointer',
-      boxShadow: '0 0 15px rgba(139, 0, 0, 0.3)'
-    },
-    timerBig: { fontSize: '5rem', textAlign: 'center', color: '#8b0000', margin: '40px 0', textShadow: '0 0 20px rgba(139, 0, 0, 0.5)' }
-  };
+      {/* HEADER */}
+      <header className="spy-header">
+        <button className="back-btn" onClick={() => window.location.reload()}>←</button>
+        <div className="spy-logo">SPY / ШПИОН</div>
+        <div className="empty-box"></div>
+      </header>
 
-  // 1. НАСТРОЙКА
-  if (stage === 'setup') {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span>ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
-          <button onClick={onBack} style={{background: 'none', border: 'none', color: '#666', cursor: 'pointer'}}><ArrowLeft size={18}/></button>
-        </div>
-        <div style={styles.folder}>
-          <div style={styles.stamp}>CONFIDENTIAL</div>
-          <Fingerprint size={60} color="#333" />
-          <h1 style={{fontSize: '2rem', margin: '20px 0'}}>PROJECT: SPY</h1>
-          <div style={styles.setupBox}>
-            <p style={{fontSize: '1.2rem'}}>КОЛИЧЕСТВО АГЕНТОВ:</p>
-            <div style={{fontSize: '3rem', fontWeight: 'bold', color: '#fff'}}>{players}</div>
-            <input type="range" min="3" max="12" value={players} onChange={(e) => setPlayers(Number(e.target.value))} style={styles.slider} />
+      <main className="spy-main">
+        {/* ЭКРАН НАСТРОЕК */}
+        {screen === 'setup' && (
+          <div className="view fade-in">
+            <h1 className="spy-title">Настройка</h1>
+            <div className="setting-card">
+              <label>Игроков: {players}</label>
+              <input type="range" min="3" max="12" value={players} onChange={(e) => setPlayers(parseInt(e.target.value))} />
+            </div>
+            <div className="setting-card">
+              <label>Шпионов: {spies}</label>
+              <input type="range" min="1" max="3" value={spies} onChange={(e) => setSpies(parseInt(e.target.value))} />
+            </div>
+            <button className="btn-spy-main" onClick={prepareGame}>РАЗДАТЬ РОЛИ</button>
           </div>
-          <button style={{...styles.btnSpy, marginTop: 'auto'}} onClick={startOperation}>НАЧАТЬ ИНСТРУКТАЖ</button>
-        </div>
-      </div>
-    );
-  }
+        )}
 
-  // 2. РАСПРЕДЕЛЕНИЕ РОЛЕЙ
-  if (stage === 'distribution') {
-    const isSpy = currentPlayer === gameData.spyIndex;
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}><span>AGENT {currentPlayer + 1} OF {players}</span></div>
-        <div style={styles.folder}>
-          <div style={styles.cardArea} onClick={() => setIsRevealed(!isRevealed)}>
-            {!isRevealed ? (
-              <>
-                <EyeOff size={64} color="#444" />
-                <p style={{marginTop: '20px', color: '#666'}}>НАЖМИТЕ ДЛЯ СКАНИРОВАНИЯ</p>
-              </>
-            ) : (
-              <div style={{textAlign: 'center'}}>
-                {isSpy ? <Search size={80} color="#8b0000" /> : <User size={80} color="#fff" />}
-                <h2 style={{fontSize: '2rem', margin: '20px 0'}}>{isSpy ? 'ВЫ ШПИОН' : 'ЛОКАЦИЯ'}</h2>
-                {!isSpy && <h3 style={{background: '#fff', color: '#000', padding: '10px 20px'}}>{gameData.location}</h3>}
-                <p style={{marginTop: '20px', color: '#8b0000'}}>ЗАПОМНИТЕ И СКРОЙТЕ</p>
-              </div>
+        {/* ЭКРАН РАЗДАЧИ (ПЕРЕДАЧА ТЕЛЕФОНА) */}
+        {screen === 'deal' && (
+          <div className="view fade-in">
+            <div className="player-indicator">Игрок {currentPlayer + 1}</div>
+            
+            <div className={`role-card ${showRole ? 'flipped' : ''}`} onClick={() => setShowRole(!showRole)}>
+              {!showRole ? (
+                <div className="card-face front">
+                  <EyeIcon />
+                  <p>Нажми, чтобы узнать роль</p>
+                </div>
+              ) : (
+                <div className="card-face back">
+                  <div className="role-type">{roles[currentPlayer] === 'spy' ? 'ТЫ ШПИОН 🕵️' : 'ТЫ В ИГРЕ ✅'}</div>
+                  <div className="role-loc">{roles[currentPlayer] === 'spy' ? 'Узнай локацию у других' : `Локация: ${location}`}</div>
+                  <p className="tap-hint">Нажми еще раз, чтобы скрыть</p>
+                </div>
+              )}
+            </div>
+
+            {!showRole && (
+              <button className="btn-spy-next" onClick={() => {
+                if (currentPlayer + 1 < players) {
+                  setCurrentPlayer(currentPlayer + 1);
+                } else {
+                  setScreen('play');
+                  setIsTimerRunning(true);
+                }
+              }}>
+                {currentPlayer + 1 < players ? 'СЛЕДУЮЩИЙ ИГРОК' : 'НАЧАТЬ ОБСУЖДЕНИЕ'}
+              </button>
             )}
           </div>
-          {isRevealed && (
-            <button style={styles.btnSpy} onClick={nextAgent}>
-              {currentPlayer + 1 < players ? 'СЛЕДУЮЩИЙ АГЕНТ' : 'ЗАВЕРШИТЬ ИНСТРУКТАЖ'}
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
+        )}
 
-  // 3. ИГРА (ТАЙМЕР)
-  return (
-    <div style={styles.container}>
-      <div style={styles.header}><span>STATUS: ACTIVE</span> <Clock size={18}/></div>
-      <div style={styles.folder}>
-        <h2 style={{textAlign: 'center', color: '#666'}}>ВРЕМЯ ДО ВЫЧИСЛЕНИЯ:</h2>
-        <div style={styles.timerBig}>{formatTime(timeLeft)}</div>
-        <p style={{textAlign: 'center', lineHeight: '1.6', fontSize: '0.9rem'}}>
-          ШПИОН ДОЛЖЕН УЗНАТЬ ЛОКАЦИЮ, ЗАДАВАЯ ВОПРОСЫ.<br/>
-          АГЕНТЫ ДОЛЖНЫ ВЫЯВИТЬ ШПИОНА.
-        </p>
-        <button style={{...styles.btnSpy, background: '#333', marginTop: 'auto'}} onClick={() => setStage('setup')}>ПРЕРВАТЬ ОПЕРАЦИЮ</button>
-      </div>
+        {/* ЭКРАН ИГРЫ (ТАЙМЕР) */}
+        {screen === 'play' && (
+          <div className="view fade-in">
+            <div className="timer-display ${timeLeft < 30 ? 'danger' : ''}">
+              {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+            </div>
+            <p className="play-hint">Шпион должен вычислить локацию, а игроки — шпиона.</p>
+            <div className="play-actions">
+               <button className="btn-spy-main" onClick={() => setIsTimerRunning(!isTimerRunning)}>
+                 {isTimerRunning ? 'ПАУЗА' : 'ПУСК'}
+               </button>
+               <button className="btn-spy-outline" onClick={() => setScreen('setup')}>ЗАКОНЧИТЬ</button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };
+
+// // СТИЛИ В ТВОЕМ НОВОМ СТИЛЕ
+const spyStyles = `
+  .spy-root {
+    position: fixed; inset: 0;
+    background: #0F0C29; color: #fff;
+    font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column;
+  }
+  .spy-header {
+    height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+  }
+  .spy-logo { font-weight: 900; letter-spacing: 2px; font-size: 0.9rem; color: #E94560; }
+  
+  .spy-main { flex: 1; display: flex; flex-direction: column; padding: 25px; }
+  .view { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+  .spy-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 30px; text-transform: uppercase; }
+  
+  .setting-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; margin-bottom: 20px; }
+  .setting-card label { display: block; margin-bottom: 10px; font-weight: 700; opacity: 0.7; }
+  
+  input[type=range] { width: 100%; accent-color: #E94560; }
+
+  .btn-spy-main {
+    background: #E94560; color: white; border: none; padding: 22px; border-radius: 18px;
+    font-weight: 900; font-size: 1.1rem; cursor: pointer; box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+  }
+
+  .player-indicator { text-align: center; font-size: 1.5rem; font-weight: 900; margin-bottom: 20px; color: #E94560; }
+
+  /* КАРТОЧКА РОЛИ */
+  .role-card {
+    background: #fff; color: #0F0C29; border-radius: 30px; min-height: 50vh;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 30px; cursor: pointer; margin-bottom: 20px;
+    transition: 0.6s transform; transform-style: preserve-3d;
+  }
+  .role-type { font-size: 2rem; font-weight: 900; margin-bottom: 15px; }
+  .role-loc { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-style: italic; }
+  .tap-hint { margin-top: 30px; font-size: 0.8rem; opacity: 0.4; font-weight: 700; }
+
+  .btn-spy-next {
+    background: white; color: #0F0C29; border: none; padding: 20px; border-radius: 15px; font-weight: 900;
+  }
+
+  .timer-display { font-size: 6rem; font-weight: 900; text-align: center; margin-bottom: 20px; }
+  .timer-display.danger { color: #E94560; animation: pulse 1s infinite; }
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+  .play-actions { display: flex; flex-direction: column; gap: 15px; }
+  .btn-spy-outline { background: none; border: 2px solid rgba(255,255,255,0.2); color: white; padding: 20px; border-radius: 15px; font-weight: 900; }
+
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+`;
 
 export default SpyGame;
