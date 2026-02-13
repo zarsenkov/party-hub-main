@@ -1,267 +1,202 @@
 import React, { useState, useEffect } from 'react';
 import { CATEGORIES, CARDS } from './cardsData';
 
-// // Иконки вместо эмодзи
-const HeartIcon = ({ filled }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? "#ff88cc" : "none"} stroke="#ff88cc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+// // Уникальная иконка сердца (Neon Pulse)
+const FavIcon = ({ active }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? "#ff4d94" : "none"} style={{ filter: active ? 'drop-shadow(0 0 5px #ff4d94)' : 'none', transition: 'all 0.3s' }}>
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke={active ? "#ff4d94" : "#6b5b7a"} strokeWidth="1.5" />
   </svg>
 );
 
-const ChevronLeft = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6"></polyline>
-  </svg>
-);
-
-const ExternalLinkIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-    <polyline points="15 3 21 3 21 9"></polyline>
-    <line x1="10" y1="14" x2="21" y2="3"></line>
+// // Иконка выхода (Minimal Arrow)
+const ExitIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
   </svg>
 );
 
 const MomentsApp = () => {
-  // // --- СОСТОЯНИЕ (из твоего кода) ---
-  const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState('names');
   const [names, setNames] = useState({ name1: '', name2: '' });
   const [currentCat, setCurrentCat] = useState(null);
-  const [cardIdx, setCardIdx] = useState(0);
-  const [favorites, setFavorites] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [favs, setFavs] = useState([]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // // --- ЛОГИКА СКЛОНЕНИЯ ---
-  const declineName = (name, caseType) => {
-    if (!name) return name;
-    name = name.trim();
-    const lower = name.toLowerCase();
-    const last = lower.slice(-1);
-    if (last === 'я') {
-      switch (caseType) {
-        case 'genitive': return name.slice(0, -1) + 'и';
-        case 'dative': return name.slice(0, -1) + 'е';
-        case 'instrumental': return name.slice(0, -1) + 'й';
-        case 'prepositional': return name.slice(0, -1) + 'е';
-        default: return name;
-      }
-    }
-    if (last === 'й' || /^[б-зк-нтф-щ]$/.test(last)) {
-      if (lower.endsWith('еня') || lower.endsWith('ня')) return name.slice(0, -1) + (caseType === 'genitive' ? 'и' : 'е');
-      switch (caseType) {
-        case 'genitive': return name + 'а';
-        case 'dative': return name + 'у';
-        case 'instrumental': return name + 'ом';
-        case 'prepositional': return name + 'е';
-        default: return name;
-      }
-    }
-    return name;
+  // // Логика склонения
+  const decline = (n, t) => {
+    if (!n) return ''; n = n.trim(); const l = n.toLowerCase(); const s = l.slice(-1);
+    if (s === 'я') return t === 'gen' ? n.slice(0, -1) + 'и' : t === 'dat' ? n.slice(0, -1) + 'е' : n;
+    if (/[б-зк-нтф-щй]/.test(s)) return t === 'gen' ? n + 'а' : t === 'dat' ? n + 'у' : n;
+    return n;
   };
 
-  const interpolate = (text) => {
-    return text
-      .replace(/\[1:nom\]/g, names.name1).replace(/\[1:gen\]/g, declineName(names.name1, 'genitive'))
-      .replace(/\[1:dat\]/g, declineName(names.name1, 'dative')).replace(/\[1:inst\]/g, declineName(names.name1, 'instrumental'))
-      .replace(/\[1:prep\]/g, declineName(names.name1, 'prepositional'))
-      .replace(/\[2:nom\]/g, names.name2).replace(/\[2:gen\]/g, declineName(names.name2, 'genitive'))
-      .replace(/\[2:dat\]/g, declineName(names.name2, 'dative')).replace(/\[2:inst\]/g, declineName(names.name2, 'instrumental'))
-      .replace(/\[2:prep\]/g, declineName(names.name2, 'prepositional'));
+  const parse = (txt) => {
+    return txt
+      .replace(/\[1:nom\]/g, names.name1).replace(/\[1:gen\]/g, decline(names.name1, 'gen')).replace(/\[1:dat\]/g, decline(names.name1, 'dat'))
+      .replace(/\[2:nom\]/g, names.name2).replace(/\[2:gen\]/g, decline(names.name2, 'gen')).replace(/\[2:dat\]/g, decline(names.name2, 'dat'));
   };
 
-  // // --- ДЕЙСТВИЯ ---
-  const toggleFav = (card) => {
-    const text = interpolate(card.text);
-    const exists = favorites.find(f => f.text === text);
-    if (exists) {
-      setFavorites(favorites.filter(f => f.text !== text));
-    } else {
-      setFavorites([...favorites, { text, category: currentCat }]);
-    }
+  const handleFav = (card) => {
+    const t = parse(card.text);
+    favs.includes(t) ? setFavs(favs.filter(f => f !== t)) : setFavs([...favs, t]);
   };
 
   return (
-    <div className="app-wrapper">
-      <style>{globalStyles}</style>
+    <div className="moments-root">
+      <style>{customUI}</style>
 
-      {/* ЭКРАН ЗАГРУЗКИ */}
-      {loading && (
-        <div className="loading-screen">
-          <div className="loading-emoji">💭</div>
-          <div className="loading-text">Создаём моменты...</div>
+      {/* FIXED NAV */}
+      <nav className="top-nav">
+        <a href="https://lovecouple.ru" className="nav-exit"><ExitIcon /></a>
+        <div className="nav-logo">MOMENTS</div>
+        <div className="nav-fav-count" onClick={() => setScreen('favs')}>
+          <FavIcon active={favs.length > 0} />
+          <span>{favs.length}</span>
         </div>
-      )}
+      </nav>
 
-      {/* ШАПКА */}
-      <div className="header">
-        <a href="https://lovecouple.ru" className="back-to-landing">
-          <ExternalLinkIcon /> <span>LoveCouple.ru</span>
-        </a>
-        <h1>MOMENTS</h1>
-        <div className="header-subtitle">Для вас двоих 💕</div>
-      </div>
-
-      <div className="content">
-        {/* ЭКРАН ИМЕН */}
+      <main className="main-stage">
         {screen === 'names' && (
-          <div className="screen active screen-names">
-            <div className="names-card">
-              <div className="names-title">Привет! 👋</div>
-              <div className="names-subtitle">Скажи свои имена</div>
-              <div className="input-group">
-                <label className="input-label">Твоё имя</label>
-                <input type="text" className="input-field" value={names.name1} onChange={e => setNames({...names, name1: e.target.value})} placeholder="Оля" />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Имя партнёра</label>
-                <input type="text" className="input-field" value={names.name2} onChange={e => setNames({...names, name2: e.target.value})} placeholder="Женя" />
-              </div>
-              <button className="btn-primary" onClick={() => (names.name1 && names.name2) ? setScreen('categories') : alert('Введите оба имени')}>ПОЕХАЛИ! 🚀</button>
+          <section className="view-names">
+            <h2 className="title-huge">First,<br/>Your Names</h2>
+            <div className="input-glass-group">
+              <input type="text" placeholder="Your Name" value={names.name1} onChange={e => setNames({...names, name1: e.target.value})} />
+              <input type="text" placeholder="Partner's Name" value={names.name2} onChange={e => setNames({...names, name2: e.target.value})} />
             </div>
-          </div>
+            <button className="btn-glow" onClick={() => names.name1 && names.name2 ? setScreen('cats') : null}>
+              Create Magic
+            </button>
+          </section>
         )}
 
-        {/* ЭКРАН КАТЕГОРИЙ */}
-        {screen === 'categories' && (
-          <div className="screen active screen-categories">
-            <div className="categories-container">
-              {CATEGORIES.map(cat => (
-                <div key={cat.id} className="category-card" onClick={() => { setCurrentCat(cat.id); setCardIdx(0); setScreen('game'); }}>
-                  <div className="category-emoji">{cat.emoji}</div>
-                  <div className="category-name">{cat.name}</div>
-                  <div className="category-desc">{cat.description}</div>
+        {screen === 'cats' && (
+          <section className="view-cats">
+            <p className="subtitle">Choose your mood</p>
+            <div className="cats-stack">
+              {CATEGORIES.map(c => (
+                <div key={c.id} className="cat-plate" onClick={() => { setCurrentCat(c.id); setIdx(0); setScreen('game'); }}>
+                  <span className="cat-icon">{c.emoji}</span>
+                  <div className="cat-info">
+                    <h3>{c.name}</h3>
+                    <p>{c.desc}</p>
+                  </div>
                 </div>
               ))}
-              <div className="category-card" onClick={() => setScreen('favs')}>
-                <div className="category-emoji">💗</div>
-                <div className="category-name">Избранное</div>
-                <div className="category-desc">{favorites.length} карточек</div>
-              </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ЭКРАН ИГРЫ */}
         {screen === 'game' && currentCat && (
-          <div className="screen active screen-game">
-            <div className="game-header">
-              <div className="game-title">{CATEGORIES.find(c => c.id === currentCat)?.name}</div>
-              <button className="game-back-btn" onClick={() => setScreen('categories')}>
-                <ChevronLeft /> Назад
-              </button>
-            </div>
-            <div className="game-container">
-              <div className="card-stack">
-                <div className="card">
-                  <div className="card-header">
-                    <div className="card-type">
-                      {CARDS[currentCat][cardIdx].type === 'question' ? '❓ Вопрос' : '⚡ Действие'}
-                    </div>
-                    <button className="card-favorite-btn" onClick={() => toggleFav(CARDS[currentCat][cardIdx])}>
-                       <HeartIcon filled={favorites.some(f => f.text === interpolate(CARDS[currentCat][cardIdx].text))} />
-                    </button>
-                  </div>
-                  <div className="card-content">
-                    <div className="card-text">{interpolate(CARDS[currentCat][cardIdx].text)}</div>
-                  </div>
+          <section className="view-game">
+             <div className="game-card-container">
+                <div className="card-top-bar">
+                   <span className="card-label">{CARDS[currentCat][idx].type}</span>
+                   <button onClick={() => handleFav(CARDS[currentCat][idx])} className="btn-icon">
+                      <FavIcon active={favs.includes(parse(CARDS[currentCat][idx].text))} />
+                   </button>
                 </div>
-              </div>
-              <div className="card-actions">
-                <button className="btn-card" disabled={cardIdx === 0} onClick={() => setCardIdx(cardIdx - 1)}>← Назад</button>
-                <button className="btn-card" onClick={() => setCardIdx((cardIdx + 1) % CARDS[currentCat].length)}>Далее →</button>
-              </div>
-            </div>
-          </div>
+                <div className="card-body-text">{parse(CARDS[currentCat][idx].text)}</div>
+                <div className="card-footer">
+                   <button className="btn-text" onClick={() => setScreen('cats')}>Back to mood</button>
+                   <button className="btn-next-step" onClick={() => setIdx((idx + 1) % CARDS[currentCat].length)}>Next Card</button>
+                </div>
+             </div>
+          </section>
         )}
 
-        {/* ЭКРАН ИЗБРАННОГО */}
         {screen === 'favs' && (
-          <div className="screen active screen-favorites">
-            <div className="favorites-header">
-              <div className="favorites-title">💗 Избранное</div>
-              <button className="game-back-btn-favorites" onClick={() => setScreen('categories')}>
-                <ChevronLeft /> Назад
-              </button>
-            </div>
-            <div className="favorites-list">
-              {favorites.length === 0 ? (
-                <div className="empty-favorites">
-                  <span className="empty-favorites-emoji">💭</span>
-                  Здесь ещё нет избранных карточек
-                </div>
-              ) : (
-                favorites.map((fav, i) => (
-                  <div key={i} className="favorite-card">
-                    <div className="favorite-card-content">
-                      <div className="favorite-card-text">{fav.text}</div>
-                      <div className="favorite-card-category">{fav.category}</div>
-                    </div>
-                    <button className="favorite-remove-btn" onClick={() => setFavorites(favorites.filter((_, idx) => idx !== i))}>✕</button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <section className="view-favs">
+             <h2 className="title-small">Saved Moments</h2>
+             <div className="favs-list">
+                {favs.map((f, i) => <div key={i} className="fav-item">{f}</div>)}
+                {favs.length === 0 && <p className="empty">No favorites yet...</p>}
+             </div>
+             <button className="btn-text" onClick={() => setScreen('cats')}>Back</button>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   );
 };
 
-// // CSS (полностью из твоего HTML + фикс кнопки на лендинг)
-const globalStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap');
+// // УНИКАЛЬНЫЙ ДИЗАЙН (Ambient UI)
+const customUI = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap');
 
-  .app-wrapper { height: 100vh; display: flex; flex-direction: column; background: linear-gradient(135deg, #fde4f0 0%, #e8d5f2 50%, #d5e8f7 100%); font-family: 'Quicksand', sans-serif; }
-  
-  .back-to-landing {
-    position: absolute; left: 20px; top: 38px;
-    display: flex; align-items: center; gap: 6px;
-    text-decoration: none; color: #b88fbf; font-size: 12px; font-weight: 700;
-    background: rgba(255, 255, 255, 0.4); padding: 6px 12px; border-radius: 20px;
-    transition: all 0.2s;
+  :root {
+    --bg: #f8f4f9;
+    --accent: #ff4d94;
+    --text: #2d232e;
+    --glass: rgba(255, 255, 255, 0.6);
   }
-  .back-to-landing:hover { background: rgba(255, 255, 255, 0.8); }
 
-  .loading-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #fde4f0 0%, #e8d5f2 50%, #d5e8f7 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-  .loading-emoji { font-size: 80px; animation: subtleFloat 3s ease-in-out infinite; }
-  @keyframes subtleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+  .moments-root {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    padding: 20px;
+    background-image: radial-gradient(circle at 10% 20%, rgba(255, 136, 204, 0.1) 0%, transparent 40%),
+                      radial-gradient(circle at 90% 80%, rgba(184, 143, 191, 0.1) 0%, transparent 40%);
+  }
 
-  .header { padding: 32px 20px; text-align: center; position: relative; }
-  .header h1 { font-size: 42px; font-weight: 700; background: linear-gradient(135deg, #ff88cc, #b88fbf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .top-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 10px; margin-bottom: 40px;
+  }
+  .nav-logo { font-weight: 800; letter-spacing: -1px; font-size: 1.2rem; }
+  .nav-exit, .nav-fav-count { cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none;}
+
+  .title-huge { font-size: 3.5rem; line-height: 0.9; font-weight: 800; margin-bottom: 40px; letter-spacing: -2px; }
+
+  /* СТИЛЬ ИНПУТОВ */
+  .input-glass-group input {
+    width: 100%; background: var(--glass); border: 2px solid transparent;
+    padding: 20px; border-radius: 20px; margin-bottom: 15px;
+    font-family: inherit; font-size: 1.1rem; transition: 0.3s;
+    backdrop-filter: blur(10px);
+  }
+  .input-glass-group input:focus { border-color: var(--accent); outline: none; background: #fff; }
+
+  /* КНОПКА-ГЛОУ */
+  .btn-glow {
+    background: var(--text); color: #fff; border: none; padding: 20px 40px;
+    border-radius: 50px; font-weight: 700; font-size: 1rem; cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s;
+  }
+  .btn-glow:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 77, 148, 0.3); }
+
+  /* КАРТОЧКИ КАТЕГОРИЙ */
+  .cats-stack { display: flex; flex-direction: column; gap: 15px; }
+  .cat-plate {
+    background: #fff; padding: 25px; border-radius: 30px;
+    display: flex; align-items: center; gap: 20px;
+    transition: 0.3s; cursor: pointer; border: 1px solid rgba(0,0,0,0.03);
+  }
+  .cat-plate:hover { transform: scale(1.02); background: var(--accent); color: #fff; }
+  .cat-icon { font-size: 2rem; }
+  .cat-info h3 { margin: 0; font-size: 1.2rem; }
+  .cat-info p { margin: 5px 0 0; font-size: 0.8rem; opacity: 0.7; }
+
+  /* ЭКРАН ИГРЫ */
+  .game-card-container {
+    background: #fff; border-radius: 40px; padding: 40px; min-height: 450px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+  }
+  .card-label { text-transform: uppercase; font-size: 0.7rem; font-weight: 800; letter-spacing: 2px; opacity: 0.4; }
+  .card-body-text { font-size: 2rem; font-weight: 700; line-height: 1.2; margin: 40px 0; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; }
   
-  .screen { display: none; flex: 1; flex-direction: column; padding: 24px; }
-  .screen.active { display: flex; }
-  .screen-names { justify-content: center; align-items: center; }
+  .btn-next-step {
+    background: var(--accent); color: #fff; border: none; padding: 15px 30px;
+    border-radius: 20px; font-weight: 700; cursor: pointer;
+  }
+  .btn-text { background: none; border: none; font-weight: 700; color: var(--text); cursor: pointer; opacity: 0.5; }
+  .btn-text:hover { opacity: 1; }
+  .btn-icon { background: none; border: none; cursor: pointer; }
 
-  .names-card { background: linear-gradient(135deg, #fce9f3 0%, #f0e9fc 100%); border-radius: 28px; padding: 40px 32px; width: 100%; max-width: 380px; box-shadow: 0 8px 32px rgba(255, 136, 204, 0.15); }
-  .names-title { font-size: 32px; font-weight: 700; text-align: center; background: linear-gradient(135deg, #ff88cc, #d97ba8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  
-  .input-field { width: 100%; padding: 14px 18px; border-radius: 16px; border: 1px solid rgba(255, 136, 204, 0.2); background: white; margin-bottom: 20px; }
-  .btn-primary { width: 100%; padding: 16px; background: linear-gradient(135deg, #ff88cc, #ff99d8); color: white; border: none; border-radius: 16px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-
-  .categories-container { display: grid; gap: 14px; width: 100%; max-width: 400px; margin: 0 auto; }
-  .category-card { background: white; border-radius: 20px; padding: 24px; text-align: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
-
-  .game-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; }
-  .game-back-btn { display: flex; align-items: center; gap: 4px; border: none; background: rgba(255,255,255,0.5); padding: 8px 12px; border-radius: 12px; cursor: pointer; color: #6b5b7a; font-weight: 600; }
-
-  .card { background: white; border-radius: 24px; padding: 28px; height: 340px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 12px 32px rgba(255,136,204,0.15); }
-  .card-type { font-size: 10px; background: #fce9f3; padding: 6px 12px; border-radius: 10px; font-weight: 700; }
-  .card-favorite-btn { background: none; border: none; cursor: pointer; }
-  .card-text { font-size: 18px; text-align: center; line-height: 1.6; }
-
-  .card-actions { display: flex; gap: 12px; margin-top: 20px; }
-  .btn-card { flex: 1; padding: 14px; border-radius: 12px; border: none; background: white; cursor: pointer; font-weight: 600; }
-  .btn-card:disabled { opacity: 0.5; }
-
-  .favorite-card { background: white; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .favorite-remove-btn { border: none; background: #ffd9f0; padding: 8px; border-radius: 10px; cursor: pointer; }
+  .fav-item { background: #fff; padding: 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; }
 `;
 
 export default MomentsApp;
