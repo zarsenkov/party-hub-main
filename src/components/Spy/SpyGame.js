@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { SPY_LOCATIONS } from './spyData';
 
-// // Игра "Шпион" в стиле "Доска расследования"
+// // Компонент игры "Шпион" с читабельным дизайном "Доска расследований"
 const SpyGame = () => {
   const [screen, setScreen] = useState('setup'); 
-  const [players, setPlayers] = useState(3);
+  const [players, setPlayers] = useState(4);
   const [spies, setSpies] = useState(1);
   const [roles, setRoles] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
@@ -12,10 +12,10 @@ const SpyGame = () => {
   const [timeLeft, setTimeLeft] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // // Ссылка на главную
+  // // Ссылка на главную LoveCouple
   const goHome = () => window.location.href = 'https://lovecouple.ru';
 
-  // // Начало операции
+  // // Логика подготовки раунда
   const prepareGame = () => {
     const loc = SPY_LOCATIONS[Math.floor(Math.random() * SPY_LOCATIONS.length)];
     setLocation(loc);
@@ -26,6 +26,7 @@ const SpyGame = () => {
     setScreen('transit');
   };
 
+  // // Работа таймера
   useEffect(() => {
     let timer;
     if (isTimerRunning && timeLeft > 0) {
@@ -35,83 +36,79 @@ const SpyGame = () => {
   }, [isTimerRunning, timeLeft]);
 
   return (
-    <div className="investigation-root">
+    <div className="board-root">
       <style>{boardStyles}</style>
 
-      <button className="back-to-hq" onClick={goHome}>← В ШТАБ</button>
+      {/* Кнопка назад */}
+      <button className="nav-back" onClick={goHome}>← В МЕНЮ</button>
 
-      {/* ЭКРАН 1: СБОР УЛИК (НАСТРОЙКИ) */}
+      {/* 1. НАСТРОЙКИ */}
       {screen === 'setup' && (
-        <div className="board-view fade-in">
-          <div className="polaroid setup-photo">
-            <div className="photo-area">
-              <h2>КТО ПОД ПОДОЗРЕНИЕМ?</h2>
-            </div>
-            <div className="photo-desc">
-              <div className="row">
-                <span>ПОДОЗРЕВАЕМЫЕ:</span>
-                <div className="counter">
+        <div className="view fade-in">
+          <div className="polaroid setup-card">
+            <h2 className="stamp-title">ДЕЛО №2026</h2>
+            <div className="setup-rows">
+              <div className="setup-item">
+                <label>УЧАСТНИКИ</label>
+                <div className="counter-box">
                   <button onClick={() => setPlayers(Math.max(3, players - 1))}>–</button>
-                  <b>{players}</b>
+                  <span>{players}</span>
                   <button onClick={() => setPlayers(Math.min(12, players + 1))}>+</button>
                 </div>
               </div>
-              <div className="row">
-                <span>ШПИОНЫ (КРОТЫ):</span>
-                <div className="counter">
+              <div className="setup-item">
+                <label>ШПИОНЫ</label>
+                <div className="counter-box red">
                   <button onClick={() => setSpies(Math.max(1, spies - 1))}>–</button>
-                  <b className="spy-red">{spies}</b>
+                  <span>{spies}</span>
                   <button onClick={() => setSpies(Math.min(3, spies + 1))}>+</button>
                 </div>
               </div>
             </div>
           </div>
-          <button className="pin-button" onClick={prepareGame}>НАЧАТЬ ПОИСК</button>
+          <button className="main-action-btn" onClick={prepareGame}>НАЧАТЬ ПОИСК</button>
         </div>
       )}
 
-      {/* ЭКРАН 2: ТРАНЗИТ (ПЕРЕДАЧА) */}
+      {/* 2. ТРАНЗИТ */}
       {screen === 'transit' && (
-        <div className="board-view transit-view fade-in">
+        <div className="view fade-in">
           <div className="sticky-note">
-            <div className="pin red"></div>
-            <div className="note-content">
-              <h3>СЛЕДУЮЩИЙ АГЕНТ:</h3>
-              <div className="agent-number">№{currentPlayer + 1}</div>
-              <p>Возьми устройство и нажми на кнопку ниже.</p>
+            <div className="pin-head"></div>
+            <div className="note-body">
+              <p>СЛЕДУЮЩИЙ</p>
+              <h3>АГЕНТ #{currentPlayer + 1}</h3>
+              <div className="divider"></div>
+              <p className="small">Убедись, что никто не подглядывает</p>
             </div>
           </div>
-          <button className="pin-button" onClick={() => setScreen('role')}>ПОСМОТРЕТЬ ФАЙЛ</button>
+          <button className="main-action-btn" onClick={() => setScreen('role')}>УЗНАТЬ РОЛЬ</button>
         </div>
       )}
 
-      {/* ЭКРАН 3: УЛИКА (РОЛЬ) */}
+      {/* 3. ПРОСМОТР РОЛИ */}
       {screen === 'role' && (
-        <div className="board-view fade-in">
-          <div className="polaroid role-photo">
-            <div className="photo-area bg-dark">
-              {roles[currentPlayer] === 'spy' ? (
-                <div className="spy-mark">?</div>
-              ) : (
-                <div className="loc-mark">📍</div>
-              )}
+        <div className="view fade-in">
+          <div className="polaroid role-card">
+            <div className="photo-placeholder">
+              {roles[currentPlayer] === 'spy' ? '🕵️' : '📍'}
             </div>
-            <div className="photo-desc">
+            <div className="role-details">
               {roles[currentPlayer] === 'spy' ? (
-                <div className="role-text">
-                  <h3 className="red-stamp">ШПИОН</h3>
-                  <p>Твоя цель: Узнать локацию по разговорам.</p>
+                <div className="spy-info">
+                  <h3 className="red-label">ТЫ ШПИОН</h3>
+                  <p>Твоя задача — слушать и угадать место, не выдав себя.</p>
                 </div>
               ) : (
-                <div className="role-text">
-                  <h3 className="blue-stamp">АГЕНТ</h3>
-                  <p>ОБЪЕКТ:</p>
-                  <div className="loc-name">{location}</div>
+                <div className="player-info">
+                  <h3 className="blue-label">ТЫ В ИГРЕ</h3>
+                  <p className="loc-hint">ЛОКАЦИЯ:</p>
+                  <div className="loc-display">{location}</div>
                 </div>
               )}
             </div>
           </div>
-          <button className="pin-button dark" onClick={() => {
+          <button className="main-action-btn dark" onClick={() => {
             if (currentPlayer + 1 < players) {
               setCurrentPlayer(currentPlayer + 1);
               setScreen('transit');
@@ -119,26 +116,24 @@ const SpyGame = () => {
               setScreen('play');
               setIsTimerRunning(true);
             }
-          }}>ПРИКОЛОТЬ К ДОСКЕ</button>
+          }}>СКРЫТЬ И ПЕРЕДАТЬ</button>
         </div>
       )}
 
-      {/* ЭКРАН 4: ТАЙМЕР */}
+      {/* 4. ТАЙМЕР */}
       {screen === 'play' && (
-        <div className="board-view play-view fade-in">
-          <div className="timer-clip">
-            <div className="clip-metal"></div>
+        <div className="view fade-in">
+          <div className="timer-paper">
             <div className="timer-val">
-               {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}
+              {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
             </div>
-            <p>ДО ПЕРЕХВАТА</p>
+            <p className="timer-label">ВРЕМЯ ДОПРОСА</p>
           </div>
-          
-          <div className="play-actions">
-            <button className="action-btn" onClick={() => setIsTimerRunning(!isTimerRunning)}>
-              {isTimerRunning ? 'СТОП' : 'ПУСК'}
+          <div className="play-footer">
+            <button className="btn-secondary" onClick={() => setIsTimerRunning(!isTimerRunning)}>
+              {isTimerRunning ? 'ПАУЗА' : 'СТАРТ'}
             </button>
-            <button className="action-btn reset" onClick={() => setScreen('setup')}>НОВОЕ ДЕЛО</button>
+            <button className="btn-secondary reset" onClick={() => setScreen('setup')}>СБРОС</button>
           </div>
         </div>
       )}
@@ -147,97 +142,108 @@ const SpyGame = () => {
 };
 
 const boardStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Kalam:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Permanent+Marker&display=swap');
 
-  .investigation-root {
+  .board-root {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: #4d3a2e;
+    background: #4a3728;
     background-image: url('https://www.transparenttextures.com/patterns/cork-board.png');
-    display: flex; flex-direction: column; overflow: hidden;
-    font-family: 'Kalam', cursive;
+    font-family: 'Inter', sans-serif;
+    color: #333; overflow: hidden;
   }
 
-  .back-to-hq {
-    position: absolute; top: 15px; left: 15px; z-index: 50;
-    background: rgba(255,255,255,0.1); border: 1px dashed white;
-    color: white; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+  .nav-back {
+    position: absolute; top: 20px; left: 20px; z-index: 10;
+    background: rgba(0,0,0,0.3); border: none; color: white;
+    padding: 8px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; cursor: pointer;
   }
 
-  .board-view {
-    flex: 1; display: flex; flex-direction: column;
+  .view {
+    height: 100%; width: 100%; display: flex; flex-direction: column;
     align-items: center; justify-content: center; padding: 20px;
   }
 
   /* Полароид */
   .polaroid {
-    background: #fff; padding: 15px 15px 40px 15px;
-    box-shadow: 5px 10px 30px rgba(0,0,0,0.5);
-    transform: rotate(-2deg); width: 85%; max-width: 320px;
-    margin-bottom: 30px;
+    background: white; padding: 15px 15px 35px 15px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    width: 90%; max-width: 340px; transform: rotate(-1deg);
+    margin-bottom: 40px;
   }
-  .photo-area {
-    background: #e0e0e0; height: 250px; display: flex;
-    align-items: center; justify-content: center; text-align: center;
-    border: 1px solid #ccc; overflow: hidden;
-  }
-  .photo-area h2 { font-size: 1.5rem; padding: 20px; color: #333; }
-  .photo-area.bg-dark { background: #222; color: #fff; }
 
-  .photo-desc { margin-top: 15px; color: #333; }
-  .photo-desc .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .stamp-title { 
+    font-family: 'Permanent Marker', cursive; 
+    font-size: 1.5rem; text-align: center; margin-bottom: 25px; color: #555;
+  }
+
+  .setup-rows { display: flex; flex-direction: column; gap: 20px; }
+  .setup-item label { display: block; font-size: 0.7rem; font-weight: 900; opacity: 0.6; margin-bottom: 8px; }
   
-  .counter { display: flex; align-items: center; gap: 15px; }
-  .counter button { background: #333; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
-  .counter b { font-size: 1.4rem; }
-  .spy-red { color: #d32f2f; }
-
-  /* Кнопки на доске */
-  .pin-button {
-    background: #d32f2f; color: #fff; border: none;
-    padding: 15px 40px; font-size: 1.2rem; font-weight: bold;
-    font-family: 'Permanent Marker', cursive;
-    box-shadow: 0 4px 0 #8a1d1d; cursor: pointer;
-    transform: rotate(1deg);
+  .counter-box { 
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f0f0f0; border-radius: 12px; padding: 5px;
   }
-  .pin-button.dark { background: #333; box-shadow: 0 4px 0 #000; }
+  .counter-box span { font-size: 1.5rem; font-weight: 900; }
+  .counter-box button { 
+    width: 40px; height: 40px; border-radius: 8px; border: none;
+    background: white; font-size: 1.2rem; font-weight: 900; cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .counter-box.red span { color: #d32f2f; }
 
-  /* Стикеров (Transit) */
+  /* Основная кнопка */
+  .main-action-btn {
+    background: #d32f2f; color: white; border: none;
+    padding: 20px 50px; font-size: 1.1rem; font-weight: 900;
+    border-radius: 50px; cursor: pointer; transform: rotate(1deg);
+    box-shadow: 0 10px 20px rgba(211, 47, 47, 0.3);
+  }
+  .main-action-btn.dark { background: #222; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+
+  /* Стикер (Транзит) */
   .sticky-note {
-    background: #ffeb3b; padding: 30px; width: 280px;
-    box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
-    position: relative; transform: rotate(3deg); margin-bottom: 40px;
+    background: #ffeb3b; width: 280px; padding: 30px;
+    box-shadow: 5px 10px 20px rgba(0,0,0,0.2);
+    transform: rotate(2deg); margin-bottom: 40px; position: relative;
   }
-  .pin {
-    width: 20px; height: 20px; border-radius: 50%;
-    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  .pin-head {
+    width: 16px; height: 16px; background: #f44336; border-radius: 50%;
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
-  .pin.red { background: #f44336; }
-  
-  .note-content { text-align: center; color: #555; }
-  .agent-number { font-size: 4rem; font-weight: bold; color: #333; line-height: 1; }
+  .note-body { text-align: center; }
+  .note-body h3 { font-size: 1.8rem; margin: 10px 0; font-weight: 900; }
+  .divider { height: 2px; background: rgba(0,0,0,0.1); margin: 15px 0; }
+  .small { font-size: 0.8rem; opacity: 0.6; }
 
-  /* Роли */
-  .red-stamp { color: #d32f2f; border: 3px solid #d32f2f; display: inline-block; padding: 5px 15px; transform: rotate(-10deg); font-size: 2rem; }
-  .blue-stamp { color: #1976d2; border: 3px solid #1976d2; display: inline-block; padding: 5px 15px; transform: rotate(5deg); font-size: 2rem; }
-  .loc-name { font-size: 1.8rem; font-weight: bold; margin-top: 5px; color: #1976d2; }
-  .spy-mark { font-size: 6rem; font-family: 'Permanent Marker', cursive; }
-  .loc-mark { font-size: 6rem; }
+  /* Карточка роли */
+  .photo-placeholder {
+    height: 180px; background: #222; display: flex; align-items: center;
+    justify-content: center; font-size: 4rem; margin-bottom: 20px;
+  }
+  .red-label { color: #d32f2f; font-family: 'Permanent Marker', cursive; font-size: 2rem; margin-bottom: 10px; }
+  .blue-label { color: #1976d2; font-family: 'Permanent Marker', cursive; font-size: 2rem; margin-bottom: 10px; }
+  .loc-hint { font-size: 0.7rem; font-weight: 900; opacity: 0.5; margin-top: 10px; }
+  .loc-display { font-size: 1.6rem; font-weight: 900; color: #1976d2; text-transform: uppercase; }
+  .role-details p { font-size: 0.9rem; line-height: 1.4; color: #555; }
 
   /* Таймер */
-  .timer-clip {
-    background: #fff; padding: 40px; width: 280px;
-    border-top: 20px solid #555; text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  .timer-paper {
+    background: white; padding: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    text-align: center; border-radius: 4px; border-top: 8px solid #333;
   }
-  .timer-val { font-size: 5rem; font-family: 'Permanent Marker', cursive; line-height: 1; margin-bottom: 10px; }
-  
-  .play-actions { display: flex; gap: 15px; margin-top: 40px; }
-  .action-btn { background: #fff; border: 2px solid #333; padding: 10px 20px; font-weight: bold; cursor: pointer; }
-  .action-btn.reset { background: #333; color: #fff; }
+  .timer-val { font-size: 5rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .timer-label { font-size: 0.8rem; font-weight: 900; letter-spacing: 2px; opacity: 0.4; }
+
+  .play-footer { display: flex; gap: 15px; margin-top: 50px; }
+  .btn-secondary {
+    background: rgba(255,255,255,0.1); border: 2px solid white;
+    color: white; padding: 12px 30px; border-radius: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-secondary.reset { border-color: #d32f2f; color: #d32f2f; }
 
   .fade-in { animation: fIn 0.4s ease-out; }
-  @keyframes fIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  @keyframes fIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 `;
 
 export default SpyGame;
