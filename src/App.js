@@ -63,15 +63,6 @@ const GAMES = [
   footer: '3+ ИГРОКА',
   ready: true
 },
-  {
-    id: '5-letters',
-    className: 'one-letter', // Бирюзовый
-    title: '5 БУКВ',
-    icon: '📝',
-    desc: 'Ежедневная головоломка: угадай слово из 5 букв.',
-    footer: '1 ИГРОК',
-    ready: true
-  },
     {
     id: 'city-guide',
     className: 'mafia', // Или создай в App.css класс .archive { background: #e4e0d9; }
