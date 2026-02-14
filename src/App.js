@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 // Подключаем компоненты игр из папок
 import AliasGame from './components/Alias/AliasGame';
-import Never from './components/Never/NeverHaveIEver';
+import NeverGame from './components/Never/NeverHaveIEver';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
@@ -124,7 +124,7 @@ export default function App() {
 
   // Если открыта игра Крокодил
   if (activeGame === 'Never') {
-    return <Never onBack={() => setActiveGame(null)} />;
+    return <NeverGame onBack={() => setActiveGame(null)} />;
   }
   
 // Если открыта игра Шпион
