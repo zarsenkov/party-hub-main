@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 // Подключаем компоненты игр из папок
 import AliasGame from './components/Alias/AliasGame';
-import NeverGame from './components/Never/NeverHaveIEver';
+import NeverHaveIEver from './components/Never/NeverHaveIEver';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
