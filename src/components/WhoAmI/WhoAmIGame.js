@@ -1,145 +1,106 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WHO_AM_I_CATEGORIES } from './whoAmI_data';
 
-// // Компонент игры "Кто я?" в стиле "Поп-арт Комиксы"
+// // Игра "Кто я?" в стиле матового стекла (Glassmorphism)
 const WhoAmIGame = () => {
-  const [screen, setScreen] = useState('setup'); // // setup, deal, play
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [characterList, setCharacterList] = useState([]);
-  const [currentCharacterIndex, setCurrentCharacterIndex] = useState(0);
+  const [screen, setScreen] = useState('setup'); 
+  const [selectedCats, setSelectedCats] = useState([]);
+  const [characters, setCharacters] = useState([]);
+  const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60); // // 60 секунд на персонажа
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isActive, setIsActive] = useState(false);
 
-  const characterDisplayRef = useRef(null); // // Для анимации угадывания
-
-  // // Ссылка на главную
+  // // Редирект на главную
   const goHome = () => window.location.href = 'https://lovecouple.ru';
 
-  // // Подготовка персонажей из выбранных категорий
-  const prepareGame = () => {
-    if (selectedCategories.length === 0) return;
-
-    let allCharacters = [];
-    selectedCategories.forEach(catId => {
-      const category = WHO_AM_I_CATEGORIES.find(c => c.id === catId);
-      if (category) {
-        allCharacters = allCharacters.concat(category.characters);
-      }
+  // // Сборка колоды персонажей
+  const startGame = () => {
+    if (selectedCats.length === 0) return;
+    let deck = [];
+    selectedCats.forEach(id => {
+      const cat = WHO_AM_I_CATEGORIES.find(c => c.id === id);
+      if (cat) deck = [...deck, ...cat.characters];
     });
-
-    // // Перемешиваем персонажей
-    setCharacterList(allCharacters.sort(() => Math.random() - 0.5));
-    setCurrentCharacterIndex(0);
+    setCharacters(deck.sort(() => Math.random() - 0.5));
+    setIndex(0);
     setScore(0);
-    setTimeLeft(60); // // Сброс таймера для первого персонажа
+    setTimeLeft(60);
     setScreen('play');
-    setIsTimerRunning(true);
+    setIsActive(true);
   };
 
   // // Логика таймера
   useEffect(() => {
     let timer;
-    if (isTimerRunning && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    } else if (timeLeft === 0 && isTimerRunning) {
-      handleSkip(); // // Если время вышло, пропускаем персонажа
+    if (isActive && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
     }
     return () => clearInterval(timer);
-  }, [isTimerRunning, timeLeft]);
+  }, [isActive, timeLeft]);
 
-  // // Переключение категорий
-  const toggleCategory = (catId) => {
-    setSelectedCategories(prev => 
-      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
-    );
+  // // Выбор категорий
+  const toggleCat = (id) => {
+    setSelectedCats(s => s.includes(id) ? s.filter(i => i !== id) : [...s, id]);
   };
-
-  // // Обработка угадывания
-  const handleGuess = (isCorrect) => {
-    if (isCorrect) {
-      setScore(prev => prev + 1);
-      // // Анимация "POW!"
-      if (characterDisplayRef.current) {
-        characterDisplayRef.current.classList.add('animate-pow');
-        setTimeout(() => {
-          characterDisplayRef.current.classList.remove('animate-pow');
-          nextCharacter();
-        }, 500); // // Длительность анимации
-      }
-    } else {
-      nextCharacter();
-    }
-  };
-
-  // // Переход к следующему персонажу
-  const nextCharacter = () => {
-    if (currentCharacterIndex < characterList.length - 1) {
-      setCurrentCharacterIndex(prev => prev + 1);
-      setTimeLeft(60); // // Сброс таймера для нового персонажа
-    } else {
-      setScreen('setup'); // // Игра окончена, возвращаемся к настройкам
-      setIsTimerRunning(false);
-    }
-  };
-
-  // // Обработка пропуска
-  const handleSkip = () => {
-    nextCharacter();
-  };
-
-  // // Текущий персонаж
-  const currentCharacter = characterList[currentCharacterIndex];
 
   return (
-    <div className="popart-root">
-      <style>{popartStyles}</style>
+    <div className="who-glass-root">
+      <style>{glassStyles}</style>
+      
+      <button className="back-link" onClick={goHome}>← МЕНЮ</button>
 
-      <button className="comic-btn btn-back" onClick={goHome}>← МЕНЮ</button>
-
-      {/* ЭКРАН 1: НАСТРОЙКИ */}
+      {/* ЭКРАН 1: ВЫБОР */}
       {screen === 'setup' && (
-        <div className="comic-panel setup-panel fade-in">
-          <h1 className="comic-title">КТО Я?!</h1>
-          <p className="subtitle">ВЫБЕРИТЕ КАТЕГОРИИ</p>
-
-          <div className="category-grid">
-            {WHO_AM_I_CATEGORIES.map(category => (
-              <button 
-                key={category.id} 
-                className={`category-tag ${selectedCategories.includes(category.id) ? 'active' : ''}`}
-                onClick={() => toggleCategory(category.id)}
+        <div className="glass-container fade-in">
+          <h1 className="main-title">КТО Я?</h1>
+          <p className="hint">Выбери темы для игры</p>
+          
+          <div className="cats-list">
+            {WHO_AM_I_CATEGORIES.map(c => (
+              <div 
+                key={c.id} 
+                className={`cat-card ${selectedCats.includes(c.id) ? 'active' : ''}`}
+                onClick={() => toggleCat(c.id)}
               >
-                {category.name}
-              </button>
+                {c.name}
+              </div>
             ))}
           </div>
 
           <button 
-            className="comic-btn play-btn" 
-            onClick={prepareGame} 
-            disabled={selectedCategories.length === 0}
+            className="start-button" 
+            disabled={selectedCats.length === 0}
+            onClick={startGame}
           >
-            НАЧАТЬ ИГРУ!
+            ПОЕХАЛИ
           </button>
         </div>
       )}
 
       {/* ЭКРАН 2: ИГРА */}
       {screen === 'play' && (
-        <div className="comic-panel play-panel fade-in">
-          <div className="score-display">СЧЕТ: {score}</div>
-          <div className="timer-comic">{timeLeft}</div>
-
-          <div ref={characterDisplayRef} className="character-display">
-            <span className="who-am-i-text">Я...</span>
-            <div className="character-name">{currentCharacter}</div>
-            <div className="pow-effect">POW!</div>
+        <div className="play-wrapper fade-in">
+          <div className="stats-row">
+            <div className="glass-pill">СЧЕТ: {score}</div>
+            <div className={`glass-pill timer ${timeLeft < 10 ? 'low' : ''}`}>
+              0:{(timeLeft).toString().padStart(2, '0')}
+            </div>
           </div>
 
-          <div className="action-buttons">
-            <button className="comic-btn skip-btn" onClick={() => handleGuess(false)}>ПРОПУСТИТЬ</button>
-            <button className="comic-btn guess-btn" onClick={() => handleGuess(true)}>УГАДАЛ!</button>
+          <div className="character-card">
+            <span className="card-label">ТЫ СЕЙЧАС:</span>
+            <h2 className="char-name">{characters[index]}</h2>
+          </div>
+
+          <div className="controls-row">
+            <button className="glass-btn skip" onClick={() => setIndex(i => i + 1)}>ПРОПУСТИТЬ</button>
+            <button className="glass-btn hit" onClick={() => {
+              setScore(s => s + 1);
+              setIndex(i => i + 1);
+            }}>УГАДАЛ</button>
           </div>
         </div>
       )}
@@ -147,144 +108,85 @@ const WhoAmIGame = () => {
   );
 };
 
-const popartStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@700;900&display=swap');
+const glassStyles = `
+  .who-glass-root {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: white; padding: 20px;
+  }
 
-  .popart-root {
-    position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: #FFD700; /* Ярко-желтый фон */
-    background-image: radial-gradient(#FFDD33 10%, #FFD700 30%, #FFCC00 100%);
-    font-family: 'Inter', sans-serif;
-    color: #333; overflow: hidden;
+  .back-link {
+    position: absolute; top: env(safe-area-inset-top, 20px); left: 20px;
+    background: rgba(255,255,255,0.1); border: none; color: white;
+    padding: 8px 16px; border-radius: 20px; backdrop-filter: blur(10px);
+  }
+
+  .glass-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 32px;
+    padding: 40px 24px;
+    width: 100%; max-width: 360px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+
+  .main-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+  .hint { opacity: 0.7; font-size: 0.9rem; margin-bottom: 32px; }
+
+  .cats-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+  .cat-card {
+    background: rgba(255,255,255,0.1);
+    padding: 16px; border-radius: 16px;
+    font-weight: 600; font-size: 0.85rem;
+    border: 1px solid transparent; transition: 0.3s;
+  }
+  .cat-card.active {
+    background: white; color: #764ba2;
+    transform: scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+
+  .start-button {
+    width: 100%; padding: 18px; border-radius: 18px;
+    border: none; background: #fff; color: #764ba2;
+    font-weight: 800; font-size: 1.1rem; cursor: pointer;
+  }
+
+  /* Игровой экран */
+  .play-wrapper { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+  
+  .stats-row { display: flex; justify-content: space-between; }
+  .glass-pill {
+    background: rgba(255,255,255,0.15);
+    padding: 10px 20px; border-radius: 30px;
+    backdrop-filter: blur(10px); font-weight: 700;
+  }
+  .timer.low { color: #ff4d4d; background: rgba(255, 77, 77, 0.2); }
+
+  .character-card {
+    background: rgba(255,255,255,0.2);
+    height: 300px; border-radius: 32px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
+    backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   }
+  .card-label { font-size: 0.8rem; font-weight: 700; opacity: 0.6; margin-bottom: 12px; }
+  .char-name { font-size: 2.2rem; font-weight: 900; text-align: center; padding: 0 20px; }
 
-  .comic-btn {
-    background: #E60023; /* Красный акцент */
-    color: white; border: 4px solid #000;
-    padding: 15px 25px; font-family: 'Bangers', cursive;
-    font-size: 1.2rem; text-transform: uppercase;
-    box-shadow: 8px 8px 0 #000; /* Жирная тень */
-    cursor: pointer; position: relative;
-    transition: all 0.1s ease-out;
-    letter-spacing: 1px;
+  .controls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .glass-btn {
+    padding: 20px; border-radius: 20px; border: none;
+    font-weight: 700; font-size: 1rem; color: white; backdrop-filter: blur(10px);
   }
-  .comic-btn:active {
-    top: 4px; left: 4px; box-shadow: 4px 4px 0 #000;
-  }
-  .comic-btn.btn-back {
-    position: absolute; top: 20px; left: 20px;
-    background: #000; color: #FFD700; font-family: 'Inter', sans-serif;
-    font-size: 0.8rem; box-shadow: none; padding: 10px 15px; border-radius: 5px;
-  }
+  .glass-btn.skip { background: rgba(255,255,255,0.1); }
+  .glass-btn.hit { background: #4ade80; color: #1a472a; }
 
-  /* Комиксные панели */
-  .comic-panel {
-    background: #FFF; border: 6px solid #000;
-    width: 90%; max-width: 400px;
-    padding: 40px 25px; text-align: center;
-    box-shadow: 15px 15px 0 #000; /* Основная тень панели */
-    position: relative;
-  }
-  .comic-panel::before { /* Декоративный уголок */
-    content: ''; position: absolute; bottom: -15px; right: -15px;
-    width: 30px; height: 30px; background: #E60023; border: 6px solid #000;
-    transform: rotate(45deg);
-  }
-
-  /* Настройки */
-  .comic-title {
-    font-family: 'Bangers', cursive; font-size: 3rem; color: #E60023;
-    -webkit-text-stroke: 2px #000; color: #FFF; /* Обводка текста */
-    line-height: 1; margin-bottom: 20px;
-  }
-  .subtitle { font-family: 'Press Start 2P', cursive; font-size: 0.8rem; margin-bottom: 30px; }
-
-  .category-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 40px;
-  }
-  .category-tag {
-    background: #F0F0F0; border: 3px solid #000; padding: 12px 15px;
-    font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 700;
-    box-shadow: 5px 5px 0 #000; cursor: pointer;
-    transition: all 0.1s ease-out;
-  }
-  .category-tag.active {
-    background: #00BFFF; /* Ярко-синий */
-    color: white; box-shadow: 5px 5px 0 #000;
-  }
-  .category-tag:active { top: 3px; left: 3px; box-shadow: 2px 2px 0 #000; }
-
-  .play-btn { background: #00BFFF; box-shadow: 8px 8px 0 #000; margin-top: 20px; }
-  .play-btn:disabled { 
-    background: #CCC; border-color: #999; box-shadow: 8px 8px 0 #999; cursor: not-allowed; 
-  }
-  .play-btn:disabled:active { top: 0; left: 0; box-shadow: 8px 8px 0 #999; }
-
-  /* Экран игры */
-  .score-display { 
-    position: absolute; top: 15px; left: 15px; background: #000; 
-    color: #FFD700; padding: 5px 10px; font-family: 'Press Start 2P', cursive;
-    font-size: 0.7rem; border: 2px solid #000; /* Добавляем рамку для стиля */
-  }
-  .timer-comic {
-    font-family: 'Bangers', cursive; font-size: 4rem; color: #E60023;
-    -webkit-text-stroke: 2px #000; color: #FFF;
-    margin-bottom: 30px;
-  }
-
-  .character-display {
-    background: #F0F0F0; border: 4px solid #000;
-    padding: 30px 20px; min-height: 200px;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    margin-bottom: 40px; position: relative;
-  }
-  .character-display .who-am-i-text {
-    font-family: 'Press Start 2P', cursive; font-size: 1rem; color: #888;
-    position: absolute; top: 15px; left: 15px;
-  }
-  .character-name {
-    font-family: 'Bangers', cursive; font-size: 3rem; color: #E60023;
-    -webkit-text-stroke: 1.5px #000; color: #FFF;
-    text-align: center; line-height: 1.2;
-  }
-
-  .action-buttons {
-    display: flex; justify-content: space-between; gap: 20px;
-  }
-  .skip-btn { background: #555; box-shadow: 8px 8px 0 #333; }
-  .skip-btn:active { top: 4px; left: 4px; box-shadow: 4px 4px 0 #333; }
-  .guess-btn { background: #00BFFF; box-shadow: 8px 8px 0 #000; }
-  .guess-btn:active { top: 4px; left: 4px; box-shadow: 4px 4px 0 #000; }
-
-  /* Анимация POW! */
-  .pow-effect {
-    font-family: 'Bangers', cursive;
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    font-size: 5rem;
-    color: #FFD700;
-    -webkit-text-stroke: 4px #E60023;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .animate-pow .pow-effect {
-    animation: powBlast 0.5s ease-out forwards;
-  }
-  @keyframes powBlast {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-  }
-
-
-  /* Анимация появления */
-  .fade-in { animation: fadeIn 0.4s ease-out; }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .fade-in { animation: fIn 0.5s ease; }
+  @keyframes fIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 `;
 
 export default WhoAmIGame;
