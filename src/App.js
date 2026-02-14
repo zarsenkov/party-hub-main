@@ -105,7 +105,7 @@ export default function App() {
 
   // Если открыта игра Крокодил
   if (activeGame === 'Never') {
-    return <NeverGame onBack={() => setActiveGame(null)} />;
+    return <NeverHaveIEver onBack={() => setActiveGame(null)} />;
   }
   
 // Если открыта игра Шпион
