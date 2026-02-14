@@ -82,15 +82,6 @@ const GAMES = [
     ready: true
   },
   {
-    id: 'bunker',
-    className: 'danetki', // Фиолетовый
-    title: 'БУНКЕР',
-    icon: '🛡️',
-    desc: 'Убеди остальных, что ты достоин места в убежище.',
-    footer: '4-12 ИГРОКОВ',
-    ready: false
-  },
-  {
     id: 'couples',
     className: 'couples', // Светло-розовый
     title: 'LOVE STORY',
