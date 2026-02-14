@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import AliasGame from './components/Alias/AliasGame';
 import NeverHaveIEver from './components/Never/NeverHaveIEver';
 import SpyGame from './components/Spy/SpyGame';
-import QuizGame from './components/Quiz/QuizGame';
+import QuizGame from './components/Voice/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
 import CityGuide from './components/CityGuide/CityGuide';
 import MafiaGame from './components/Mafia/MafiaGame';
