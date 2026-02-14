@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 // Подключаем компоненты игр из папок
 import AliasGame from './components/Alias/AliasGame';
-import CrocodileGame from './components/Crocodile/CrocodileGame';
+import Never from './components/Never/NeverHaveIEver';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
@@ -28,11 +28,11 @@ const GAMES = [
     ready: true
   },
   {
-    id: 'crocodile',
-    className: 'crocodile', // Зеленый
-    title: 'КРОКОДИЛ',
-    icon: '🐊',
-    desc: 'Показывай слова жестами и мимикой без лишних звуков.',
+    id: 'Never',
+    className: 'Never', // Зеленый
+    title: 'Я никогда не',
+    icon: '🤯',
+    desc: 'Что ты делал или не делал: выпивай, если это правда!',
     footer: '3+ ИГРОКА',
     ready: true
   },
@@ -123,8 +123,8 @@ export default function App() {
   }
 
   // Если открыта игра Крокодил
-  if (activeGame === 'crocodile') {
-    return <CrocodileGame onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'Never') {
+    return <Never onBack={() => setActiveGame(null)} />;
   }
   
 // Если открыта игра Шпион
