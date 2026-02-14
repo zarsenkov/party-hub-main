@@ -114,7 +114,7 @@ export default function App() {
   }
   
   // Если открыта игра Квиз
-  if (activeGame === 'quiz') {
+  if (activeGame === 'voices') {
     return <QuizGame onBack={() => setActiveGame(null)} />;
   }
   
