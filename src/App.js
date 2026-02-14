@@ -7,7 +7,6 @@ import NeverHaveIEver from './components/Never/NeverHaveIEver';
 import SpyGame from './components/Spy/SpyGame';
 import QuizGame from './components/Quiz/QuizGame';
 import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
-import FiveLettersGame from './components/FiveLetters/FiveLettersGame';
 import CityGuide from './components/CityGuide/CityGuide';
 import MafiaGame from './components/Mafia/MafiaGame';
 import LoveStory from './components/LoveStory/LoveStory';
