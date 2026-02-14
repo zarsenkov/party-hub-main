@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { WHO_AM_I_CATEGORIES } from './whoAmI_data';
 
-// // Игра "Кто я?" в стиле матового стекла (Glassmorphism)
+// // Игра "Кто я?" в стиле матового стекла
 const WhoAmIGame = () => {
-  const [screen, setScreen] = useState('setup'); 
+  const [screen, setScreen] = useState('setup'); // // setup, play, results
   const [selectedCats, setSelectedCats] = useState([]);
   const [characters, setCharacters] = useState([]);
   const [index, setIndex] = useState(0);
@@ -14,7 +14,7 @@ const WhoAmIGame = () => {
   // // Редирект на главную
   const goHome = () => window.location.href = 'https://lovecouple.ru';
 
-  // // Сборка колоды персонажей
+  // // Сборка колоды и старт
   const startGame = () => {
     if (selectedCats.length === 0) return;
     let deck = [];
@@ -30,13 +30,19 @@ const WhoAmIGame = () => {
     setIsActive(true);
   };
 
-  // // Логика таймера
+  // // Логика окончания игры
+  const finishGame = () => {
+    setIsActive(false);
+    setScreen('results');
+  };
+
+  // // Эффект таймера
   useEffect(() => {
     let timer;
     if (isActive && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (timeLeft === 0) {
-      setIsActive(false);
+    } else if (timeLeft === 0 && isActive) {
+      finishGame(); // // Конец по времени
     }
     return () => clearInterval(timer);
   }, [isActive, timeLeft]);
@@ -46,13 +52,24 @@ const WhoAmIGame = () => {
     setSelectedCats(s => s.includes(id) ? s.filter(i => i !== id) : [...s, id]);
   };
 
+  // // Переключение персонажа
+  const handleAction = (isHit) => {
+    if (isHit) setScore(s => s + 1);
+    
+    if (index + 1 < characters.length) {
+      setIndex(i => i + 1);
+    } else {
+      finishGame(); // // Конец, если персонажи закончились
+    }
+  };
+
   return (
     <div className="who-glass-root">
       <style>{glassStyles}</style>
       
       <button className="back-link" onClick={goHome}>← МЕНЮ</button>
 
-      {/* ЭКРАН 1: ВЫБОР */}
+      {/* ЭКРАН 1: НАСТРОЙКИ */}
       {screen === 'setup' && (
         <div className="glass-container fade-in">
           <h1 className="main-title">КТО Я?</h1>
@@ -80,7 +97,7 @@ const WhoAmIGame = () => {
         </div>
       )}
 
-      {/* ЭКРАН 2: ИГРА */}
+      {/* ЭКРАН 2: ПРОЦЕСС ИГРЫ */}
       {screen === 'play' && (
         <div className="play-wrapper fade-in">
           <div className="stats-row">
@@ -96,12 +113,25 @@ const WhoAmIGame = () => {
           </div>
 
           <div className="controls-row">
-            <button className="glass-btn skip" onClick={() => setIndex(i => i + 1)}>ПРОПУСТИТЬ</button>
-            <button className="glass-btn hit" onClick={() => {
-              setScore(s => s + 1);
-              setIndex(i => i + 1);
-            }}>УГАДАЛ</button>
+            <button className="glass-btn skip" onClick={() => handleAction(false)}>ПРОПУСТИТЬ</button>
+            <button className="glass-btn hit" onClick={() => handleAction(true)}>УГАДАЛ</button>
           </div>
+        </div>
+      )}
+
+      {/* ЭКРАН 3: РЕЗУЛЬТАТЫ */}
+      {screen === 'results' && (
+        <div className="glass-container result-card fade-in">
+          <h2 className="main-title">ФИНИШ!</h2>
+          <div className="final-score">
+            <span>Твой результат:</span>
+            <div className="score-num">{score}</div>
+          </div>
+          <p className="hint">Отличная работа, агент!</p>
+          
+          <button className="start-button" onClick={() => setScreen('setup')}>
+            ИГРАТЬ СНОВА
+          </button>
         </div>
       )}
     </div>
@@ -121,6 +151,7 @@ const glassStyles = `
     position: absolute; top: env(safe-area-inset-top, 20px); left: 20px;
     background: rgba(255,255,255,0.1); border: none; color: white;
     padding: 8px 16px; border-radius: 20px; backdrop-filter: blur(10px);
+    z-index: 10;
   }
 
   .glass-container {
@@ -155,6 +186,10 @@ const glassStyles = `
     border: none; background: #fff; color: #764ba2;
     font-weight: 800; font-size: 1.1rem; cursor: pointer;
   }
+
+  /* Экран результатов */
+  .final-score { margin: 20px 0; }
+  .score-num { font-size: 5rem; font-weight: 900; line-height: 1; margin-top: 10px; }
 
   /* Игровой экран */
   .play-wrapper { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; }
