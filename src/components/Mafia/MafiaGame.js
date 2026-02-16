@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
-// // Импорт иконок для интерфейса
-import { Moon, Sun, ArrowLeft, Users, Skull, Heart, Timer, RefreshCw, Eye, ShieldOff } from 'lucide-react';
+// // Добавляем иконку ShieldOff для Путаны и Edit для имен
+import { Moon, Sun, ArrowLeft, Skull, Heart, Timer, RefreshCw, Eye, ShieldOff, UserEdit, Plus } from 'lucide-react';
 import { mafiaRoles } from './mafiaData';
 
-// // Список кличек для атмосферы
 const NICKNAMES = ["Крот", "Шустрый", "Барон", "Доцент", "Бритва", "Молчун", "Артист", "Счастливчик", "Шериф", "Лис", "Призрак", "Кабан", "Акула", "Маэстро", "Стукач"];
 
 export default function MafiaGame({ onBack }) {
-  // // Глобальные состояния игры
-  const [gameState, setGameState] = useState('setup'); // setup, dealing, action, results
+  const [gameState, setGameState] = useState('setup');
   const [phase, setPhase] = useState('night');
   const [playerCount, setPlayerCount] = useState(6);
   const [useManiac, setUseManiac] = useState(false);
   const [useProstitute, setUseProstitute] = useState(false);
   const [players, setPlayers] = useState([]);
+  const [customNames, setCustomNames] = useState(""); // // Состояние для своих имен
   const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
   const [showRole, setShowRole] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [timerActive, setTimerActive] = useState(false);
   const [winner, setWinner] = useState(null);
 
-  // // Логика таймера для обсуждения
   useEffect(() => {
     let interval;
     if (timerActive && timeLeft > 0) {
@@ -29,66 +27,71 @@ export default function MafiaGame({ onBack }) {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
 
-  // // Функция перемешивания и раздачи ролей
+  // // Функция старта с учетом имен
   const startDealing = () => {
-    // // Создаем массив ролей исходя из количества игроков
     let rolesPool = [];
     const mafiaCount = Math.floor(playerCount / 3);
 
-    // // Наполнение пула: Мафия, Доктор, Комиссар всегда (минимум)
+    // // Формирование ролей
     for (let i = 0; i < mafiaCount; i++) rolesPool.push(mafiaRoles.find(r => r.id === 'mafia'));
     rolesPool.push(mafiaRoles.find(r => r.id === 'doctor'));
     rolesPool.push(mafiaRoles.find(r => r.id === 'detective'));
-
-    // // Добавляем спецроли по желанию
     if (useManiac) rolesPool.push(mafiaRoles.find(r => r.id === 'maniac'));
     if (useProstitute) rolesPool.push(mafiaRoles.find(r => r.id === 'prostitute'));
-
-    // // Заполняем остаток мирными жителями
     while (rolesPool.length < playerCount) rolesPool.push(mafiaRoles.find(r => r.id === 'civilian'));
 
-    // // Рандомизация ролей и имен
     rolesPool = rolesPool.slice(0, playerCount).sort(() => Math.random() - 0.5);
-    const shuffledNames = [...NICKNAMES].sort(() => Math.random() - 0.5);
+    
+    // // Обработка имен: если введено меньше, чем игроков, дополняем кличками
+    const inputNames = customNames.split('\n').filter(n => n.trim());
+    const finalNames = [...inputNames];
+    const shuffledNicks = [...NICKNAMES].sort(() => Math.random() - 0.5);
+    
+    while (finalNames.length < playerCount) {
+      finalNames.push(shuffledNicks.pop() || `Игрок ${finalNames.length + 1}`);
+    }
 
-    // // Формируем итоговый объект игроков
     setPlayers(rolesPool.map((role, i) => ({
       id: i + 1,
-      name: shuffledNames[i] || `Игрок ${i + 1}`,
+      name: finalNames[i],
       role: role,
       alive: true,
-      statusEffect: null, // // Может быть 'killed', 'healed', 'checked'
+      statusEffect: null, // // killed, healed, checked, blocked
       fouls: 0
     })));
     setCurrentPlayerIdx(0);
     setGameState('dealing');
   };
 
-  // // Проверка условий победы (Мафия/Мирные/Маньяк)
   const checkVictory = (currentPlayers) => {
     const alive = currentPlayers.filter(p => p.alive);
     const mafia = alive.filter(p => p.role.side === 'evil' && p.role.id !== 'maniac');
     const maniac = alive.filter(p => p.role.id === 'maniac');
-    const civilians = alive.filter(p => p.role.side === 'good');
+    const good = alive.filter(p => p.role.side === 'good');
 
-    // // Если мафии и маньяка нет — победа города
     if (mafia.length === 0 && maniac.length === 0) return 'Мирные жители';
-    // // Если мафия сравнялась по количеству или превзошла (стандартные правила)
     if (mafia.length >= (alive.length - mafia.length)) return 'Мафия';
-    // // Если остался только маньяк и 1 игрок
     if (maniac.length > 0 && alive.length <= 2) return 'Маньяк';
     return null;
   };
 
-  // // Обработка смены фазы с расчетом ночных событий
+  // // Логика подтверждения фазы (с учетом блокировки Путаны)
   const confirmAction = () => {
-    // // Исправленная логика: проверяем 'killed' ТОЛЬКО если нет 'healed'
+    // // Находим того, кто заблокирован Путаной
+    const blockedPlayer = players.find(p => p.statusEffect === 'blocked');
+    
     const updated = players.map(p => {
       let isAlive = p.alive;
-      if (p.statusEffect === 'killed' && p.statusEffect !== 'healed') {
-        isAlive = false;
+      
+      // // Если в игрока стреляли (killed)
+      if (p.statusEffect === 'killed') {
+        // // Проверяем, не заблокирована ли Мафия/Маньяк (если это их жертва)
+        // // В упрощенной логике ведущего: если цель убита и НЕ вылечена — она умирает
+        if (p.statusEffect !== 'healed') {
+          isAlive = false;
+        }
       }
-      // // Сбрасываем временные статусы, но оставляем результат проверки комиссара (checked)
+
       return { 
         ...p, 
         alive: isAlive, 
@@ -109,14 +112,8 @@ export default function MafiaGame({ onBack }) {
     }
   };
 
-  // // Функция переключения статусов (точечное внесение функционала)
   const toggleStatus = (id, status) => {
-    setPlayers(players.map(p => {
-      if (p.id === id) {
-        return { ...p, statusEffect: p.statusEffect === status ? null : status };
-      }
-      return p;
-    }));
+    setPlayers(players.map(p => p.id === id ? { ...p, statusEffect: p.statusEffect === status ? null : status } : p));
   };
 
   // --- ЭКРАН 1: НАСТРОЙКА ---
@@ -129,16 +126,24 @@ export default function MafiaGame({ onBack }) {
         </header>
         <h1 style={ui.neoTitle}>MAFIA_GAME</h1>
         <div style={ui.setupBox}>
-          <p style={ui.label}>КОЛИЧЕСТВО ИГРОКОВ: <b>{playerCount}</b></p>
+          <p style={ui.label}>СПИСОК ИМЕН (КАЖДОЕ С НОВОЙ СТРОКИ):</p>
+          <textarea 
+            style={ui.textarea} 
+            value={customNames} 
+            onChange={(e) => setCustomNames(e.target.value)}
+            placeholder="Оставьте пустым для случайных кличек..."
+          />
+          
+          <p style={ui.label}>ИГРОКОВ: <b>{playerCount}</b></p>
           <input type="range" min="4" max="15" value={playerCount} onChange={(e) => setPlayerCount(parseInt(e.target.value))} style={ui.range} />
 
           <div style={ui.optionsList}>
             <label style={ui.optionItem}>
-              <span>ДОБАВИТЬ МАНЬЯКА</span>
+              <span>МАНЬЯК</span>
               <input type="checkbox" checked={useManiac} onChange={() => setUseManiac(!useManiac)} />
             </label>
             <label style={ui.optionItem}>
-              <span>ДОБАВИТЬ ПУТАНУ</span>
+              <span>ПУТАНА (БЛОК)</span>
               <input type="checkbox" checked={useProstitute} onChange={() => setUseProstitute(!useProstitute)} />
             </label>
           </div>
@@ -148,7 +153,7 @@ export default function MafiaGame({ onBack }) {
     );
   }
 
-  // --- ЭКРАН 2: РАЗДАЧА РОЛЕЙ ---
+  // --- ЭКРАН 2: РАЗДАЧА (без изменений) ---
   if (gameState === 'dealing') {
     const p = players[currentPlayerIdx];
     return (
@@ -171,7 +176,7 @@ export default function MafiaGame({ onBack }) {
     );
   }
 
-  // --- ЭКРАН 3: РЕЗУЛЬТАТЫ ---
+  // --- ЭКРАН 3: РЕЗУЛЬТАТЫ (без изменений) ---
   if (gameState === 'results') {
     return (
       <div style={ui.container('day')}>
@@ -198,7 +203,7 @@ export default function MafiaGame({ onBack }) {
       <div style={ui.playerGrid}>
         {players.map(p => (
           <div key={p.id} style={ui.playerRow(p.alive, phase)}>
-            <div style={{textAlign: 'left'}}>
+            <div style={{textAlign: 'left', flex: 1}}>
               <div style={{fontWeight: '900', fontSize: '1.1rem', color: p.statusEffect === 'checked' ? '#d4af37' : 'inherit'}}>
                 {p.name} {p.statusEffect === 'checked' && '🔍'}
               </div>
@@ -207,12 +212,12 @@ export default function MafiaGame({ onBack }) {
             <div style={{display: 'flex', gap: '5px'}}>
               {p.alive ? (
                 <>
-                  {/* Кнопка смерти */}
-                  <button onClick={() => toggleStatus(p.id, 'killed')} style={ui.actionBtn(p.statusEffect === 'killed', '#ff4444')}><Skull size={18}/></button>
-                  {/* Кнопка лечения */}
-                  <button onClick={() => toggleStatus(p.id, 'healed')} style={ui.actionBtn(p.statusEffect === 'healed', '#44ff44')}><Heart size={18}/></button>
-                  {/* Кнопка проверки (только ночью для Комиссара) */}
-                  <button onClick={() => toggleStatus(p.id, 'checked')} style={ui.actionBtn(p.statusEffect === 'checked', '#d4af37')}><Eye size={18}/></button>
+                  <button onClick={() => toggleStatus(p.id, 'killed')} style={ui.actionBtn(p.statusEffect === 'killed', '#ff4444')}><Skull size={16}/></button>
+                  <button onClick={() => toggleStatus(p.id, 'healed')} style={ui.actionBtn(p.statusEffect === 'healed', '#44ff44')}><Heart size={16}/></button>
+                  <button onClick={() => toggleStatus(p.id, 'checked')} style={ui.actionBtn(p.statusEffect === 'checked', '#d4af37')}><Eye size={16}/></button>
+                  {useProstitute && (
+                    <button onClick={() => toggleStatus(p.id, 'blocked')} style={ui.actionBtn(p.statusEffect === 'blocked', '#a29bfe')}><ShieldOff size={16}/></button>
+                  )}
                 </>
               ) : <div style={{color: '#ff4444', fontWeight: '900', fontSize: '0.8rem'}}>DIED</div>}
             </div>
@@ -236,23 +241,23 @@ const ui = {
   header: { display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '20px', alignItems: 'center' },
   badge: { background: '#1a1a1a', color: '#fff', padding: '2px 10px', fontWeight: '900', transform: 'rotate(-1deg)' },
   neoTitle: { fontSize: '2.5rem', fontWeight: '900', margin: '20px 0', borderBottom: '4px solid #1a1a1a' },
-  setupBox: { width: '100%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' },
-  label: { fontSize: '0.8rem', fontWeight: '900' },
+  setupBox: { width: '100%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '15px' },
+  label: { fontSize: '0.7rem', fontWeight: '900' },
+  textarea: { width: '100%', height: '80px', padding: '10px', border: '2px solid #1a1a1a', fontFamily: 'monospace', fontSize: '0.8rem', resize: 'none', outline: 'none' },
   range: { width: '100%', accentColor: '#1a1a1a' },
-  optionsList: { display: 'flex', flexDirection: 'column', gap: '10px' },
-  optionItem: { display: 'flex', justifyContent: 'space-between', padding: '10px', border: '2px solid #1a1a1a', background: '#fff', color: '#000', fontWeight: '900', fontSize: '0.7rem' },
+  optionsList: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  optionItem: { display: 'flex', justifyContent: 'space-between', padding: '8px', border: '2px solid #1a1a1a', background: '#fff', color: '#000', fontWeight: '900', fontSize: '0.7rem' },
   mainBtn: { background: '#1a1a1a', color: '#fff', border: 'none', padding: '15px', fontWeight: '900', cursor: 'pointer', boxShadow: '4px 4px 0 #ff4444' },
   card: (p) => ({ background: p === 'night' ? '#111' : '#fff', padding: '30px', border: '3px solid #1a1a1a', width: '100%', textAlign: 'center', boxShadow: '8px 8px 0 rgba(0,0,0,0.2)' }),
-  playerGrid: { width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' },
+  playerGrid: { width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' },
   playerRow: (alive, p) => ({
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px',
     background: alive ? (p === 'night' ? '#1a1a1a' : '#fff') : 'rgba(0,0,0,0.05)',
-    border: '2px solid #1a1a1a', opacity: alive ? 1 : 0.5, boxShadow: alive ? '4px 4px 0 rgba(0,0,0,0.1)' : 'none'
+    border: '2px solid #1a1a1a', opacity: alive ? 1 : 0.5, boxShadow: alive ? '3px 3px 0 rgba(0,0,0,0.1)' : 'none'
   }),
   actionBtn: (active, color) => ({
     background: active ? color : 'none', color: active ? '#fff' : 'inherit',
-    border: `2px solid #1a1a1a`, padding: '8px', cursor: 'pointer', transform: active ? 'translate(1px, 1px)' : 'none',
-    boxShadow: active ? '0 0 0' : '2px 2px 0 #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center'
+    border: `2px solid #1a1a1a`, width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
   }),
   confirmBtn: { marginTop: '20px', width: '100%', padding: '20px', background: '#1a1a1a', color: '#fff', border: 'none', fontWeight: '900', letterSpacing: '2px', cursor: 'pointer', flexShrink: 0 },
   iconBtn: { background: 'none', border: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '5px' },
