@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-// // Иконки для управления консолью
-import { Moon, Sun, ArrowLeft, Skull, Heart, Timer, RefreshCw, Eye, Plus, X, UserCheck } from 'lucide-react';
-// // Данные ролей (массив объектов с id, name, side, desc)
+// // Иконки в стиле классики
+import { Moon, Sun, ArrowLeft, Skull, Heart, Timer, RefreshCw, Eye, UserPlus, Trash2, CheckCircle2 } from 'lucide-react';
 import { mafiaRoles } from './mafiaData';
 
-// // Запасные имена, если ведущий не ввел свои
-const NICKNAMES = ["Крот", "Бритва", "Доцент", "Барон", "Артист", "Счастливчик", "Лис", "Призрак", "Кабан", "Маэстро"];
+const NICKNAMES = ["Дон", "Капо", "Советник", "Красотка", "Букмекер", "Адвокат", "Судья", "Счастливчик", "Громила", "Интуит"];
 
 const MafiaGame = ({ onBack }) => {
-  // === ГЛОБАЛЬНЫЕ СОСТОЯНИЯ ===
-  const [gameState, setGameState] = useState('setup'); // // setup, dealing, action, results
+  const [gameState, setGameState] = useState('setup');
   const [phase, setPhase] = useState('night');
-  const [tempNames, setTempNames] = useState(['', '', '', '']); // // Поля для ввода имен
+  const [tempNames, setTempNames] = useState(['', '', '', '']);
   const [useManiac, setUseManiac] = useState(false);
   const [useProstitute, setUseProstitute] = useState(false);
   const [players, setPlayers] = useState([]);
@@ -21,7 +18,6 @@ const MafiaGame = ({ onBack }) => {
   const [timerActive, setTimerActive] = useState(false);
   const [winner, setWinner] = useState(null);
 
-  // === ЛОГИКА ТАЙМЕРА ===
   useEffect(() => {
     let interval;
     if (timerActive && timeLeft > 0) {
@@ -30,34 +26,27 @@ const MafiaGame = ({ onBack }) => {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
 
-  // === УПРАВЛЕНИЕ СПИСКОМ ИГРОКОВ ===
-  // // Добавить новое поле для игрока
   const addPlayerField = () => setTempNames([...tempNames, '']);
-  // // Удалить поле (минимум 4 игрока)
   const removePlayerField = (idx) => {
     if (tempNames.length > 4) setTempNames(tempNames.filter((_, i) => i !== idx));
   };
-  // // Обновить имя в поле
   const handleNameChange = (idx, val) => {
     const next = [...tempNames];
     next[idx] = val;
     setTempNames(next);
   };
 
-  // === СТАРТ ИГРЫ И РАСПРЕДЕЛЕНИЕ ===
   const startDealing = () => {
     let rolesPool = [];
     const count = tempNames.length;
     const mafiaCount = Math.max(1, Math.floor(count / 4));
     
-    // // Формируем колоду ролей
     for (let i = 0; i < mafiaCount; i++) rolesPool.push(mafiaRoles.find(r => r.id === 'mafia'));
     rolesPool.push(mafiaRoles.find(r => r.id === 'doctor'), mafiaRoles.find(r => r.id === 'detective'));
     if (useManiac) rolesPool.push(mafiaRoles.find(r => r.id === 'maniac'));
     if (useProstitute) rolesPool.push(mafiaRoles.find(r => r.id === 'prostitute'));
     while (rolesPool.length < count) rolesPool.push(mafiaRoles.find(r => r.id === 'civilian'));
     
-    // // Перемешиваем
     rolesPool = rolesPool.slice(0, count).sort(() => Math.random() - 0.5);
     
     setPlayers(tempNames.map((name, i) => ({
@@ -65,114 +54,89 @@ const MafiaGame = ({ onBack }) => {
       name: name.trim() || NICKNAMES[i % NICKNAMES.length],
       role: rolesPool[i],
       alive: true,
-      statusEffect: null, // // 'killed' | 'healed'
-      isRevealed: false   // // Пометка для ведущего (проверен комиссаром)
+      statusEffect: null,
+      isRevealed: false
     })));
     
     setCurrentPlayerIdx(0);
     setGameState('dealing');
   };
 
-  // === ГЛАВНЫЕ ДЕЙСТВИЯ (ХОД) ===
   const confirmCycle = () => {
     const updated = players.map(p => {
-      // // Если был убит и НЕ вылечен — умирает
       if (p.statusEffect === 'killed') return { ...p, alive: false, statusEffect: null };
       return { ...p, statusEffect: null };
     });
-    
     setPlayers(updated);
     const v = checkVictory(updated);
-    
-    if (v) {
-      setWinner(v);
-      setGameState('results');
-    } else {
-      setPhase(phase === 'night' ? 'day' : 'night');
-      setTimerActive(false);
-      setTimeLeft(60);
-    }
+    if (v) { setWinner(v); setGameState('results'); }
+    else { setPhase(phase === 'night' ? 'day' : 'night'); setTimerActive(false); setTimeLeft(60); }
   };
 
-  // // Логика проверки условий победы
   const checkVictory = (currentPlayers) => {
     const alive = currentPlayers.filter(p => p.alive);
     const mafia = alive.filter(p => p.role.side === 'evil' && p.role.id !== 'maniac');
     const maniac = alive.filter(p => p.role.id === 'maniac');
     const good = alive.filter(p => p.role.side === 'good' || p.role.id === 'prostitute');
-
-    if (mafia.length === 0 && maniac.length === 0) return 'Мирные жители';
+    if (mafia.length === 0 && maniac.length === 0) return 'Мирные';
     if (mafia.length >= (good.length + maniac.length)) return 'Мафия';
     if (maniac.length > 0 && alive.length <= 2) return 'Маньяк';
     return null;
   };
 
   return (
-    <div className={`mafia-console ${phase}`}>
-      <style>{consoleStyles}</style>
+    <div className={`estate-root ${phase}`}>
+      <style>{estateStyles}</style>
 
-      {/* --- ЭКРАН 1: РЕДАКТОР ИГРОКОВ --- */}
+      {/* ЭКРАН 1: СПИСОК ПРИГЛАШЕННЫХ */}
       {gameState === 'setup' && (
-        <div className="console-view fade-in">
-          <header className="c-header">
-            <button onClick={onBack} className="c-back-btn"><ArrowLeft size={18}/> ВЫХОД</button>
-            <div className="c-system-tag">SYSTEM_OVR_9.1</div>
+        <div className="estate-view fade-in">
+          <header className="e-header">
+            <button onClick={onBack} className="e-back"><ArrowLeft size={18}/> ВЫЙТИ</button>
+            <div className="e-logo">THE SYNDICATE</div>
           </header>
 
-          <h1 className="c-title">MAFIA<span>CRIME_LOG</span></h1>
+          <h1 className="e-title">Список<span>Гостей</span></h1>
 
-          <div className="c-scroll-area">
-            <p className="c-label">АКТИВНЫЕ ДОСЬЕ ({tempNames.length})</p>
+          <div className="e-guest-list">
             {tempNames.map((name, i) => (
-              <div key={i} className="c-input-row">
-                <span className="c-num">{i + 1}</span>
+              <div key={i} className="e-guest-row">
+                <span className="e-guest-number">{String(i + 1).padStart(2, '0')}</span>
                 <input 
                   type="text" 
-                  placeholder={`Имя объекта ${i+1}...`}
+                  placeholder="Введите имя гостя..."
                   value={name}
                   onChange={(e) => handleNameChange(i, e.target.value)}
                 />
-                <button onClick={() => removePlayerField(i)} className="c-row-del"><X size={16}/></button>
+                <button onClick={() => removePlayerField(i)} className="e-guest-del"><Trash2 size={16}/></button>
               </div>
             ))}
-            <button onClick={addPlayerField} className="c-add-btn"><Plus size={16}/> ДОБАВИТЬ ОБЪЕКТ</button>
+            <button onClick={addPlayerField} className="e-add-guest"><UserPlus size={16}/> Пригласить еще</button>
           </div>
 
-          <div className="c-options-grid">
-            <div className={`c-toggle ${useManiac ? 'active' : ''}`} onClick={() => setUseManiac(!useManiac)}>
-              МАНЬЯК: {useManiac ? 'YES' : 'NO'}
-            </div>
-            <div className={`c-toggle ${useProstitute ? 'active' : ''}`} onClick={() => setUseProstitute(!useProstitute)}>
-              ПУТАНА: {useProstitute ? 'YES' : 'NO'}
-            </div>
+          <div className="e-settings">
+            <div className={`e-check ${useManiac ? 'active' : ''}`} onClick={() => setUseManiac(!useManiac)}>Маньяк</div>
+            <div className={`e-check ${useProstitute ? 'active' : ''}`} onClick={() => setUseProstitute(!useProstitute)}>Путана</div>
           </div>
 
-          <button onClick={startDealing} className="c-main-btn">СФОРМИРОВАТЬ СОСТАВ</button>
+          <button onClick={startDealing} className="e-btn-gold">Начать встречу</button>
         </div>
       )}
 
-      {/* --- ЭКРАН 2: РАЗДАЧА (С КАРТОЧКАМИ) --- */}
+      {/* ЭКРАН 2: ПРИВАТНЫЙ ЗАЛ (РАЗДАЧА) */}
       {gameState === 'dealing' && (
-        <div className="console-view dealing-screen fade-in">
-          <div className="c-role-reveal-card">
-            <div className="c-card-top">IDENTIFICATION_REQUIRED</div>
-            <div className="c-card-content">
-              <h2 className="c-p-name">{players[currentPlayerIdx].name}</h2>
+        <div className="estate-view center fade-in">
+          <div className="e-role-envelope">
+            <div className="e-env-header">Строго конфиденциально</div>
+            <div className="e-env-content">
+              <h2 className="e-env-name">{players[currentPlayerIdx].name}</h2>
               {!showRole ? (
-                <button onClick={() => setShowRole(true)} className="c-main-btn">СКАНИРОВАТЬ РОЛЬ</button>
+                <button onClick={() => setShowRole(true)} className="e-btn-gold">Вскрыть конверт</button>
               ) : (
-                <div className="c-role-data">
+                <div className="e-role-reveal">
                   <h3 className={players[currentPlayerIdx].role.side}>{players[currentPlayerIdx].role.name}</h3>
                   <p>{players[currentPlayerIdx].role.desc}</p>
-                  <button 
-                    onClick={() => {
-                      setShowRole(false);
-                      currentPlayerIdx < players.length - 1 ? setCurrentPlayerIdx(c => c + 1) : setGameState('action');
-                    }}
-                    className="c-sub-btn"
-                  >
-                    ПРИНЯТО
-                  </button>
+                  <button onClick={() => { setShowRole(false); currentPlayerIdx < players.length - 1 ? setCurrentPlayerIdx(c => c + 1) : setGameState('action'); }} className="e-btn-outline">Ясно</button>
                 </div>
               )}
             </div>
@@ -180,73 +144,51 @@ const MafiaGame = ({ onBack }) => {
         </div>
       )}
 
-      {/* --- ЭКРАН 3: ПУЛЬТ ВЕДУЩЕГО --- */}
+      {/* ЭКРАН 3: ПУЛЬТ РАСПОРЯДИТЕЛЯ */}
       {gameState === 'action' && (
-        <div className="console-action-view fade-in">
-          <div className="c-action-header">
-            <div className="c-timer-box" onClick={() => setTimerActive(!timerActive)}>
-              <Timer size={16}/> {timeLeft}s
-            </div>
-            <div className="c-phase-indicator">{phase === 'night' ? 'PHASE: NIGHT' : 'PHASE: DAY'}</div>
-            <button className="c-phase-swap" onClick={() => setPhase(phase === 'night' ? 'day' : 'night')}>
-              <RefreshCw size={16}/>
-            </button>
-          </div>
+        <div className="estate-action-view fade-in">
+          <header className="e-action-header">
+            <div className="e-timer" onClick={() => setTimerActive(!timerActive)}><Timer size={18}/> {timeLeft}с</div>
+            <div className="e-phase-title">{phase === 'night' ? 'Глубокая ночь' : 'Солнечный день'}</div>
+            <button className="e-swap" onClick={() => setPhase(phase === 'night' ? 'day' : 'night')}><RefreshCw size={18}/></button>
+          </header>
 
-          <div className="c-list-scroll">
+          <div className="e-cards-grid">
             {players.map(p => (
-              <div key={p.id} className={`c-p-row ${!p.alive ? 'eliminated' : ''} ${p.statusEffect ? 'active-target' : ''}`}>
-                <div className="c-p-main-info">
-                  <div className="c-p-identity">
-                    <span className="c-p-name">{p.name}</span>
-                    <span className={`c-p-role-badge ${p.role.side}`}>{p.role.name}</span>
-                    {p.isRevealed && <Eye size={12} className="eye-icon"/>}
+              <div key={p.id} className={`e-player-card ${!p.alive ? 'dead' : ''} ${p.statusEffect ? 'selected' : ''}`}>
+                <div className="e-card-main">
+                  <span className="e-card-name">{p.name}</span>
+                  <div className="e-card-badges">
+                    <span className={`e-badge ${p.role.side}`}>{p.role.name}</span>
+                    {p.isRevealed && <Eye size={12}/>}
                   </div>
                 </div>
-
-                <div className="c-p-controls">
+                <div className="e-card-actions">
                   {p.alive ? (
                     <>
-                      <button 
-                        className={`c-act kill ${p.statusEffect === 'killed' ? 'on' : ''}`}
-                        onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, statusEffect: pl.statusEffect === 'killed' ? null : 'killed'} : pl))}
-                      >
-                        <Skull size={18}/>
-                      </button>
-                      <button 
-                        className={`c-act check ${p.isRevealed ? 'on' : ''}`}
-                        onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, isRevealed: !pl.isRevealed} : pl))}
-                      >
-                        <Eye size={18}/>
-                      </button>
-                      {phase === 'night' && (
-                        <button 
-                          className={`c-act heal ${p.statusEffect === 'healed' ? 'on' : ''}`}
-                          onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, statusEffect: pl.statusEffect === 'healed' ? null : 'healed'} : pl))}
-                        >
-                          <Heart size={18}/>
-                        </button>
-                      )}
+                      <button className={`e-action-btn k ${p.statusEffect === 'killed' ? 'active' : ''}`} onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, statusEffect: pl.statusEffect === 'killed' ? null : 'killed'} : pl))}><Skull size={18}/></button>
+                      <button className={`e-action-btn r ${p.isRevealed ? 'active' : ''}`} onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, isRevealed: !pl.isRevealed} : pl))}><Eye size={18}/></button>
+                      {phase === 'night' && <button className={`e-action-btn h ${p.statusEffect === 'healed' ? 'active' : ''}`} onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, statusEffect: pl.statusEffect === 'healed' ? null : 'healed'} : pl))}><Heart size={18}/></button>}
                     </>
-                  ) : <span className="c-status-dead">EXPIRED</span>}
+                  ) : <span className="e-eliminated">ВЫБЫЛ</span>}
                 </div>
               </div>
             ))}
           </div>
 
-          <button onClick={confirmCycle} className="c-confirm-bar">
-            {phase === 'night' ? 'ОБРАБОТАТЬ НОЧНЫЕ СОБЫТИЯ' : 'ПОДТВЕРДИТЬ ИЗГНАНИЕ'}
+          <button onClick={confirmCycle} className="e-btn-confirm">
+            {phase === 'night' ? 'Завершить ночь' : 'Подтвердить итоги дня'}
           </button>
         </div>
       )}
 
-      {/* --- ЭКРАН 4: РЕЗУЛЬТАТ --- */}
+      {/* ЭКРАН 4: ИТОГИ */}
       {gameState === 'results' && (
-        <div className="console-view result-screen fade-in">
-          <div className="c-final-box">
-            <p className="c-final-label">OPERATIONAL_RESULT</p>
-            <h1>ПОБЕДА: {winner.toUpperCase()}</h1>
-            <button onClick={() => setGameState('setup')} className="c-main-btn">НОВЫЙ ПРОТОКОЛ</button>
+        <div className="estate-view center fade-in">
+          <div className="e-victory-card">
+            <p>Встреча окончена</p>
+            <h1>Победила {winner}</h1>
+            <button onClick={() => setGameState('setup')} className="e-btn-gold">Новый раунд</button>
           </div>
         </div>
       )}
@@ -254,97 +196,92 @@ const MafiaGame = ({ onBack }) => {
   );
 };
 
-// // СТИЛИ: CYBER-POLICE CONSOLE
-const consoleStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+const estateStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Montserrat:wght@400;700&display=swap');
 
-  .mafia-console {
+  .estate-root {
     position: fixed !important; inset: 0 !important;
-    font-family: 'JetBrains Mono', monospace !important;
+    font-family: 'Montserrat', sans-serif !important;
     display: flex !important; flex-direction: column !important;
-    z-index: 100000 !important; transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                      linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)) !important;
-    background-size: 100% 4px, 3px 100% !important;
+    z-index: 100000 !important; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
-  .mafia-console.night { background-color: #0d0202 !important; color: #ff3e3e !important; }
-  .mafia-console.day { background-color: #020d14 !important; color: #00d2ff !important; }
+  .estate-root.night { background: #0a0e14 !important; color: #d4af37 !important; }
+  .estate-root.day { background: #fdfaf1 !important; color: #2c1e1e !important; }
 
-  .console-view { width: 100% !important; max-width: 440px !important; margin: 0 auto !important; padding: 20px !important; }
+  .estate-view { width: 100% !important; max-width: 440px !important; margin: 0 auto !important; padding: 25px !important; }
+  .estate-view.center { display: flex; align-items: center; justify-content: center; height: 100%; }
+
+  .e-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+  .e-back { background: none; border: 1px solid currentColor; color: inherit; padding: 6px 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border-radius: 40px; }
+  .e-logo { font-family: 'Playfair Display'; font-weight: 900; font-style: italic; font-size: 0.9rem; letter-spacing: 2px; }
+
+  .e-title { font-family: 'Playfair Display'; font-size: 3rem; line-height: 1; margin-bottom: 40px; text-align: center; font-weight: 900; }
+  .e-title span { display: block; font-style: italic; font-weight: 400; color: #c41e3a; }
+
+  /* Списки гостей */
+  .e-guest-list { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); padding: 20px; border-radius: 12px; margin-bottom: 30px; }
+  .estate-root.night .e-guest-list { background: rgba(255,255,255,0.02); border-color: rgba(212, 175, 55, 0.2); }
   
-  .c-header { display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 25px !important; }
-  .c-back-btn { background: none; border: 1px solid currentColor; color: inherit; padding: 5px 12px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 700; }
-  .c-system-tag { font-size: 0.6rem; opacity: 0.6; letter-spacing: 2px; }
+  .e-guest-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; }
+  .e-guest-number { font-family: 'Playfair Display'; font-weight: 700; opacity: 0.4; font-size: 0.8rem; }
+  .e-guest-row input { flex: 1; background: none; border: none; font-family: inherit; font-size: 1rem; color: inherit; outline: none; }
+  .e-guest-del { background: none; border: none; color: #c41e3a; cursor: pointer; opacity: 0.6; }
 
-  .c-title { font-size: 2.2rem !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 30px !important; }
-  .c-title span { display: block; font-size: 1rem; color: #fff; background: currentColor; color: #000; width: fit-content; margin: 5px auto; padding: 0 8px; }
+  .e-add-guest { width: 100%; padding: 12px; background: none; border: 1px dashed currentColor; color: inherit; border-radius: 8px; cursor: pointer; font-weight: 700; margin-top: 10px; }
 
-  /* Редактор имен */
-  .c-scroll-area { 
-    background: rgba(0,0,0,0.3) !important; border: 1px solid currentColor !important; 
-    padding: 15px !important; max-height: 45vh !important; overflow-y: auto !important; margin-bottom: 20px !important;
-  }
-  .c-label { font-size: 0.7rem; font-weight: 800; margin-bottom: 15px; opacity: 0.8; }
-  .c-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 5px; }
-  .c-num { font-size: 0.7rem; opacity: 0.5; width: 20px; }
-  .c-input-row input { flex: 1; background: none; border: none; color: #fff; font-family: inherit; font-size: 1rem; outline: none; }
-  .c-row-del { background: none; border: none; color: #ff3e3e; cursor: pointer; }
-  .c-add-btn { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px dashed currentColor; color: inherit; cursor: pointer; font-weight: 700; }
+  .e-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+  .e-check { padding: 12px; border: 1px solid currentColor; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+  .e-check.active { background: #d4af37 !important; color: #fff !important; border-color: #d4af37 !important; }
 
-  .c-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
-  .c-toggle { padding: 12px; border: 1px solid currentColor; text-align: center; font-size: 0.7rem; font-weight: 800; cursor: pointer; }
-  .c-toggle.active { background: currentColor !important; color: #000 !important; }
-
-  .c-main-btn { 
-    width: 100% !important; padding: 20px !important; background: currentColor !important; 
-    color: #000 !important; border: none !important; font-weight: 800 !important; 
-    cursor: pointer !important; box-shadow: 0 0 15px currentColor !important;
+  .e-btn-gold { 
+    width: 100%; padding: 20px; background: #d4af37; color: #fff; border: none; border-radius: 12px; 
+    font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
+    text-transform: uppercase; letter-spacing: 1px;
   }
 
-  /* Карточка роли */
-  .c-role-reveal-card { border: 2px solid currentColor; background: #000; overflow: hidden; }
-  .c-card-top { background: currentColor; color: #000; padding: 5px; font-size: 0.6rem; font-weight: 800; text-align: center; }
-  .c-card-content { padding: 40px 20px; text-align: center; }
-  .c-p-name { font-size: 1.8rem; margin-bottom: 30px; color: #fff; text-transform: uppercase; }
-  .c-role-data h3 { font-size: 2.5rem; font-weight: 800; margin-bottom: 15px; }
-  .c-role-data .evil { color: #ff3e3e; }
-  .c-role-data .good { color: #00ff88; }
-  .c-role-data p { font-size: 0.85rem; line-height: 1.5; opacity: 0.8; margin-bottom: 30px; }
-  .c-sub-btn { background: none; border: 1px solid currentColor; color: inherit; padding: 12px 30px; cursor: pointer; font-weight: 800; }
+  /* Конверт роли */
+  .e-role-envelope { background: #fff; padding: 40px 20px; border-radius: 4px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 100%; max-width: 320px; position: relative; border-top: 40px solid #f0f0f0; }
+  .estate-root.night .e-role-envelope { background: #1a1e26; border-top-color: #12151c; }
+  .e-env-header { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; color: #888; }
+  .e-env-name { font-family: 'Playfair Display'; font-size: 2rem; margin-bottom: 30px; }
+  .e-role-reveal h3 { font-family: 'Playfair Display'; font-size: 2.5rem; margin-bottom: 10px; }
+  .e-role-reveal .evil { color: #c41e3a; }
+  .e-role-reveal .good { color: #2e7d32; }
+  .e-role-reveal p { font-size: 0.8rem; opacity: 0.7; margin-bottom: 25px; line-height: 1.6; }
+  .e-btn-outline { background: none; border: 1px solid currentColor; color: inherit; padding: 10px 25px; border-radius: 30px; cursor: pointer; font-weight: 700; }
 
-  /* Пульт управления */
-  .console-action-view { flex: 1; display: flex; flex-direction: column; padding: 15px; }
-  .c-action-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); border: 1px solid currentColor; padding: 10px 15px; margin-bottom: 15px; }
-  .c-timer-box { font-weight: 800; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-  .c-phase-indicator { font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; }
-  .c-phase-swap { background: none; border: none; color: inherit; cursor: pointer; }
+  /* Пульт распорядителя */
+  .estate-action-view { flex: 1; display: flex; flex-direction: column; padding: 20px; }
+  .e-action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid rgba(212, 175, 55, 0.3); }
+  .e-timer { font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .e-phase-title { font-family: 'Playfair Display'; font-weight: 900; font-size: 1.2rem; }
+  .e-swap { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.5; }
 
-  .c-list-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-  .c-p-row { background: rgba(255,255,255,0.03); border-left: 4px solid rgba(255,255,255,0.1); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
-  .c-p-row.active-target { border-left-color: currentColor !important; background: rgba(255,255,255,0.08); }
-  .c-p-row.eliminated { opacity: 0.3; filter: grayscale(1); }
+  .e-cards-grid { flex: 1; overflow-y: auto; display: grid; gap: 12px; }
+  .e-player-card { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .e-player-card.selected { border-color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+  .e-player-card.dead { opacity: 0.4; filter: sepia(1); }
 
-  .c-p-identity { display: flex; flex-direction: column; gap: 4px; }
-  .c-p-name { font-weight: 700; font-size: 1.1rem; color: #fff; }
-  .c-p-role-badge { font-size: 0.6rem; font-weight: 800; padding: 1px 6px; width: fit-content; }
-  .c-p-role-badge.evil { background: #ff3e3e; color: #fff; }
-  .c-p-role-badge.good { background: #00ff88; color: #000; }
-  .eye-icon { color: #fff; margin-top: 2px; }
+  .e-card-main { display: flex; flex-direction: column; gap: 4px; }
+  .e-card-name { font-weight: 700; font-size: 1.1rem; font-family: 'Playfair Display'; }
+  .e-card-badges { display: flex; align-items: center; gap: 8px; }
+  .e-badge { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; opacity: 0.7; }
 
-  .c-p-controls { display: flex; gap: 8px; }
-  .c-act { background: none; border: 1px solid rgba(255,255,255,0.2); color: inherit; padding: 8px; cursor: pointer; transition: 0.2s; }
-  .c-act.on { background: currentColor !important; color: #000 !important; border-color: currentColor !important; }
-  .c-status-dead { font-size: 0.65rem; font-weight: 800; color: #ff3e3e; border: 1px solid; padding: 2px 6px; }
+  .e-card-actions { display: flex; gap: 8px; }
+  .e-action-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(212, 175, 55, 0.3); color: inherit; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+  .e-action-btn.active { background: #d4af37 !important; color: #fff !important; }
+  .e-eliminated { font-size: 0.6rem; font-weight: 700; letter-spacing: 1px; color: #c41e3a; }
 
-  .c-confirm-bar { width: 100%; padding: 22px; background: #ff3e3e; color: #fff; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; margin-top: 15px; letter-spacing: 1px; box-shadow: 0 -5px 20px rgba(255, 62, 62, 0.2); }
-  .mafia-console.day .c-confirm-bar { background: #00d2ff; color: #000; box-shadow: 0 -5px 20px rgba(0, 210, 255, 0.2); }
+  .e-btn-confirm { width: 100%; padding: 22px; background: #2c1e1e; color: #fff; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 15px; border-radius: 12px; text-transform: uppercase; letter-spacing: 2px; }
+  .estate-root.night .e-btn-confirm { background: #d4af37; color: #000; }
 
-  .c-final-box { border: 2px solid currentColor; padding: 50px 20px; background: #000; text-align: center; }
-  .c-final-label { font-size: 0.7rem; opacity: 0.6; margin-bottom: 20px; }
+  .e-victory-card { text-align: center; }
+  .e-victory-card p { font-family: 'Playfair Display'; font-style: italic; font-size: 1.2rem; margin-bottom: 10px; }
+  .e-victory-card h1 { font-family: 'Playfair Display'; font-size: 3.5rem; font-weight: 900; margin-bottom: 40px; }
 
-  .fade-in { animation: cFade 0.4s ease-out forwards; }
-  @keyframes cFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+  .fade-in { animation: eIn 0.6s ease-out forwards; }
+  @keyframes eIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 `;
 
 export default MafiaGame;
