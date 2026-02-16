@@ -2,11 +2,30 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <title>LOVECOUPLE | PARTY HUB</title>
+    
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta name="theme-color" content="#F7FAFC" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="LoveCouple">
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Запрет выделения текста для ощущения нативного приложения */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
 </head>
 <body>
+    <noscript>Вам нужно включить JavaScript для запуска этого приложения.</noscript>
     <div id="root"></div>
 </body>
 </html>
