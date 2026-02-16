@@ -68,7 +68,7 @@ const AliasGame = ({ onBack }) => {
       ? customWordsInput.split(',').map(s => s.trim()).filter(s => s !== "")
       : words;
     
-    if (finalWords.length === 0) return alert("Слова не выбраны!");
+    if (finalWords.length === 0) return alert("Выберите хотя бы одну категорию!");
 
     setWords([...finalWords].sort(() => Math.random() - 0.5));
     setTimeLeft(timeInput);
@@ -102,266 +102,258 @@ const AliasGame = ({ onBack }) => {
   return (
     <div id="app" style={{ height: '100%', width: '100%', display: 'flex' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { 
-          font-family: 'Space Grotesk', sans-serif; 
-          background-color: #f0f0f0; 
-          color: #1a1a1a;
-          overflow: hidden;
-        }
-
-        /* Текстурный шум на фон */
-        #app::before {
-          content: "";
-          position: fixed; inset: 0;
-          background-image: url("https://www.transparenttextures.com/patterns/asfalt-dark.png");
-          opacity: 0.05;
-          pointer-events: none;
-          z-index: 9999;
+          font-family: 'Nunito', sans-serif; 
+          background-color: #2D3436; 
+          overflow: hidden; 
+          height: 100%; width: 100%;
         }
 
         .container {
-          position: fixed; inset: 0; padding: 20px;
+          position: fixed; inset: 0; padding: 24px;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          transition: all 0.2s steps(4);
+          background: #4834D4; /* Основной глубокий цвет */
+          color: #fff;
+          text-align: center;
         }
 
-        /* Кнопка выхода - как бирка */
-        .btn-tag {
-          position: absolute; top: 0; left: 20px;
-          background: #1a1a1a; color: #fff;
-          padding: 30px 10px 10px 10px;
-          clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
-          border: none; font-weight: 700; font-size: 10px;
+        .bg-menu { background: #686DE0; }
+        .bg-setup { background: #EB4D4B; }
+        .bg-game { background: #4834D4; }
+        .bg-results { background: #F9F9F9; color: #2D3436; }
+
+        /* Кнопка выхода */
+        .btn-top-left {
+          position: absolute; top: 16px; left: 16px;
+          background: rgba(255,255,255,0.2);
+          border: none; padding: 10px 18px;
+          border-radius: 12px; color: #fff;
+          font-weight: 900; font-size: 14px;
           cursor: pointer; z-index: 100;
         }
 
-        /* Заголовок - Эффект вырезки */
-        .title-cutout {
-          background: #1a1a1a;
-          color: #ccff00; /* Кислотный лайм */
-          padding: 10px 30px;
-          font-size: 4.5rem;
-          font-weight: 900;
-          transform: rotate(-2deg);
-          box-shadow: 10px 10px 0 rgba(26,26,26,0.2);
-          margin-bottom: 40px;
-          text-transform: uppercase;
+        /* Заголовок */
+        .game-title {
+          font-size: 5rem; font-weight: 900;
+          color: #FFF; margin-bottom: 20px;
+          text-shadow: 0 8px 0 rgba(0,0,0,0.1);
         }
 
-        /* Кнопки - Стилистика грубого наброска */
-        .btn-raw {
-          background: #fff;
-          border: 3px solid #1a1a1a;
+        /* Кнопки "Конфеты" */
+        .btn-candy {
+          background: #BADC58;
+          color: #2D3436;
+          border: none;
           padding: 20px 40px;
+          border-radius: 24px;
           font-size: 1.5rem;
-          font-weight: 700;
-          position: relative;
+          font-weight: 900;
+          box-shadow: 0 8px 0 #6AB04C;
           cursor: pointer;
-          transition: 0.1s steps(2);
+          width: 90%; max-width: 320px;
+          transition: all 0.1s;
           text-transform: uppercase;
         }
-        .btn-raw::after {
-          content: "";
-          position: absolute; inset: 4px;
-          border: 1px solid #1a1a1a;
-        }
-        .btn-raw:active {
-          transform: translate(4px, 4px);
-          background: #ccff00;
+        .btn-candy:active {
+          transform: translateY(4px);
+          box-shadow: 0 4px 0 #6AB04C;
         }
 
-        /* Категории - Список как в блокноте */
-        .notebook-list {
+        .btn-secondary {
+          background: #F0932B;
+          box-shadow: 0 8px 0 #D35400;
+        }
+        .btn-secondary:active { box-shadow: 0 4px 0 #D35400; }
+
+        /* Игровая карточка */
+        .game-card {
+          background: #FFF;
           width: 100%; max-width: 400px;
-          max-height: 60vh; overflow-y: auto;
-          border-left: 4px solid #1a1a1a;
-          padding-left: 15px;
-        }
-        .note-item {
-          padding: 15px;
-          margin-bottom: 10px;
-          border-bottom: 1px dashed #1a1a1a;
-          text-align: left;
-          font-weight: 500;
-          font-size: 1.2rem;
-          cursor: pointer;
-          display: flex; justify-content: space-between;
-        }
-        .note-item.selected {
-          background: #1a1a1a; color: #ccff00;
-        }
-
-        /* Игровая карточка - Рваная бумага */
-        .paper-card {
-          background: #fff;
-          width: 90%; max-width: 450px;
-          min-height: 300px;
-          padding: 40px;
-          position: relative;
-          box-shadow: 5px 5px 0 #1a1a1a;
+          padding: 60px 20px;
+          border-radius: 40px;
+          box-shadow: 0 15px 0 rgba(0,0,0,0.1);
+          margin: 30px 0;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          clip-path: polygon(0% 2%, 98% 0%, 100% 95%, 2% 100%, 0% 50%);
         }
-        .paper-card::before {
-          content: "EXPLAIN THIS:";
-          position: absolute; top: 15px; left: 20px;
-          font-size: 12px; font-weight: 900; color: #aaa;
+        .card-label { color: #686DE0; font-size: 14px; font-weight: 900; margin-bottom: 10px; opacity: 0.6; }
+        .word-text { color: #2D3436; font-size: 3.5rem; font-weight: 900; line-height: 1; }
+
+        /* Список категорий */
+        .cat-list {
+          width: 100%; max-width: 400px;
+          overflow-y: auto; flex: 1;
+          display: flex; flex-direction: column; gap: 12px;
+          padding: 20px 0;
         }
-        .word-main {
-          font-size: 3.5rem;
-          font-weight: 700;
-          line-height: 1;
-          color: #1a1a1a;
-          text-decoration: underline;
+        .cat-item {
+          background: rgba(255,255,255,0.1);
+          padding: 20px; border-radius: 20px;
+          font-weight: 900; font-size: 1.2rem;
+          cursor: pointer; display: flex; justify-content: space-between;
+          border: 4px solid transparent;
+        }
+        .cat-item.active {
+          background: #BADC58; color: #2D3436;
+          border-color: #FFF;
         }
 
-        /* Статус бары */
-        .info-strip {
-          position: fixed; bottom: 20px; left: 20px; right: 20px;
+        /* Статус раунда */
+        .status-row {
+          width: 100%; max-width: 400px;
           display: flex; justify-content: space-between;
-          font-weight: 700; text-transform: uppercase;
+          margin-bottom: 20px;
         }
-        .stat-block { background: #1a1a1a; color: #fff; padding: 5px 15px; }
-        .stat-block.warning { background: #ff4400; animation: flash 0.5s steps(2) infinite; }
+        .stat-badge {
+          background: rgba(255,255,255,0.2);
+          padding: 10px 20px; border-radius: 50px;
+          font-weight: 900; font-size: 18px;
+        }
+        .timer-warning { background: #FF7979; animation: pulse 0.6s infinite; }
 
-        @keyframes flash {
-          from { opacity: 1; } to { opacity: 0; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* Инпуты */
+        .custom-field {
+          width: 100%; padding: 15px; border-radius: 15px;
+          border: none; background: #FFF; color: #2D3436;
+          font-family: inherit; font-weight: 900; font-size: 1.1rem;
+          margin-top: 5px;
         }
 
-        .blur-effect { filter: grayscale(1) blur(5px); pointer-events: none; }
-
-        /* Итоги - Инверсия */
-        .results-wrap {
-          background: #1a1a1a; color: #fff;
-          width: 100%; height: 100%;
-          padding-top: 60px;
-        }
-        .log-row {
-          padding: 10px 20px;
-          border-bottom: 1px solid #333;
-          display: flex; justify-content: space-between;
-        }
+        .blur-filter { filter: blur(8px); pointer-events: none; }
       `}</style>
 
       {/* МЕНЮ */}
       {screen === 'menu' && (
-        <div className="container">
-          <button className="btn-tag" onClick={goToHome}>EXIT</button>
-          <div className="title-cutout">ALIAS</div>
-          <p style={{ fontWeight: 500, marginBottom: '30px', maxWidth: '250px' }}>
-            // INDIE GAME MODE_ <br/> NO RULES, JUST EXPLAIN.
-          </p>
-          <button className="btn-raw" onClick={() => setScreen('source')}>START_SESSION</button>
+        <div className="container bg-menu">
+          <button className="btn-top-left" onClick={goToHome}>ВЫХОД</button>
+          <div className="game-title">ALIAS</div>
+          <p style={{ fontWeight: 900, marginBottom: '40px', opacity: 0.8 }}>Объясни как можно больше слов!</p>
+          <button className="btn-candy" onClick={() => setScreen('source')}>ПОЕХАЛИ! 🚀</button>
         </div>
       )}
 
-      {/* ИСТОЧНИК */}
+      {/* ВЫБОР ИСТОЧНИКА */}
       {screen === 'source' && (
-        <div className="container">
-          <button className="btn-tag" onClick={backToMenu}>BACK</button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '80%' }}>
-            <button className="btn-raw" onClick={() => { setWords([]); setScreen('bank'); }}>[ WORD_BANK ]</button>
-            <button className="btn-raw" onClick={() => { setWords([]); setShowWordsGroup(true); setScreen('setup'); }}>[ MANUAL_INPUT ]</button>
+        <div className="container bg-menu">
+          <button className="btn-top-left" onClick={backToMenu}>НАЗАД</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', alignItems: 'center' }}>
+            <button className="btn-candy" onClick={() => { setWords([]); setScreen('bank'); }}>📚 БАНК СЛОВ</button>
+            <button className="btn-candy btn-secondary" onClick={() => { setWords([]); setShowWordsGroup(true); setScreen('setup'); }}>✏️ СВОИ СЛОВА</button>
           </div>
         </div>
       )}
 
       {/* КАТЕГОРИИ */}
       {screen === 'bank' && (
-        <div className="container" style={{ justifyContent: 'flex-start', paddingTop: '80px' }}>
-          <button className="btn-tag" onClick={() => setScreen('source')}>BACK</button>
-          <div className="notebook-list">
+        <div className="container bg-menu" style={{ justifyContent: 'flex-start', paddingTop: '80px' }}>
+          <button className="btn-top-left" onClick={() => setScreen('source')}>НАЗАД</button>
+          <div className="cat-list">
             {Object.keys(wordBanks).map(cat => (
               <div 
                 key={cat} 
-                className={`note-item ${selectedCategories.has(cat) ? 'selected' : ''}`} 
+                className={`cat-item ${selectedCategories.has(cat) ? 'active' : ''}`} 
                 onClick={() => toggleCategory(cat)}
               >
-                <span>{cat.toUpperCase()}</span>
-                {selectedCategories.has(cat) && <span>[X]</span>}
+                <span>{cat === 'animals' ? '🐾 ЖИВОТНЫЕ' : cat === 'food' ? '🍕 ЕДА' : cat === 'movies' ? '🎬 ФИЛЬМЫ' : cat === 'sports' ? '⚽ СПОРТ' : cat === 'professions' ? '👔 ПРОФЕССИИ' : cat === 'countries' ? '🌍 СТРАНЫ' : '🎯 МИКС'}</span>
+                {selectedCategories.has(cat) && <span>✓</span>}
               </div>
             ))}
           </div>
           {selectedCategories.size > 0 && (
-            <button className="btn-raw" style={{ marginTop: '30px' }} onClick={() => {
+            <button className="btn-candy" style={{ margin: '20px 0' }} onClick={() => {
               let combined = [];
               selectedCategories.forEach(cat => { combined = [...combined, ...wordBanks[cat]]; });
               setWords(combined);
               setShowWordsGroup(false);
               setScreen('setup');
-            }}>CONFIRM_SELECTION</button>
+            }}>ПРОДОЛЖИТЬ →</button>
           )}
         </div>
       )}
 
       {/* НАСТРОЙКИ */}
       {screen === 'setup' && (
-        <div className="container">
-          <button className="btn-tag" onClick={() => setScreen(showWordsGroup ? 'source' : 'bank')}>BACK</button>
-          <div style={{ background: '#fff', border: '3px solid #1a1a1a', padding: '30px', width: '90%', maxWidth: '400px' }}>
+        <div className="container bg-setup">
+          <button className="btn-top-left" onClick={() => setScreen(showWordsGroup ? 'source' : 'bank')}>НАЗАД</button>
+          <div style={{ width: '100%', maxWidth: '360px', textAlign: 'left', marginBottom: '30px' }}>
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 900 }}>TIME_LIMIT (SEC)</label>
-              <input type="number" style={{ width: '100%', border: 'none', borderBottom: '3px solid #1a1a1a', fontSize: '2rem', outline: 'none' }} value={timeInput} onChange={e => setTimeInput(Number(e.target.value))} />
+              <label style={{ fontWeight: 900, fontSize: '14px' }}>⏱️ ВРЕМЯ РАУНДА (СЕК)</label>
+              <input type="number" className="custom-field" value={timeInput} onChange={e => setTimeInput(Number(e.target.value))} />
             </div>
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 900 }}>WORDS_AMOUNT</label>
-              <input type="number" style={{ width: '100%', border: 'none', borderBottom: '3px solid #1a1a1a', fontSize: '2rem', outline: 'none' }} value={roundsInput} onChange={e => setRoundsInput(Number(e.target.value))} />
+              <label style={{ fontWeight: 900, fontSize: '14px' }}>🔢 СЛОВ В РАУНДЕ</label>
+              <input type="number" className="custom-field" value={roundsInput} onChange={e => setRoundsInput(Number(e.target.value))} />
             </div>
-            {showWordsGroup && <textarea style={{ width: '100%', height: '80px', border: '1px solid #1a1a1a', padding: '10px' }} value={customWordsInput} onChange={e => setCustomWordsInput(e.target.value)} />}
+            {showWordsGroup && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontWeight: 900, fontSize: '14px' }}>📝 ВАШИ СЛОВА (ЧЕРЕЗ ЗАПЯТУЮ)</label>
+                <textarea className="custom-field" style={{ height: '100px', resize: 'none' }} value={customWordsInput} onChange={e => setCustomWordsInput(e.target.value)} />
+              </div>
+            )}
           </div>
-          <button className="btn-raw" style={{ marginTop: '20px', width: '90%', maxWidth: '400px' }} onClick={startGame}>EXECUTE_GAME</button>
+          <button className="btn-candy" onClick={startGame}>СТАРТ! 🎮</button>
         </div>
       )}
 
       {/* ИГРА */}
       {screen === 'game' && (
-        <div className={`container ${isConfirmModalOpen ? 'blur-effect' : ''}`} style={{ backgroundColor: '#1a1a1a' }}>
-          <div className="paper-card">
-            <div className="word-main">{words[currentIndex]}</div>
+        <div className={`container bg-game ${isConfirmModalOpen ? 'blur-filter' : ''}`}>
+          <div className="status-row">
+            <div className={`stat-badge ${timeLeft <= 10 ? 'timer-warning' : ''}`}>⏱️ {timeLeft}</div>
+            <div className="stat-badge">⭐ {score}</div>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '90%', maxWidth: '450px', marginTop: '30px' }}>
-            <button className="btn-raw" style={{ background: '#1a1a1a', color: '#fff' }} onClick={() => handleAction(false)}>SKIP</button>
-            <button className="btn-raw" onClick={() => handleAction(true)}>DONE</button>
+          <div className="game-card">
+            <div className="card-label">ОБЪЯСНИ СЛОВО:</div>
+            <div className="word-text">{words[currentIndex]}</div>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', width: '100%', maxWidth: '400px' }}>
+            <button className="btn-candy btn-secondary" style={{ width: '100%' }} onClick={() => handleAction(false)}>ПРОПУСК</button>
+            <button className="btn-candy" style={{ width: '100%' }} onClick={() => handleAction(true)}>ГОТОВО</button>
           </div>
 
-          <div className="info-strip">
-            <div className={`stat-block ${timeLeft <= 10 ? 'warning' : ''}`}>T: {timeLeft}S</div>
-            <button style={{ background: '#fff', border: 'none', fontWeight: 900, padding: '5px 10px' }} onClick={() => setIsConfirmModalOpen(true)}>PAUSE</button>
-            <div className="stat-block">SCORE: {score}</div>
-          </div>
+          <button 
+            style={{ marginTop: '30px', background: 'none', border: 'none', color: '#fff', fontWeight: 900, opacity: 0.6, fontSize: '16px' }}
+            onClick={() => setIsConfirmModalOpen(true)}
+          >
+            ПАУЗА
+          </button>
         </div>
       )}
 
       {/* ИТОГИ */}
       {screen === 'results' && (
-        <div className="container results-wrap">
-          <div className="title-cutout" style={{ fontSize: '2.5rem' }}>SESSION_OVER</div>
-          <h2 style={{ fontSize: '4rem', fontWeight: 900 }}>{score}</h2>
-          <div style={{ width: '90%', maxWidth: '400px', flex: 1, overflowY: 'auto', marginTop: '20px' }}>
+        <div className="container bg-results">
+          <div className="game-title" style={{ color: '#4834D4', fontSize: '3rem' }}>РЕЗУЛЬТАТ</div>
+          <div style={{ fontSize: '6rem', fontWeight: 900, color: '#F0932B', marginBottom: '10px' }}>{score}</div>
+          <div style={{ width: '100%', maxWidth: '400px', flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
             {log.map((item, idx) => (
-              <div key={idx} className="log-row" onClick={() => toggleLogStatus(idx)}>
-                <span style={{ textDecoration: item.ok ? 'none' : 'line-through', opacity: item.ok ? 1 : 0.5 }}>{item.word}</span>
-                <span style={{ color: item.ok ? '#ccff00' : '#ff4400' }}>{item.ok ? '[OK]' : '[X]'}</span>
+              <div key={idx} style={{ padding: '15px', borderBottom: '2px solid #EEE', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 900 }}>
+                <span style={{ opacity: item.ok ? 1 : 0.4 }}>{item.word}</span>
+                <span style={{ color: item.ok ? '#BADC58' : '#EB4D4B' }}>{item.ok ? '✓' : '✕'}</span>
               </div>
             ))}
           </div>
-          <button className="btn-raw" style={{ margin: '20px 0' }} onClick={backToMenu}>REBOOT_SYSTEM</button>
+          <button className="btn-candy" onClick={backToMenu}>В МЕНЮ ↻</button>
         </div>
       )}
 
-      {/* ПАУЗА */}
+      {/* ПАУЗА (МОДАЛКА) */}
       {isConfirmModalOpen && (
-        <div className="container" style={{ background: 'rgba(204, 255, 0, 0.9)', zIndex: 2000 }}>
-          <div className="title-cutout" style={{ fontSize: '3rem' }}>PAUSED</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '80%' }}>
-            <button className="btn-raw" style={{ background: '#1a1a1a', color: '#fff' }} onClick={backToMenu}>ABORT_GAME</button>
-            <button className="btn-raw" onClick={() => setIsConfirmModalOpen(false)}>RESUME</button>
+        <div className="container" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 2000 }}>
+          <div style={{ background: '#FFF', padding: '40px 20px', borderRadius: '40px', width: '85%', maxWidth: '320px', color: '#2D3436' }}>
+            <div className="game-title" style={{ color: '#4834D4', fontSize: '2.5rem', textShadow: 'none' }}>ПАУЗА</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+              <button className="btn-candy" onClick={() => setIsConfirmModalOpen(false)}>ПРОДОЛЖИТЬ</button>
+              <button className="btn-candy btn-secondary" onClick={backToMenu}>ВЫЙТИ</button>
+            </div>
           </div>
         </div>
       )}
