@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // // Добавили useEffect
 import { motion } from 'framer-motion';
 
-// Подключаем компоненты игр из папок
+// Подключаем компоненты игр
 import AliasGame from './components/Alias/AliasGame';
 import NeverHaveIEver from './components/Never/NeverHaveIEver';
 import SpyGame from './components/Spy/SpyGame';
@@ -11,176 +11,119 @@ import CityGuide from './components/CityGuide/CityGuide';
 import MafiaGame from './components/Mafia/MafiaGame';
 import LoveStory from './components/LoveStory/LoveStory';
 
-// Твой CSS файл
 import './App.css';
 
-// --- ДАННЫЕ ИГР С ТВОИМИ КЛАССАМИ ---
 const GAMES = [
-  {
-    id: 'alias',
-    className: 'alias', // Розовый
-    title: 'ALIAS NEO',
-    icon: '🗣️',
-    desc: 'Объясняй слова на скорость, не называя однокоренных.',
-    footer: '2+ ИГРОКА',
-    badge: 'NEW',
-    ready: true
-  },
-  {
-    id: 'Never',
-    className: 'Never', // Зеленый
-    title: 'Я никогда не',
-    icon: '🤯',
-    desc: 'Признавайся в самых курьезных поступках и узнавай тайны друзей',
-    footer: '3+ ИГРОКА',
-    ready: true
-  },
-  {
-    id: 'spy',
-    className: 'spy', // Мятный
-    title: 'ШПИОН',
-    icon: '🕵️',
-    desc: 'Вычисли шпиона по глупым ответам на вопросы.',
-    footer: '3-10 ИГРОКОВ',
-    ready: true
-  },
-  {
-    id: 'whoami',
-    className: 'whoami', // Бежевый
-    title: 'КТО Я?',
-    icon: '👤',
-    desc: 'Угадай персонажа на своем лбу, задавая вопросы "Да" или "Нет".',
-    footer: '2-8 ИГРОКОВ',
-    ready: true
-  },
-{
-  id: 'voices',            // Новый ID
-  className: 'quiz',      // Голубой цвет из CSS
-  title: 'ГОЛОСА В ГОЛОВЕ',
-  icon: '👥',             // Иконка группы людей
-  desc: 'Выбирайте, кто из вас вероятнее всего совершит безумный поступок.',
-  footer: '3+ ИГРОКА',
-  ready: true
-},
-    {
-    id: 'city-guide',
-    className: 'mafia', // Или создай в App.css класс .archive { background: #e4e0d9; }
-    title: 'РФ-АРХИВ',
-    icon: '🇷🇺',
-    desc: 'Небанальные места в городах России: бары, секретные локации, ивенты.',
-    footer: 'ГИД', // Добавил футер для единообразия
-    ready: true
-  },
-  {
-    id: 'couples',
-    className: 'couples', // Светло-розовый
-    title: 'LOVE STORY',
-    icon: '❤️',
-    desc: 'Укрепляйте отношения через милые и честные задания.',
-    footer: '2 ИГРОКА',
-    badge: 'HOT',
-    ready: true
-  },
-  {
-    id: 'mafia',
-    className: 'mafia', // Серый
-    title: 'МАФИЯ',
-    icon: '🎭',
-    desc: 'Город засыпает... Проверь свою интуицию и блеф.',
-    footer: '6-16 ИГРОКОВ',
-    ready: true
-  }
+  /* ... твой массив GAMES без изменений ... */
+  { id: 'alias', className: 'alias', title: 'ALIAS NEO', icon: '🗣️', desc: 'Объясняй слова на скорость, не называя однокоренных.', footer: '2+ ИГРОКА', badge: 'NEW', ready: true },
+  { id: 'Never', className: 'Never', title: 'Я никогда не', icon: '🤯', desc: 'Признавайся в самых курьезных поступках и узнавай тайны друзей', footer: '3+ ИГРОКА', ready: true },
+  { id: 'spy', className: 'spy', title: 'ШПИОН', icon: '🕵️', desc: 'Вычисли шпиона по глупым ответам на вопросы.', footer: '3-10 ИГРОКОВ', ready: true },
+  { id: 'whoami', className: 'whoami', title: 'КТО Я?', icon: '👤', desc: 'Угадай персонажа на своем лбу, задавая вопросы "Да" или "Нет".', footer: '2-8 ИГРОКОВ', ready: true },
+  { id: 'voices', className: 'quiz', title: 'ГОЛОСА В ГОЛОВЕ', icon: '👥', desc: 'Выбирайте, кто из вас вероятнее всего совершит безумный поступок.', footer: '3+ ИГРОКА', ready: true },
+  { id: 'city-guide', className: 'mafia', title: 'РФ-АРХИВ', icon: '🇷🇺', desc: 'Небанальные места в городах России: бары, секретные локации, ивенты.', footer: 'ГИД', ready: true },
+  { id: 'couples', className: 'couples', title: 'LOVE STORY', icon: '❤️', desc: 'Укрепляйте отношения через милые и честные задания.', footer: '2 ИГРОКА', badge: 'HOT', ready: true },
+  { id: 'mafia', className: 'mafia', title: 'МАФИЯ', icon: '🎭', desc: 'Город засыпает... Проверь свою интуицию и блеф.', footer: '6-16 ИГРОКОВ', ready: true }
 ];
 
 export default function App() {
-  // Состояние для переключения между лендингом и игрой
   const [activeGame, setActiveGame] = useState(null);
 
-  // --- ЛОГИКА ОТОБРАЖЕНИЯ ---
+  // // СОСТОЯНИЯ ДЛЯ PWA (ANDROID И IOS)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // Если открыта игра Alias
-  if (activeGame === 'alias') {
-    return <AliasGame onBack={() => setActiveGame(null)} />;
-  }
+  // // ЭФФЕКТ ДЛЯ ОПРЕДЕЛЕНИЯ УСТРОЙСТВА
+  useEffect(() => {
+    // Логика для Android: ловим системное событие установки
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    });
 
-  // Если открыта игра Крокодил
-  if (activeGame === 'Never') {
-    return <NeverHaveIEver onBack={() => setActiveGame(null)} />;
-  }
-  
-// Если открыта игра Шпион
-  if (activeGame === 'spy') {
-    return <SpyGame onBack={() => setActiveGame(null)} />;
-  }
-  
-  // Если открыта игра Квиз
-  if (activeGame === 'voices') {
-    return <QuizGame onBack={() => setActiveGame(null)} />;
-  }
-  
-  // Если открыта игра КТО Я
-  if (activeGame === 'whoami') {
-    return <WhoAmIGame onBack={() => setActiveGame(null)} />;
-  }
-  
-    // Если открыта игра 5 БУКВ
-  if (activeGame === '5-letters') {
-    return <FiveLettersGame onBack={() => setActiveGame(null)} />;
-  }
+    // Логика для iOS: проверяем, что это Safari и не PWA режим
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isIos && !isStandalone) {
+      setShowInstallPrompt(true);
+    }
+  }, []);
 
+  // // ФУНКЦИЯ УСТАНОВКИ ДЛЯ ANDROID
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    } else {
+      setShowInstallPrompt(false);
+    }
+  };
+
+  // --- ЛОГИКА ОТОБРАЖЕНИЯ ИГР ---
+  if (activeGame === 'alias') return <AliasGame onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'Never') return <NeverHaveIEver onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'spy') return <SpyGame onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'voices') return <QuizGame onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'whoami') return <WhoAmIGame onBack={() => setActiveGame(null)} />;
   if (activeGame === 'city-guide') return <CityGuide onBack={() => setActiveGame(null)} />;
-  
   if (activeGame === 'mafia') return <MafiaGame onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'couples') return <LoveStory onBack={() => setActiveGame(null)} />;
 
-  if (activeGame === 'couples') {
-    return <LoveStory onBack={() => setActiveGame(null)} />;
-  }
-  
-  // Основной лендинг
   return (
     <div className="neo-wrapper">
-      {/* Шапка по твоему дизайну */}
       <header className="neo-header">
         <h1 className="neo-logo">LOVECOUPLE</h1>
         <p className="neo-subtitle">ТВОЯ ПЛАНЕТА РАЗВЛЕЧЕНИЙ</p>
       </header>
 
-      {/* Сетка карточек */}
       <main className="neo-grid">
         {GAMES.map((game) => (
           <motion.div
             key={game.id}
-            // Формируем классы: neo-card + цвет + locked (если не готова)
             className={`neo-card ${game.className} ${!game.ready ? 'locked' : ''}`}
-            // Анимация из Framer Motion (легкое нажатие)
             whileTap={game.ready ? { scale: 0.95 } : {}}
-            onClick={() => {
-              if (game.ready) {
-                setActiveGame(game.id);
-              } else {
-                alert("Эта игра скоро появится!");
-              }
-            }}
+            onClick={() => game.ready ? setActiveGame(game.id) : alert("Скоро!")}
           >
-            {/* Твой значок (Badge) */}
             {game.badge && <div className="neo-badge">{game.badge}</div>}
-            
-            {/* Твои элементы карточки */}
             <div className="neo-icon">{game.icon}</div>
             <h2 className="neo-title">{game.title}</h2>
             <p className="neo-desc">{game.desc}</p>
-            
-            {/* Твой футер внутри карточки */}
             <div className="neo-footer">{game.footer}</div>
           </motion.div>
         ))}
       </main>
 
-      {/* Футер со ссылками */}
       <footer className="neo-footer-links">
         <a href="https://lovecouple.ru" className="footer-link">LOVECOUPLE.RU</a>
         <a href="https://t.me/LoveCouple_news" className="footer-link">TELEGRAM CHANNEL</a>
       </footer>
+
+      {/* --- ОКНО УСТАНОВКИ PWA (В САМОМ КОНЦЕ) --- */}
+      {showInstallPrompt && (
+        <div className="install-prompt fade-in">
+          <div className="install-prompt-content">
+            {deferredPrompt ? (
+              // Вид для Android
+              <>
+                <p>Установи <b>LOVECOUPLE</b> на рабочий стол</p>
+                <button onClick={handleInstallClick} className="close-prompt">УСТАНОВИТЬ</button>
+              </>
+            ) : (
+              // Вид для iOS
+              <>
+                <p>Добавь игру на экран <b>«Домой»</b></p>
+                <div className="install-hint">
+                  Нажми <span className="ios-share-icon">⎋</span> а затем <b>«На экран Домой»</b>
+                </div>
+                <button onClick={() => setShowInstallPrompt(false)} className="close-prompt">ОК</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
