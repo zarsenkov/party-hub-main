@@ -1,303 +1,258 @@
 import React, { useState, useEffect } from 'react';
-// // Иконки в стиле классики
-import { Moon, Sun, ArrowLeft, Skull, Heart, Timer, RefreshCw, Eye, UserPlus, Trash2, CheckCircle2 } from 'lucide-react';
-// // Данные ролей
+// // Используем иконки для функционала ведущего
+import { 
+  Moon, Sun, Shield, Crosshair, AlertTriangle, 
+  UserX, Check, RotateCcw, Plus, Minus, Info 
+} from 'lucide-react';
 import { mafiaRoles } from './mafiaData';
 
-// // Имена по умолчанию для атмосферы
-const NICKNAMES = ["Дон", "Капо", "Советник", "Красотка", "Букмекер", "Адвокат", "Судья", "Счастливчик", "Громила", "Интуит"];
-
 const MafiaGame = ({ onBack }) => {
-  // === СОСТОЯНИЯ ===
-  const [gameState, setGameState] = useState('setup');
-  const [phase, setPhase] = useState('night');
-  const [tempNames, setTempNames] = useState(['', '', '', '']);
-  const [useManiac, setUseManiac] = useState(false);
-  const [useProstitute, setUseProstitute] = useState(false);
+  // === СОСТОЯНИЕ ===
+  const [gameState, setGameState] = useState('setup'); // // setup, gameplay, victory
+  const [phase, setPhase] = useState('night'); // // night, day
   const [players, setPlayers] = useState([]);
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
-  const [showRole, setShowRole] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [timerActive, setTimerActive] = useState(false);
-  const [winner, setWinner] = useState(null);
+  const [namesInput, setNamesInput] = useState(""); // // Ввод списком
+  const [timer, setTimer] = useState(60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  
+  // // Логика ночных действий (храним ID целей)
+  const [nightActions, setNightActions] = useState({ kill: null, heal: null, check: null });
 
   // === ТАЙМЕР ===
   useEffect(() => {
     let interval;
-    if (timerActive && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    } else { setTimerActive(false); }
+    if (isTimerRunning && timer > 0) {
+      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    } else if (timer === 0) {
+      setIsTimerRunning(false);
+    }
     return () => clearInterval(interval);
-  }, [timerActive, timeLeft]);
+  }, [isTimerRunning, timer]);
 
-  // === ЛОГИКА СПИСКА ИГРОКОВ ===
-  // // Добавить новое поле
-  const addPlayerField = () => setTempNames([...tempNames, '']);
-  // // Удалить поле (минимум 4)
-  const removePlayerField = (idx) => {
-    if (tempNames.length > 4) setTempNames(tempNames.filter((_, i) => i !== idx));
-  };
-  // // Обновить имя
-  const handleNameChange = (idx, val) => {
-    const next = [...tempNames];
-    next[idx] = val;
-    setTempNames(next);
-  };
+  // === ИНИЦИАЛИЗАЦИЯ ИГРЫ ===
+  const setupGame = () => {
+    const list = namesInput.split('\n').filter(n => n.trim() !== "");
+    if (list.length < 4) return alert("Нужно минимум 4 игрока");
 
-  // === СТАРТ ИГРЫ ===
-  const startDealing = () => {
-    let rolesPool = [];
-    const count = tempNames.length;
-    const mafiaCount = Math.max(1, Math.floor(count / 4));
-    
-    // // Наполнение пула
-    for (let i = 0; i < mafiaCount; i++) rolesPool.push(mafiaRoles.find(r => r.id === 'mafia'));
-    rolesPool.push(mafiaRoles.find(r => r.id === 'doctor'), mafiaRoles.find(r => r.id === 'detective'));
-    if (useManiac) rolesPool.push(mafiaRoles.find(r => r.id === 'maniac'));
-    if (useProstitute) rolesPool.push(mafiaRoles.find(r => r.id === 'prostitute'));
-    while (rolesPool.length < count) rolesPool.push(mafiaRoles.find(r => r.id === 'civilian'));
-    
-    // // Перемешивание
-    rolesPool = rolesPool.slice(0, count).sort(() => Math.random() - 0.5);
-    
-    setPlayers(tempNames.map((name, i) => ({
-      id: i + 1,
-      name: name.trim() || NICKNAMES[i % NICKNAMES.length],
-      role: rolesPool[i],
+    // // Базовое распределение (упрощенно для ведущего)
+    let roles = [];
+    const mCount = Math.floor(list.length / 3.5) || 1;
+    for (let i = 0; i < mCount; i++) roles.push('mafia');
+    roles.push('doctor', 'detective');
+    while (roles.length < list.length) roles.push('civilian');
+    roles = roles.sort(() => Math.random() - 0.5);
+
+    const newPlayers = list.map((name, i) => ({
+      id: i,
+      name: name.trim(),
+      role: roles[i],
       alive: true,
-      statusEffect: null,
-      isRevealed: false
-    })));
-    
-    setCurrentPlayerIdx(0);
-    setGameState('dealing');
+      fouls: 0,
+      note: ""
+    }));
+
+    setPlayers(newPlayers);
+    setGameState('gameplay');
   };
 
-  // === ИГРОВОЙ ЦИКЛ ===
-  const confirmCycle = () => {
-    const updated = players.map(p => {
-      if (p.statusEffect === 'killed') return { ...p, alive: false, statusEffect: null };
-      return { ...p, statusEffect: null };
+  // === ЛОГИКА ВЕДУЩЕГО ===
+  const handleFoul = (id, delta) => {
+    setPlayers(prev => prev.map(p => 
+      p.id === id ? { ...p, fouls: Math.max(0, p.fouls + delta) } : p
+    ));
+  };
+
+  const processNight = () => {
+    const { kill, heal } = nightActions;
+    let report = "Ночь прошла спокойно.";
+
+    const updatedPlayers = players.map(p => {
+      if (p.id === kill && kill !== heal) {
+        report = `Убит игрок: ${p.name}`;
+        return { ...p, alive: false };
+      }
+      return p;
     });
-    setPlayers(updated);
-    const v = checkVictory(updated);
-    if (v) { setWinner(v); setGameState('results'); }
-    else { setPhase(phase === 'night' ? 'day' : 'night'); setTimerActive(false); setTimeLeft(60); }
-  };
 
-  const checkVictory = (currentPlayers) => {
-    const alive = currentPlayers.filter(p => p.alive);
-    const mafia = alive.filter(p => p.role.side === 'evil' && p.role.id !== 'maniac');
-    const maniac = alive.filter(p => p.role.id === 'maniac');
-    const good = alive.filter(p => p.role.side === 'good' || p.role.id === 'prostitute');
-    if (mafia.length === 0 && maniac.length === 0) return 'Мирные';
-    if (mafia.length >= (good.length + maniac.length)) return 'Мафия';
-    if (maniac.length > 0 && alive.length <= 2) return 'Маньяк';
-    return null;
+    setPlayers(updatedPlayers);
+    alert(report);
+    setPhase('day');
+    setNightActions({ kill: null, heal: null, check: null });
+    setTimer(60);
   };
 
   return (
-    <div className={`estate-root ${phase}`}>
-      <style>{estateStyles}</style>
+    <div className={`noir-root ${phase}`}>
+      <style>{noirStyles}</style>
 
-      {/* ЭКРАН 1: НАСТРОЙКА (С фиксом кнопки) */}
+      {/* ШАПКА ВЕДУЩЕГО */}
+      <header className="noir-header">
+        <button className="h-btn" onClick={onBack}>ВЫЙТИ</button>
+        <div className="h-status">{phase === 'night' ? <Moon size={14}/> : <Sun size={14}/>} {phase.toUpperCase()}</div>
+        <div className="h-timer" onClick={() => setIsTimerRunning(!isTimerRunning)}>
+          {timer}s {isTimerRunning ? '⏸' : '▶'}
+        </div>
+      </header>
+
+      {/* ЭКРАН 1: РЕГИСТРАЦИЯ (СПИСКОМ) */}
       {gameState === 'setup' && (
-        <div className="estate-view setup-layout fade-in">
-          <header className="e-header">
-            <button onClick={onBack} className="e-back"><ArrowLeft size={18}/> ВЫЙТИ</button>
-            <div className="e-logo">THE SYNDICATE</div>
-          </header>
-
-          <h1 className="e-title">Список<span>Гостей</span></h1>
-
-          <div className="e-scroll-container">
-            <div className="e-guest-list">
-              {tempNames.map((name, i) => (
-                <div key={i} className="e-guest-row">
-                  <span className="e-guest-number">{String(i + 1).padStart(2, '0')}</span>
-                  <input 
-                    type="text" 
-                    placeholder="Имя гостя..."
-                    value={name}
-                    onChange={(e) => handleNameChange(i, e.target.value)}
-                  />
-                  <button onClick={() => removePlayerField(i)} className="e-guest-del"><Trash2 size={16}/></button>
-                </div>
-              ))}
-              <button onClick={addPlayerField} className="e-add-guest"><UserPlus size={16}/> Пригласить еще</button>
-            </div>
-          </div>
-
-          <div className="e-footer-controls">
-            <div className="e-settings">
-              <div className={`e-check ${useManiac ? 'active' : ''}`} onClick={() => setUseManiac(!useManiac)}>Маньяк</div>
-              <div className={`e-check ${useProstitute ? 'active' : ''}`} onClick={() => setUseProstitute(!useProstitute)}>Путана</div>
-            </div>
-            <button onClick={startDealing} className="e-btn-gold">Начать встречу</button>
-          </div>
+        <div className="setup-panel fade-in">
+          <h1 className="noir-title">РЕЕСТР ГОРOДА</h1>
+          <p className="noir-hint">Введите имена (каждое с новой строки):</p>
+          <textarea 
+            placeholder="Иван&#10;Мария&#10;Петр..." 
+            value={namesInput}
+            onChange={(e) => setNamesInput(e.target.value)}
+          />
+          <button className="start-btn" onClick={setupGame}>УТВЕРДИТЬ СОСТАВ</button>
         </div>
       )}
 
-      {/* ЭКРАН 2: РАЗДАЧА */}
-      {gameState === 'dealing' && (
-        <div className="estate-view center fade-in">
-          <div className="e-role-envelope">
-            <div className="e-env-header">Конфиденциально</div>
-            <div className="e-env-content">
-              <h2 className="e-env-name">{players[currentPlayerIdx].name}</h2>
-              {!showRole ? (
-                <button onClick={() => setShowRole(true)} className="e-btn-gold">Вскрыть конверт</button>
-              ) : (
-                <div className="e-role-reveal">
-                  <h3 className={players[currentPlayerIdx].role.side}>{players[currentPlayerIdx].role.name}</h3>
-                  <p>{players[currentPlayerIdx].role.desc}</p>
-                  <button onClick={() => { setShowRole(false); currentPlayerIdx < players.length - 1 ? setCurrentPlayerIdx(c => c + 1) : setGameState('action'); }} className="e-btn-outline">Ясно</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ЭКРАН 3: ИГРОВОЙ ПРОЦЕСС */}
-      {gameState === 'action' && (
-        <div className="estate-action-view fade-in">
-          <header className="e-action-header">
-            <div className="e-timer" onClick={() => setTimerActive(!timerActive)}><Timer size={18}/> {timeLeft}с</div>
-            <div className="e-phase-title">{phase === 'night' ? 'Глубокая ночь' : 'Солнечный день'}</div>
-            <button className="e-swap" onClick={() => setPhase(phase === 'night' ? 'day' : 'night')}><RefreshCw size={18}/></button>
-          </header>
-
-          <div className="e-cards-grid">
+      {/* ЭКРАН 2: ПУЛЬТ УПРАВЛЕНИЯ */}
+      {gameState === 'gameplay' && (
+        <div className="ledger-view fade-in">
+          <div className="players-grid">
             {players.map(p => (
-              <div key={p.id} className={`e-player-card ${!p.alive ? 'dead' : ''} ${p.statusEffect ? 'selected' : ''}`}>
-                <div className="e-card-main">
-                  <span className="e-card-name">{p.name}</span>
-                  <div className="e-card-badges">
-                    <span className={`e-badge ${p.role.side}`}>{p.role.name}</span>
-                    {p.isRevealed && <Eye size={12}/>}
-                  </div>
+              <div key={p.id} className={`p-card ${!p.alive ? 'dead' : ''}`}>
+                <div className="p-info">
+                  <span className="p-num">{p.id + 1}</span>
+                  <span className="p-name">{p.name}</span>
+                  <span className={`p-role-tag ${p.role}`}>{p.role}</span>
                 </div>
-                <div className="e-card-actions">
+
+                <div className="p-actions">
                   {p.alive ? (
                     <>
-                      <button className={`e-action-btn k ${p.statusEffect === 'killed' ? 'active' : ''}`} onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, statusEffect: pl.statusEffect === 'killed' ? null : 'killed'} : pl))}><Skull size={18}/></button>
-                      <button className={`e-action-btn r ${p.isRevealed ? 'active' : ''}`} onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, isRevealed: !pl.isRevealed} : pl))}><Eye size={18}/></button>
-                      {phase === 'night' && <button className={`e-action-btn h ${p.statusEffect === 'healed' ? 'active' : ''}`} onClick={() => setPlayers(players.map(pl => pl.id === p.id ? {...pl, statusEffect: pl.statusEffect === 'healed' ? null : 'healed'} : pl))}><Heart size={18}/></button>}
+                      {/* Ночные цели */}
+                      {phase === 'night' && (
+                        <div className="night-tools">
+                          <button 
+                            className={`tool-btn kill ${nightActions.kill === p.id ? 'active' : ''}`}
+                            onClick={() => setNightActions({...nightActions, kill: p.id})}
+                          ><Crosshair size={14}/></button>
+                          <button 
+                            className={`tool-btn heal ${nightActions.heal === p.id ? 'active' : ''}`}
+                            onClick={() => setNightActions({...nightActions, heal: p.id})}
+                          ><Shield size={14}/></button>
+                        </div>
+                      )}
+                      
+                      {/* Фолы */}
+                      <div className="foul-tools">
+                        <button onClick={() => handleFoul(p.id, 1)} className="foul-btn"><AlertTriangle size={12}/> {p.fouls}</button>
+                      </div>
+
+                      {/* Убить вручную (днем) */}
+                      <button className="kill-btn" onClick={() => setPlayers(prev => prev.map(pl => pl.id === p.id ? {...pl, alive: false} : pl))}>
+                        <UserX size={14}/>
+                      </button>
                     </>
-                  ) : <span className="e-eliminated">ВЫБЫЛ</span>}
+                  ) : (
+                    <span className="rip-tag">ELIMINATED</span>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          <button onClick={confirmCycle} className="e-btn-confirm">
-            {phase === 'night' ? 'Завершить ночь' : 'Итоги голосования'}
-          </button>
-        </div>
-      )}
-
-      {/* ЭКРАН 4: ПОБЕДА */}
-      {gameState === 'results' && (
-        <div className="estate-view center fade-in">
-          <div className="e-victory-card">
-            <p>Финал встречи</p>
-            <h1>Победила {winner}</h1>
-            <button onClick={() => setGameState('setup')} className="e-btn-gold">Новая партия</button>
-          </div>
+          <footer className="ledger-footer">
+            {phase === 'night' ? (
+              <button className="action-btn next-phase" onClick={processNight}>ЗАВЕРШИТЬ НОЧЬ</button>
+            ) : (
+              <button className="action-btn next-phase" onClick={() => setPhase('night')}>ГОРОД ЗАСЫПАЕТ</button>
+            )}
+            <div className="quick-time">
+              <button onClick={() => setTimer(30)}>30s</button>
+              <button onClick={() => setTimer(60)}>60s</button>
+              <button onClick={() => setTimer(timer + 10)}>+10</button>
+            </div>
+          </footer>
         </div>
       )}
     </div>
   );
 };
 
-const estateStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Montserrat:wght@400;700&display=swap');
+// // CSS: DARK NOIR LEDGER STYLE
+const noirStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;700;900&display=swap');
 
-  .estate-root {
+  .noir-root {
     position: fixed !important; inset: 0 !important;
-    font-family: 'Montserrat', sans-serif !important;
+    background: #1a1a1a !important; color: #eee !important;
+    font-family: 'Inter', sans-serif !important;
     display: flex !important; flex-direction: column !important;
-    z-index: 100000 !important; transition: all 0.6s ease !important;
-    overflow: hidden !important;
+    z-index: 100000 !important;
   }
   
-  .estate-root.night { background: #0a0e14 !important; color: #d4af37 !important; }
-  .estate-root.day { background: #fdfaf1 !important; color: #2c1e1e !important; }
+  .noir-root.night { background: #0c0c0e !important; box-shadow: inset 0 0 100px #000; }
+  .noir-root.night .noir-header { border-bottom-color: #ff3b3b; }
 
-  .estate-view { width: 100% !important; max-width: 440px !important; margin: 0 auto !important; height: 100% !important; display: flex !important; flex-direction: column !important; padding: 20px !important; box-sizing: border-box !important; }
-  .estate-view.center { justify-content: center !important; }
+  /* ХЕДЕР ВЕДУЩЕГО */
+  .noir-header {
+    height: 60px; display: flex; justify-content: space-between; align-items: center;
+    padding: 0 20px; border-bottom: 2px solid #333; background: #222;
+  }
+  .h-btn { background: none; border: 1px solid #555; color: #888; padding: 4px 10px; font-size: 10px; cursor: pointer; }
+  .h-status { font-weight: 900; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .h-timer { font-family: 'Courier Prime', monospace; font-weight: 700; color: #ff3b3b; cursor: pointer; }
 
-  /* Специфичный лейаут для настройки */
-  .setup-layout { display: flex !important; flex-direction: column !important; }
-  .e-scroll-container { flex: 1 !important; overflow-y: auto !important; margin: 15px 0 !important; padding-right: 5px !important; }
-
-  .e-header { display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
-  .e-back { background: none; border: 1px solid currentColor; color: inherit; padding: 6px 14px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border-radius: 40px; }
-  .e-logo { font-family: 'Playfair Display'; font-weight: 900; font-style: italic; font-size: 0.9rem; letter-spacing: 2px; }
-
-  .e-title { font-family: 'Playfair Display'; font-size: 2.5rem; line-height: 1; margin: 20px 0; text-align: center; font-weight: 900; }
-  .e-title span { display: block; font-style: italic; font-weight: 400; color: #c41e3a; }
-
-  /* Список */
-  .e-guest-list { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; }
-  .estate-root.night .e-guest-list { background: rgba(255,255,255,0.02); border-color: rgba(212, 175, 55, 0.2); }
-  .e-guest-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; }
-  .e-guest-number { font-family: 'Playfair Display'; font-weight: 700; opacity: 0.4; font-size: 0.8rem; width: 25px; }
-  .e-guest-row input { flex: 1; background: none; border: none; font-family: inherit; font-size: 1rem; color: inherit; outline: none; }
-  .e-guest-del { background: none; border: none; color: #c41e3a; cursor: pointer; }
-  .e-add-guest { width: 100%; padding: 10px; background: none; border: 1px dashed currentColor; color: inherit; border-radius: 8px; cursor: pointer; font-weight: 700; }
-
-  /* Нижняя часть настроек */
-  .e-footer-controls { padding-top: 15px; border-top: 1px solid rgba(212, 175, 55, 0.2); }
-  .e-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-  .e-check { padding: 10px; border: 1px solid currentColor; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
-  .e-check.active { background: #d4af37 !important; color: #fff !important; border-color: #d4af37 !important; }
-
-  .e-btn-gold { 
-    width: 100%; padding: 18px; background: #d4af37; color: #fff; border: none; border-radius: 12px; 
-    font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
-    text-transform: uppercase;
+  /* РЕГИСТРАЦИЯ */
+  .setup-panel { flex: 1; display: flex; flex-direction: column; padding: 30px; justify-content: center; }
+  .noir-title { font-family: 'Courier Prime', monospace; font-size: 1.5rem; text-align: center; margin-bottom: 5px; }
+  .noir-hint { font-size: 11px; text-align: center; opacity: 0.5; margin-bottom: 20px; }
+  textarea {
+    flex: 0.6; background: #000; border: 1px solid #333; color: #32CD32;
+    padding: 15px; font-family: 'Courier Prime', monospace; font-size: 1.1rem;
+    resize: none; border-radius: 5px; margin-bottom: 20px;
+  }
+  .start-btn { 
+    background: #ff3b3b; color: #fff; border: none; padding: 20px; 
+    font-weight: 900; cursor: pointer; border-radius: 5px; 
   }
 
-  /* Конверт */
-  .e-role-envelope { background: #fff; padding: 30px 20px; border-radius: 4px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); width: 100%; max-width: 300px; position: relative; border-top: 30px solid #f0f0f0; }
-  .estate-root.night .e-role-envelope { background: #1a1e26; border-top-color: #12151c; }
-  .e-env-header { position: absolute; top: -22px; left: 0; width: 100%; text-align: center; font-size: 0.5rem; text-transform: uppercase; color: #888; letter-spacing: 2px; }
-  .e-env-name { font-family: 'Playfair Display'; font-size: 1.8rem; margin-bottom: 20px; }
-  .e-role-reveal h3 { font-family: 'Playfair Display'; font-size: 2.2rem; margin-bottom: 8px; }
-  .e-role-reveal .evil { color: #c41e3a; }
-  .e-role-reveal .good { color: #2e7d32; }
-  .e-role-reveal p { font-size: 0.8rem; opacity: 0.8; margin-bottom: 20px; }
-  .e-btn-outline { background: none; border: 1px solid currentColor; color: inherit; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; }
+  /* КАРТОЧКИ ИГРОКОВ */
+  .ledger-view { flex: 1; display: flex; flex-direction: column; padding: 15px; overflow: hidden; }
+  .players-grid { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  
+  .p-card {
+    background: #252527; border: 1px solid #333; padding: 10px 15px;
+    border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .p-card.dead { opacity: 0.3; background: #111; border-style: dashed; }
+  
+  .p-info { display: flex; align-items: center; gap: 12px; }
+  .p-num { font-family: 'Courier Prime', monospace; color: #ff3b3b; font-weight: 700; width: 20px; }
+  .p-name { font-weight: 700; font-size: 0.9rem; }
+  .p-role-tag { font-size: 9px; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: #444; }
+  .p-role-tag.mafia { background: #ff3b3b; color: #fff; }
 
-  /* Экран действий */
-  .estate-action-view { height: 100%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
-  .e-action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 10px; }
-  .e-timer { font-weight: 700; display: flex; align-items: center; gap: 6px; }
-  .e-phase-title { font-family: 'Playfair Display'; font-weight: 900; }
-  .e-swap { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.4; }
+  .p-actions { display: flex; align-items: center; gap: 10px; }
+  .night-tools { display: flex; gap: 4px; border-right: 1px solid #444; padding-right: 10px; }
+  
+  .tool-btn { 
+    width: 32px; height: 32px; border-radius: 4px; border: 1px solid #444; 
+    background: none; color: #888; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .tool-btn.active.kill { background: #ff3b3b; color: #fff; border-color: #ff3b3b; }
+  .tool-btn.active.heal { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  
+  .foul-btn { background: none; border: 1px solid #555; color: #ffae00; font-size: 10px; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+  .kill-btn { background: none; border: none; color: #666; cursor: pointer; }
+  .rip-tag { font-size: 10px; font-weight: 900; color: #ff3b3b; letter-spacing: 1px; }
 
-  .e-cards-grid { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-  .e-player-card { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-  .e-player-card.selected { border-color: #d4af37; background: rgba(212, 175, 55, 0.15); }
-  .e-player-card.dead { opacity: 0.4; }
-  .e-card-name { font-weight: 700; font-family: 'Playfair Display'; font-size: 1rem; }
-  .e-badge { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; opacity: 0.6; margin-right: 5px; }
+  /* ФУТЕР */
+  .ledger-footer { padding: 15px 0; border-top: 1px solid #333; }
+  .action-btn { 
+    width: 100%; padding: 18px; border: none; border-radius: 8px; 
+    font-weight: 900; cursor: pointer; margin-bottom: 12px;
+  }
+  .next-phase { background: #eee; color: #000; }
+  .quick-time { display: flex; gap: 5px; }
+  .quick-time button { flex: 1; background: #333; border: none; color: #eee; padding: 8px; font-size: 10px; border-radius: 4px; cursor: pointer; }
 
-  .e-card-actions { display: flex; gap: 6px; }
-  .e-action-btn { background: none; border: 1px solid rgba(212, 175, 55, 0.3); color: inherit; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .e-action-btn.active { background: #d4af37 !important; color: #fff !important; }
-  .e-eliminated { font-size: 0.6rem; font-weight: 700; color: #c41e3a; }
-
-  .e-btn-confirm { width: 100%; padding: 20px; background: #2c1e1e; color: #fff; border: none; font-weight: 700; border-radius: 12px; cursor: pointer; margin-top: 10px; }
-  .estate-root.night .e-btn-confirm { background: #d4af37; color: #000; }
-
-  .e-victory-card { text-align: center; }
-  .e-victory-card h1 { font-family: 'Playfair Display'; font-size: 2.8rem; font-weight: 900; margin: 20px 0; }
-
-  .fade-in { animation: eIn 0.4s ease-out forwards; }
-  @keyframes eIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: noirIn 0.3s ease-out; }
+  @keyframes noirIn { from { opacity: 0; } to { opacity: 1; } }
 `;
 
 export default MafiaGame;
