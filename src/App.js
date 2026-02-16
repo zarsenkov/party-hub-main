@@ -101,17 +101,26 @@ export default function App() {
         <a href="https://t.me/LoveCouple_news" className="footer-link">TELEGRAM CHANNEL</a>
       </footer>
 
-      {/* --- ОКНО УСТАНОВКИ PWA (В САМОМ КОНЦЕ) --- */}
-      {showInstallPrompt && (
-        <div className="install-prompt fade-in">
-          <div className="install-prompt-content">
-            {deferredPrompt ? (
-              // Вид для Android
-              <>
-                <p>Установи <b>LOVECOUPLE</b> на рабочий стол</p>
-                <button onClick={handleInstallClick} className="close-prompt">УСТАНОВИТЬ</button>
-              </>
-            ) : (
+{showInstallPrompt && (
+  <div className="install-prompt fade-in">
+    <div className="install-prompt-content">
+      {deferredPrompt ? (
+        // --- ВИД ДЛЯ ANDROID С ДВУМЯ КНОПКАМИ ---
+        <>
+          <p>Установи <b>LOVECOUPLE</b> на рабочий стол</p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px' }}>
+            <button onClick={handleInstallClick} className="close-prompt">УСТАНОВИТЬ</button>
+            {/* Кнопка "ОК/ПОЗЖЕ" просто скрывает плашку */}
+            <button 
+              onClick={() => setShowInstallPrompt(false)} 
+              className="close-prompt" 
+              style={{ background: '#eee', color: '#333' }}
+            >
+              ПОЗЖЕ
+            </button>
+          </div>
+        </>
+      ) : (
               // Вид для iOS
               <>
                 <p>Добавь игру на экран <b>«Домой»</b></p>
