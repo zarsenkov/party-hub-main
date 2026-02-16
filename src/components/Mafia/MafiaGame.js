@@ -1,187 +1,124 @@
 import React, { useState, useEffect } from 'react';
-// // Импорт иконок для тактического интерфейса
-import { 
-  Crosshair, Shield, Eye, Bell, 
-  Trash2, UserPlus, Play, Info, 
-  ChevronRight, X, AlertCircle 
-} from 'lucide-react';
+// // Используем минимальный набор иконок для акцентов
+import { Search, X, Heart, Skull, Zap, RotateCcw } from 'lucide-react';
 
-const MafiaTactical = ({ onBack }) => {
-  // === СОСТОЯНИЯ СИСТЕМЫ ===
-  const [stage, setStage] = useState('briefing'); // // briefing, distribution, operation
-  const [nightPhase, setNightPhase] = useState(false);
+const MafiaScrapbook = ({ onBack }) => {
+  // === ГЛОБАЛЬНЫЙ КОНТЕКСТ ===
+  const [mode, setMode] = useState('folder'); // // folder (ввод), desk (игра), morgue (убитые)
   const [players, setPlayers] = useState([]);
-  const [inputName, setInputName] = useState("");
-  const [activePlayerIdx, setActivePlayerIdx] = useState(null); // // Для просмотра роли
-  const [selection, setSelection] = useState({ kill: null, save: null, check: null });
-  const [logs, setLogs] = useState([]);
+  const [names, setNames] = useState("");
+  const [nightAction, setNightAction] = useState({ target: null, type: null }); // // 'kill', 'save', 'check'
+  const [log, setLog] = useState(["Дело открыто..."]);
 
-  // === ФУНКЦИИ УПРАВЛЕНИЯ ===
+  // === ЛОГИКА СТАРТА ===
+  const openCase = () => {
+    const list = names.split('\n').filter(n => n.trim());
+    if (list.length < 4) return;
 
-  // // Добавление игрока в список
-  const addPlayer = () => {
-    if (!inputName.trim()) return;
-    setPlayers([...players, { 
-      id: Date.now(), 
-      name: inputName, 
-      role: null, 
-      alive: true, 
-      fouls: 0,
-      checked: false 
-    }]);
-    setInputName("");
-  };
-
-  // // Распределение ролей и запуск раздачи
-  const startDistribution = () => {
-    if (players.length < 4) return;
-    
-    // // Логика формирования колоды
-    let roles = ['Mafia', 'Doctor', 'Detective'];
-    if (players.length > 7) roles.push('Mafia');
-    while (roles.length < players.length) roles.push('Civilian');
+    // // Раздаем роли (ведущий видит их в досье, игроки — при передаче телефона)
+    let roles = ['Мафия', 'Комиссар', 'Доктор'];
+    if (list.length > 8) roles.push('Мафия');
+    while (roles.length < list.length) roles.push('Мирный');
     roles = roles.sort(() => Math.random() - 0.5);
 
-    setPlayers(players.map((p, i) => ({ ...p, role: roles[i] })));
-    setStage('distribution');
-    setActivePlayerIdx(0);
+    setPlayers(list.map((n, i) => ({
+      id: i,
+      name: n.trim(),
+      role: roles[i],
+      alive: true,
+      fouls: 0,
+      checked: false
+    })));
+    setMode('desk');
   };
 
-  // // Обработка завершения ночи
-  const executeNight = () => {
-    const { kill, save, check } = selection;
-    let report = "Город проснулся.";
-
+  // === ЛОГИКА ВЗАИМОДЕЙСТВИЯ (Drag & Drop Logic Sim) ===
+  const applyAction = (playerId, type) => {
     setPlayers(prev => prev.map(p => {
-      let updated = { ...p };
-      // // Если убит и не спасен
-      if (p.id === kill && kill !== save) {
-        updated.alive = false;
-        report = `Убийство в районе ${p.name}.`;
+      if (p.id === playerId) {
+        if (type === 'kill') return { ...p, alive: false };
+        if (type === 'check') return { ...p, checked: true };
+        if (type === 'foul') return { ...p, fouls: p.fouls + 1 };
       }
-      // // Если проверен комиссаром
-      if (p.id === check) updated.checked = true;
-      return updated;
+      return p;
     }));
-
-    setLogs([report, ...logs]);
-    setNightPhase(false);
-    setSelection({ kill: null, save: null, check: null });
+    
+    const actionName = type === 'kill' ? "ликвидирован" : type === 'check' ? "проверен" : "получил фол";
+    setLog([`Игрок ${players[playerId].name} ${actionName}`, ...log]);
   };
 
   return (
-    <div className={`tactical-root ${nightPhase ? 'is-night' : ''}`}>
-      <style>{tacticalStyles}</style>
+    <div className="scrapbook-root">
+      <style>{scrapbookStyles}</style>
 
-      {/* ЭКРАН 1: БРИФИНГ (СБОР ИГРОКОВ) */}
-      {stage === 'briefing' && (
-        <div className="view-container fade-in">
-          <header className="t-header">
-            <span className="t-label">OPERATIONAL BRIEFING</span>
-            <button className="t-close" onClick={onBack}><X size={18}/></button>
-          </header>
-
-          <div className="input-block">
-            <input 
-              value={inputName} 
-              onChange={(e) => setInputName(e.target.value)}
-              placeholder="Введите имя оперативника..."
-              onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+      {/* ЭКРАН 1: СТАРАЯ ПАПКА (ВВОД) */}
+      {mode === 'folder' && (
+        <div className="folder-view fade-in">
+          <div className="paper-stack">
+            <h1 className="noir-header">ПРОТОКОЛ №{Math.floor(Math.random()*900 + 100)}</h1>
+            <p className="instruction">Перечислите подозреваемых:</p>
+            <textarea 
+              className="typewriter-input"
+              value={names}
+              onChange={(e) => setNames(e.target.value)}
+              placeholder="ИМЯ ФАМИЛИЯ..."
             />
-            <button onClick={addPlayer}><UserPlus size={20}/></button>
-          </div>
-
-          <div className="player-chips">
-            {players.map(p => (
-              <div key={p.id} className="chip">
-                {p.name}
-                <button onClick={() => setPlayers(players.filter(pl => pl.id !== p.id))}><X size={12}/></button>
-              </div>
-            ))}
-          </div>
-
-          <button 
-            className={`start-op-btn ${players.length >= 4 ? 'ready' : ''}`}
-            onClick={startDistribution}
-          >
-            ПОДТВЕРДИТЬ СОСТАВ ({players.length})
-          </button>
-        </div>
-      )}
-
-      {/* ЭКРАН 2: СКРЫТАЯ РАЗДАЧА */}
-      {stage === 'distribution' && (
-        <div className="view-container center fade-in">
-          <div className="identity-card">
-            <div className="id-header">TOP SECRET</div>
-            <div className="id-content">
-              <div className="id-sub">OPERATIVE</div>
-              <h2 className="id-name">{players[activePlayerIdx].name}</h2>
-              
-              {activePlayerIdx !== null && (
-                <div className="role-reveal-zone">
-                  <p className="hint-text">Нажмите и удерживайте, чтобы увидеть роль</p>
-                  <button className="reveal-trigger">ПОСМОТРЕТЬ РОЛЬ</button>
-                  <div className="actual-role">{players[activePlayerIdx].role}</div>
-                </div>
-              )}
-            </div>
-            <button className="id-next" onClick={() => {
-              if (activePlayerIdx < players.length - 1) setActivePlayerIdx(activePlayerIdx + 1);
-              else setStage('operation');
-            }}>
-              СЛЕДУЮЩИЙ <ChevronRight size={16}/>
-            </button>
+            <button className="stamp-btn" onClick={openCase}>НАЧАТЬ СЛЕДСТВИЕ</button>
+            <button className="exit-link" onClick={onBack}>ОТМЕНИТЬ</button>
           </div>
         </div>
       )}
 
-      {/* ЭКРАН 3: АКТИВНАЯ ФАЗА (КАРТА) */}
-      {stage === 'operation' && (
-        <div className="view-container operation-view fade-in">
-          <div className="status-bar">
-            <div className="phase-indicator">
-              {nightPhase ? <><MoonIcon/> NIGHT OP</> : <><SunIcon/> DAYLIGHT</>}
-            </div>
-            <div className="day-count">DAY 01</div>
+      {/* ЭКРАН 2: СТОЛ СЛЕДОВАТЕЛЯ (ИГРА) */}
+      {mode === 'desk' && (
+        <div className="desk-view">
+          <div className="desk-header">
+            <div className="case-info">ДЕЛО: "ТЕНИ ГОРОДА"</div>
+            <button className="morgue-trigger" onClick={() => setMode('morgue')}>МОРГ ({players.filter(p => !p.alive).length})</button>
           </div>
 
-          <div className="tactical-grid">
-            {players.map(p => (
-              <div key={p.id} className={`sector ${!p.alive ? 'destroyed' : ''} ${selection.kill === p.id ? 'target' : ''}`}>
-                <div className="sector-info">
-                  <span className="s-name">{p.name}</span>
-                  <span className="s-role">{p.role}</span>
+          <div className="evidence-grid">
+            {players.filter(p => p.alive).map(p => (
+              <div key={p.id} className={`dossier-card ${p.checked ? 'is-checked' : ''}`}>
+                <div className="card-photo">
+                  <div className="photo-placeholder">{p.name[0]}</div>
+                  {p.checked && <div className="role-stamp">{p.role}</div>}
                 </div>
-
-                <div className="sector-actions">
-                  {p.alive ? (
-                    nightPhase ? (
-                      <div className="n-btns">
-                        <button onClick={() => setSelection({...selection, kill: p.id})} className={selection.kill === p.id ? 'active' : ''}><Crosshair size={14}/></button>
-                        <button onClick={() => setSelection({...selection, save: p.id})} className={selection.save === p.id ? 'active' : ''}><Shield size={14}/></button>
-                        <button onClick={() => setSelection({...selection, check: p.id})} className={selection.check === p.id ? 'active' : ''}><Eye size={14}/></button>
-                      </div>
-                    ) : (
-                      <button className="day-kill-btn" onClick={() => {
-                        setPlayers(players.map(pl => pl.id === p.id ? {...pl, alive: false} : pl));
-                      }}>ELIMINATE</button>
-                    )
-                  ) : <div className="status-label">KIA</div>}
+                <div className="card-info">
+                  <h3 className="name">{p.name}</h3>
+                  <div className="foul-marks">
+                    {[...Array(p.fouls)].map((_, i) => <Zap key={i} size={10} fill="#d35400" color="#d35400"/>)}
+                  </div>
+                </div>
+                
+                {/* Быстрые действия "как пометки на фото" */}
+                <div className="card-actions">
+                  <button onClick={() => applyAction(p.id, 'kill')} title="Убрать"><Skull size={16}/></button>
+                  <button onClick={() => applyAction(p.id, 'check')} title="Проверить"><Search size={16}/></button>
+                  <button onClick={() => applyAction(p.id, 'foul')} title="Фол"><Zap size={16}/></button>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="control-deck">
-            <div className="mini-logs">
-              {logs[0] || "> Ожидание приказов..."}
-            </div>
-            {nightPhase ? (
-              <button className="p-action-btn run" onClick={executeNight}>ПОДТВЕРДИТЬ УДАР</button>
-            ) : (
-              <button className="p-action-btn wait" onClick={() => setNightPhase(true)}>ОБЪЯВИТЬ НОЧЬ</button>
-            )}
+          <div className="bottom-log">
+            {log.slice(0, 2).map((l, i) => <div key={i} className="log-line">{`> ${l}`}</div>)}
+          </div>
+        </div>
+      )}
+
+      {/* ЭКРАН 3: МОРГ (АРХИВ) */}
+      {mode === 'morgue' && (
+        <div className="morgue-view fade-in">
+          <button className="close-morgue" onClick={() => setMode('desk')}><X size={24}/></button>
+          <h2 className="noir-header">АРХИВ ПОГИБШИХ</h2>
+          <div className="dead-list">
+            {players.filter(p => !p.alive).map(p => (
+              <div key={p.id} className="dead-entry">
+                <span className="dead-name">{p.name}</span>
+                <span className="dead-role">[{p.role}]</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -189,102 +126,107 @@ const MafiaTactical = ({ onBack }) => {
   );
 };
 
-// // Иконки
-const MoonIcon = () => <div className="i-moon" />;
-const SunIcon = () => <div className="i-sun" />;
+// // CSS: NOIR SCRAPBOOK DESIGN
+const scrapbookStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
-// // СТИЛИЗАЦИЯ: TACTICAL BLUEPRINT
-const tacticalStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Share+Tech+Mono&display=swap');
-
-  .tactical-root {
-    position: fixed; inset: 0; background: #0b0e11; color: #a0aec0;
-    font-family: 'Share Tech Mono', monospace; z-index: 10000;
-  }
-  
-  .tactical-root.is-night { background: #050709; border: 2px solid #2d3748; }
-
-  .view-container { height: 100%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
-  .view-container.center { justify-content: center; align-items: center; }
-
-  .t-header { display: flex; justify-content: space-between; border-bottom: 1px solid #2d3748; padding-bottom: 10px; margin-bottom: 20px; }
-  .t-label { font-family: 'Syncopate', sans-serif; font-size: 10px; letter-spacing: 3px; color: #4a5568; }
-
-  /* Инпуты */
-  .input-block { display: flex; gap: 10px; margin-bottom: 20px; }
-  .input-block input { 
-    flex: 1; background: #1a202c; border: 1px solid #2d3748; 
-    padding: 15px; color: #fff; font-family: inherit; border-radius: 4px;
-  }
-  .input-block button { background: #3182ce; color: #fff; border: none; padding: 0 20px; border-radius: 4px; }
-
-  .player-chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
-  .chip { background: #2d3748; padding: 8px 12px; border-radius: 20px; font-size: 12px; display: flex; gap: 8px; align-items: center; }
-  
-  .start-op-btn { 
-    width: 100%; padding: 20px; background: #1a202c; border: 1px solid #2d3748; 
-    color: #4a5568; font-family: 'Syncopate'; font-size: 12px; transition: 0.3s;
-  }
-  .start-op-btn.ready { background: #3182ce; color: #fff; border-color: #3182ce; }
-
-  /* Карточка роли */
-  .identity-card { 
-    width: 100%; max-width: 320px; background: #1a202c; border-top: 4px solid #3182ce; 
-    padding: 30px; position: relative; overflow: hidden;
-  }
-  .id-header { font-size: 10px; opacity: 0.3; margin-bottom: 20px; letter-spacing: 5px; }
-  .id-name { font-family: 'Syncopate'; font-size: 1.5rem; color: #fff; margin-bottom: 40px; }
-  
-  .role-reveal-zone { 
-    padding: 20px; border: 1px dashed #4a5568; text-align: center; position: relative; 
-  }
-  .reveal-trigger:active + .actual-role { opacity: 1; }
-  .actual-role { 
-    position: absolute; inset: 0; background: #1a202c; display: flex; 
-    align-items: center; justify-content: center; font-size: 1.5rem; 
-    color: #3182ce; opacity: 0; pointer-events: none; transition: 0.1s;
+  .scrapbook-root {
+    position: fixed; inset: 0; background: #2c2c2c;
+    color: #2c1e1e; font-family: 'EB Garamond', serif;
+    z-index: 100000; overflow: hidden;
   }
 
-  /* Сетка операции */
-  .operation-view { padding: 10px; }
-  .status-bar { display: flex; justify-content: space-between; padding: 10px; font-size: 12px; border-bottom: 1px solid #2d3748; }
-  
-  .tactical-grid { 
-    flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
-    margin: 15px 0; overflow-y: auto; align-content: start;
+  /* Текстура бумаги */
+  .paper-stack {
+    background: #f4f1ea; width: 90%; max-width: 400px; margin: 40px auto;
+    padding: 30px; box-shadow: 5px 5px 0 #1a1a1a, 10px 10px 0 #d4af37;
+    position: relative; border: 1px solid #dcd7c9;
   }
-  .sector { 
-    background: #1a202c; border: 1px solid #2d3748; padding: 12px; 
-    display: flex; flex-direction: column; gap: 10px; position: relative;
-  }
-  .sector.destroyed { opacity: 0.3; background: #000; }
-  .sector.target { border-color: #e53e3e; box-shadow: 0 0 10px rgba(229, 62, 62, 0.2); }
-  
-  .s-name { display: block; color: #fff; font-size: 14px; font-weight: bold; }
-  .s-role { font-size: 10px; opacity: 0.4; }
 
-  .n-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-  .n-btns button { 
-    background: #0b0e11; border: 1px solid #2d3748; color: #4a5568; 
-    height: 30px; display: flex; align-items: center; justify-content: center; 
+  .noir-header {
+    font-family: 'Special Elite', cursive; font-size: 1.5rem;
+    border-bottom: 2px solid #2c1e1e; padding-bottom: 10px; margin-bottom: 20px;
+    text-transform: uppercase; letter-spacing: 2px;
   }
-  .n-btns button.active { background: #3182ce; color: #fff; border-color: #3182ce; }
 
-  .day-kill-btn { width: 100%; border: 1px solid #e53e3e; color: #e53e3e; background: none; font-size: 10px; padding: 5px; }
-
-  .control-deck { 
-    background: #1a202c; padding: 15px; border-radius: 8px; border-top: 2px solid #3182ce;
+  .typewriter-input {
+    width: 100%; height: 200px; background: transparent; border: none;
+    font-family: 'Special Elite', cursive; font-size: 1.1rem; line-height: 1.5;
+    background-image: radial-gradient(#d1cfc0 1px, transparent 1px);
+    background-size: 20px 20px; outline: none; resize: none;
   }
-  .mini-logs { font-size: 11px; color: #3182ce; margin-bottom: 10px; font-style: italic; }
-  .p-action-btn { 
-    width: 100%; padding: 15px; border: none; font-family: 'Syncopate'; 
-    font-size: 12px; font-weight: bold; cursor: pointer;
-  }
-  .p-action-btn.run { background: #e53e3e; color: #fff; }
-  .p-action-btn.wait { background: #3182ce; color: #fff; }
 
-  .fade-in { animation: opIn 0.4s ease-out; }
-  @keyframes opIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+  .stamp-btn {
+    width: 100%; padding: 15px; margin-top: 20px;
+    background: #c0392b; color: #fff; border: none;
+    font-family: 'Special Elite', cursive; font-size: 1.2rem;
+    cursor: pointer; transform: rotate(-1deg);
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+  }
+
+  /* Рабочий стол */
+  .desk-view {
+    height: 100%; background: #1a1a1a url('https://www.transparenttextures.com/patterns/dark-leather.png');
+    display: flex; flex-direction: column; padding: 15px;
+  }
+
+  .desk-header { display: flex; justify-content: space-between; align-items: center; color: #d4af37; margin-bottom: 20px; }
+  .case-info { font-family: 'Special Elite'; font-size: 0.8rem; border: 1px solid #d4af37; padding: 4px 8px; }
+
+  .evidence-grid {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; overflow-y: auto;
+  }
+
+  .dossier-card {
+    background: #e4e0d5; padding: 10px; box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+    position: relative; display: flex; flex-direction: column; align-items: center;
+    transform: rotate(${Math.random() * 4 - 2}deg);
+  }
+
+  .card-photo {
+    width: 100%; aspect-ratio: 1/1; background: #ccc; margin-bottom: 10px;
+    position: relative; overflow: hidden; border: 4px solid #fff;
+  }
+  .photo-placeholder { 
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; font-family: 'Special Elite'; color: #aaa; background: #eee;
+  }
+
+  .role-stamp {
+    position: absolute; bottom: 5px; right: 5px; background: rgba(192, 57, 43, 0.8);
+    color: #fff; font-size: 0.6rem; padding: 2px 5px; transform: rotate(-15deg);
+    font-family: 'Special Elite';
+  }
+
+  .name { font-family: 'Special Elite'; font-size: 0.9rem; margin: 5px 0; text-align: center; }
+
+  .card-actions {
+    display: flex; gap: 10px; margin-top: auto; border-top: 1px solid #ccc; padding-top: 8px;
+  }
+  .card-actions button { 
+    background: none; border: none; color: #555; cursor: pointer; 
+    transition: 0.2s; 
+  }
+  .card-actions button:hover { color: #c0392b; }
+
+  .bottom-log {
+    margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.6);
+    color: #00ff41; font-family: 'Special Elite'; font-size: 10px;
+  }
+
+  /* Морг */
+  .morgue-view {
+    position: absolute; inset: 0; background: #000; color: #fff; padding: 40px;
+  }
+  .dead-entry { 
+    display: flex; justify-content: space-between; border-bottom: 1px dashed #444;
+    padding: 10px 0; font-family: 'Special Elite';
+  }
+  .dead-role { color: #c0392b; }
+  .close-morgue { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; }
+
+  .fade-in { animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 `;
 
-export default MafiaTactical;
+export default MafiaScrapbook;
