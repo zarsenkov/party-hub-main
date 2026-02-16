@@ -23,7 +23,7 @@ const AliasGame = ({ onBack }) => {
   const timerRef = useRef(null);
 
   // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-  // // Виброотклик (Haptic Feedback)
+  // // Виброотклик
   const triggerHaptic = (type = 'light') => {
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(type === 'heavy' ? [50, 30, 50] : 30);
@@ -113,10 +113,10 @@ const AliasGame = ({ onBack }) => {
         }
 
         .container {
-          position: fixed; inset: 0; padding: 24px;
+          position: fixed; inset: 0; padding: 20px;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          background: #4834D4; /* Основной глубокий цвет */
+          background: #4834D4;
           color: #fff;
           text-align: center;
         }
@@ -126,7 +126,6 @@ const AliasGame = ({ onBack }) => {
         .bg-game { background: #4834D4; }
         .bg-results { background: #F9F9F9; color: #2D3436; }
 
-        /* Кнопка выхода */
         .btn-top-left {
           position: absolute; top: 16px; left: 16px;
           background: rgba(255,255,255,0.2);
@@ -136,27 +135,30 @@ const AliasGame = ({ onBack }) => {
           cursor: pointer; z-index: 100;
         }
 
-        /* Заголовок */
         .game-title {
-          font-size: 5rem; font-weight: 900;
+          font-size: 4.5rem; font-weight: 900;
           color: #FFF; margin-bottom: 20px;
           text-shadow: 0 8px 0 rgba(0,0,0,0.1);
+          width: 100%;
         }
 
-        /* Кнопки "Конфеты" */
+        /* Исправленные кнопки-конфеты */
         .btn-candy {
           background: #BADC58;
           color: #2D3436;
           border: none;
-          padding: 20px 40px;
+          padding: 18px 20px;
           border-radius: 24px;
-          font-size: 1.5rem;
+          font-size: 1.3rem;
           font-weight: 900;
           box-shadow: 0 8px 0 #6AB04C;
           cursor: pointer;
-          width: 90%; max-width: 320px;
+          width: 100%; 
+          max-width: 320px;
           transition: all 0.1s;
           text-transform: uppercase;
+          display: block;
+          margin: 0 auto; /* Центрирование */
         }
         .btn-candy:active {
           transform: translateY(4px);
@@ -169,21 +171,19 @@ const AliasGame = ({ onBack }) => {
         }
         .btn-secondary:active { box-shadow: 0 4px 0 #D35400; }
 
-        /* Игровая карточка */
         .game-card {
           background: #FFF;
           width: 100%; max-width: 400px;
-          padding: 60px 20px;
+          padding: 50px 20px;
           border-radius: 40px;
           box-shadow: 0 15px 0 rgba(0,0,0,0.1);
-          margin: 30px 0;
+          margin: 20px 0;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
         }
         .card-label { color: #686DE0; font-size: 14px; font-weight: 900; margin-bottom: 10px; opacity: 0.6; }
-        .word-text { color: #2D3436; font-size: 3.5rem; font-weight: 900; line-height: 1; }
+        .word-text { color: #2D3436; font-size: 3rem; font-weight: 900; line-height: 1.1; word-break: break-word; }
 
-        /* Список категорий */
         .cat-list {
           width: 100%; max-width: 400px;
           overflow-y: auto; flex: 1;
@@ -192,32 +192,34 @@ const AliasGame = ({ onBack }) => {
         }
         .cat-item {
           background: rgba(255,255,255,0.1);
-          padding: 20px; border-radius: 20px;
-          font-weight: 900; font-size: 1.2rem;
+          padding: 18px; border-radius: 20px;
+          font-weight: 900; font-size: 1.1rem;
           cursor: pointer; display: flex; justify-content: space-between;
           border: 4px solid transparent;
         }
-        .cat-item.active {
-          background: #BADC58; color: #2D3436;
-          border-color: #FFF;
-        }
+        .cat-item.active { background: #BADC58; color: #2D3436; border-color: #FFF; }
 
-        /* Статус раунда */
         .status-row {
           width: 100%; max-width: 400px;
           display: flex; justify-content: space-between;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
         }
         .stat-badge {
           background: rgba(255,255,255,0.2);
-          padding: 10px 20px; border-radius: 50px;
-          font-weight: 900; font-size: 18px;
+          padding: 10px 18px; border-radius: 50px;
+          font-weight: 900; font-size: 16px;
         }
-        .timer-warning { background: #FF7979; animation: pulse 0.6s infinite; }
+        .timer-warning { background: #FF7979; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        /* Сетка кнопок в игре */
+        .game-btn-grid {
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 12px; 
+          width: 100%; 
+          max-width: 400px;
+        }
 
-        /* Инпуты */
         .custom-field {
           width: 100%; padding: 15px; border-radius: 15px;
           border: none; background: #FFF; color: #2D3436;
@@ -242,7 +244,7 @@ const AliasGame = ({ onBack }) => {
       {screen === 'source' && (
         <div className="container bg-menu">
           <button className="btn-top-left" onClick={backToMenu}>НАЗАД</button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
             <button className="btn-candy" onClick={() => { setWords([]); setScreen('bank'); }}>📚 БАНК СЛОВ</button>
             <button className="btn-candy btn-secondary" onClick={() => { setWords([]); setShowWordsGroup(true); setScreen('setup'); }}>✏️ СВОИ СЛОВА</button>
           </div>
@@ -255,11 +257,7 @@ const AliasGame = ({ onBack }) => {
           <button className="btn-top-left" onClick={() => setScreen('source')}>НАЗАД</button>
           <div className="cat-list">
             {Object.keys(wordBanks).map(cat => (
-              <div 
-                key={cat} 
-                className={`cat-item ${selectedCategories.has(cat) ? 'active' : ''}`} 
-                onClick={() => toggleCategory(cat)}
-              >
+              <div key={cat} className={`cat-item ${selectedCategories.has(cat) ? 'active' : ''}`} onClick={() => toggleCategory(cat)}>
                 <span>{cat === 'animals' ? '🐾 ЖИВОТНЫЕ' : cat === 'food' ? '🍕 ЕДА' : cat === 'movies' ? '🎬 ФИЛЬМЫ' : cat === 'sports' ? '⚽ СПОРТ' : cat === 'professions' ? '👔 ПРОФЕССИИ' : cat === 'countries' ? '🌍 СТРАНЫ' : '🎯 МИКС'}</span>
                 {selectedCategories.has(cat) && <span>✓</span>}
               </div>
@@ -282,19 +280,17 @@ const AliasGame = ({ onBack }) => {
         <div className="container bg-setup">
           <button className="btn-top-left" onClick={() => setScreen(showWordsGroup ? 'source' : 'bank')}>НАЗАД</button>
           <div style={{ width: '100%', maxWidth: '360px', textAlign: 'left', marginBottom: '30px' }}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontWeight: 900, fontSize: '14px' }}>⏱️ ВРЕМЯ РАУНДА (СЕК)</label>
-              <input type="number" className="custom-field" value={timeInput} onChange={e => setTimeInput(Number(e.target.value))} />
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontWeight: 900, fontSize: '14px' }}>🔢 СЛОВ В РАУНДЕ</label>
-              <input type="number" className="custom-field" value={roundsInput} onChange={e => setRoundsInput(Number(e.target.value))} />
-            </div>
+            <label style={{ fontWeight: 900, fontSize: '14px' }}>⏱️ ВРЕМЯ РАУНДА (СЕК)</label>
+            <input type="number" className="custom-field" value={timeInput} onChange={e => setTimeInput(Number(e.target.value))} />
+            <div style={{ height: '20px' }} />
+            <label style={{ fontWeight: 900, fontSize: '14px' }}>🔢 СЛОВ В РАУНДЕ</label>
+            <input type="number" className="custom-field" value={roundsInput} onChange={e => setRoundsInput(Number(e.target.value))} />
             {showWordsGroup && (
-              <div style={{ marginBottom: '20px' }}>
+              <>
+                <div style={{ height: '20px' }} />
                 <label style={{ fontWeight: 900, fontSize: '14px' }}>📝 ВАШИ СЛОВА (ЧЕРЕЗ ЗАПЯТУЮ)</label>
-                <textarea className="custom-field" style={{ height: '100px', resize: 'none' }} value={customWordsInput} onChange={e => setCustomWordsInput(e.target.value)} />
-              </div>
+                <textarea className="custom-field" style={{ height: '80px', resize: 'none' }} value={customWordsInput} onChange={e => setCustomWordsInput(e.target.value)} />
+              </>
             )}
           </div>
           <button className="btn-candy" onClick={startGame}>СТАРТ! 🎮</button>
@@ -308,34 +304,26 @@ const AliasGame = ({ onBack }) => {
             <div className={`stat-badge ${timeLeft <= 10 ? 'timer-warning' : ''}`}>⏱️ {timeLeft}</div>
             <div className="stat-badge">⭐ {score}</div>
           </div>
-          
           <div className="game-card">
             <div className="card-label">ОБЪЯСНИ СЛОВО:</div>
             <div className="word-text">{words[currentIndex]}</div>
           </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', width: '100%', maxWidth: '400px' }}>
-            <button className="btn-candy btn-secondary" style={{ width: '100%' }} onClick={() => handleAction(false)}>ПРОПУСК</button>
-            <button className="btn-candy" style={{ width: '100%' }} onClick={() => handleAction(true)}>ГОТОВО</button>
+          <div className="game-btn-grid">
+            <button className="btn-candy btn-secondary" style={{ maxWidth: 'none' }} onClick={() => handleAction(false)}>ПРОПУСК</button>
+            <button className="btn-candy" style={{ maxWidth: 'none' }} onClick={() => handleAction(true)}>ГОТОВО</button>
           </div>
-
-          <button 
-            style={{ marginTop: '30px', background: 'none', border: 'none', color: '#fff', fontWeight: 900, opacity: 0.6, fontSize: '16px' }}
-            onClick={() => setIsConfirmModalOpen(true)}
-          >
-            ПАУЗА
-          </button>
+          <button style={{ marginTop: '30px', background: 'none', border: 'none', color: '#fff', fontWeight: 900, opacity: 0.6, fontSize: '16px' }} onClick={() => setIsConfirmModalOpen(true)}>ПАУЗА</button>
         </div>
       )}
 
       {/* ИТОГИ */}
       {screen === 'results' && (
         <div className="container bg-results">
-          <div className="game-title" style={{ color: '#4834D4', fontSize: '3rem' }}>РЕЗУЛЬТАТ</div>
-          <div style={{ fontSize: '6rem', fontWeight: 900, color: '#F0932B', marginBottom: '10px' }}>{score}</div>
-          <div style={{ width: '100%', maxWidth: '400px', flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
+          <div className="game-title" style={{ color: '#4834D4', fontSize: '2.5rem' }}>РЕЗУЛЬТАТ</div>
+          <div style={{ fontSize: '5rem', fontWeight: 900, color: '#F0932B' }}>{score}</div>
+          <div style={{ width: '100%', maxWidth: '400px', flex: 1, overflowY: 'auto', margin: '15px 0' }}>
             {log.map((item, idx) => (
-              <div key={idx} style={{ padding: '15px', borderBottom: '2px solid #EEE', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 900 }}>
+              <div key={idx} style={{ padding: '12px', borderBottom: '2px solid #EEE', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 900 }}>
                 <span style={{ opacity: item.ok ? 1 : 0.4 }}>{item.word}</span>
                 <span style={{ color: item.ok ? '#BADC58' : '#EB4D4B' }}>{item.ok ? '✓' : '✕'}</span>
               </div>
@@ -345,12 +333,12 @@ const AliasGame = ({ onBack }) => {
         </div>
       )}
 
-      {/* ПАУЗА (МОДАЛКА) */}
+      {/* ПАУЗА */}
       {isConfirmModalOpen && (
         <div className="container" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 2000 }}>
-          <div style={{ background: '#FFF', padding: '40px 20px', borderRadius: '40px', width: '85%', maxWidth: '320px', color: '#2D3436' }}>
-            <div className="game-title" style={{ color: '#4834D4', fontSize: '2.5rem', textShadow: 'none' }}>ПАУЗА</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+          <div style={{ background: '#FFF', padding: '30px 20px', borderRadius: '40px', width: '85%', maxWidth: '320px', color: '#2D3436', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div className="game-title" style={{ color: '#4834D4', fontSize: '2rem', textShadow: 'none', marginBottom: '25px' }}>ПАУЗА</div>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <button className="btn-candy" onClick={() => setIsConfirmModalOpen(false)}>ПРОДОЛЖИТЬ</button>
               <button className="btn-candy btn-secondary" onClick={backToMenu}>ВЫЙТИ</button>
             </div>
