@@ -1,67 +1,123 @@
 import React, { useState } from 'react';
-// // Убедись, что neverData.js лежит в этой же папке!
+// // Данные вопросов
 import { NEVER_QUESTIONS } from './neverData';
 
-// // Принимаем onBack как проп, чтобы возвращаться на лендинг
 const NeverHaveIEver = ({ onBack }) => {
+  // // Состояния экрана, уровня и индекса вопроса
   const [screen, setScreen] = useState('menu'); 
   const [level, setLevel] = useState('soft');
   const [index, setIndex] = useState(0);
 
-  // // Функция выбора уровня сложности
+  // // Состояния для системы игроков
+  const [players, setPlayers] = useState(['Игрок 1', 'Игрок 2']);
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+
+  // // Логика управления списком игроков
+  const addPlayer = () => {
+    if (newPlayerName.trim()) {
+      setPlayers([...players, newPlayerName.trim()]);
+      setNewPlayerName('');
+    }
+  };
+
+  const removePlayer = (idx) => {
+    if (players.length > 2) setPlayers(players.filter((_, i) => i !== idx));
+  };
+
+  // // Выбор сложности
   const selectLevel = (lvl) => {
     setLevel(lvl);
-    const randomIndex = Math.floor(Math.random() * NEVER_QUESTIONS[lvl].length);
+    setScreen('setup');
+  };
+
+  // // Старт игры
+  const startGame = () => {
+    const randomIndex = Math.floor(Math.random() * NEVER_QUESTIONS[level].length);
     setIndex(randomIndex);
+    setCurrentPlayerIndex(0);
     setScreen('game');
   };
 
-  // // Функция перехода к следующему вопросу
+  // // Переход к следующему шагу
   const nextStep = () => {
     const questions = NEVER_QUESTIONS[level];
     let newIndex = Math.floor(Math.random() * questions.length);
-    // // Проверка на повтор
-    if (newIndex === index) newIndex = (index + 1) % questions.length;
+    if (questions.length > 1 && newIndex === index) newIndex = (index + 1) % questions.length;
+    
     setIndex(newIndex);
+    setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
   };
 
   return (
-    <div className="neon-root">
-      <style>{neonStyles}</style>
+    <div className="brutal-root">
+      <style>{brutalStyles}</style>
 
-      {/* Кнопка выхода на лендинг через проп onBack */}
-      <button className="neon-back" onClick={onBack}>EXIT</button>
+      {/* Кнопка выхода */}
+      <button className="brutal-back" onClick={onBack}>ВЫЙТИ</button>
 
-      {/* ЭКРАН ВЫБОРА */}
+      {/* ЭКРАН 1: МЕНЮ */}
       {screen === 'menu' && (
-        <div className="neon-menu fade-in">
-          <h1 className="neon-logo">Я НИКОГДА<span>НЕ</span></h1>
-          
-          <div className="neon-list">
-            <button className="neon-item blue" onClick={() => selectLevel('soft')}>
-              SOFT <span className="n-desc">• Для всех</span>
-            </button>
-            <button className="neon-item yellow" onClick={() => selectLevel('party')}>
-              PARTY <span className="n-desc">• Туса</span>
-            </button>
-            <button className="neon-item red" onClick={() => selectLevel('spicy')}>
-              HARD <span className="n-desc">• 18+</span>
-            </button>
+        <div className="brutal-container fade-in">
+          <div className="brutal-title-box">
+            <h1 className="brutal-logo">Я НИКОГДА<span>НЕ</span></h1>
+          </div>
+          <p className="brutal-label">ВЫБИРАЙ УРОВЕНЬ:</p>
+          <div className="brutal-grid">
+            <button className="brutal-card-btn soft" onClick={() => selectLevel('soft')}>SOFT</button>
+            <button className="brutal-card-btn party" onClick={() => selectLevel('party')}>PARTY</button>
+            <button className="brutal-card-btn spicy" onClick={() => selectLevel('spicy')}>18+</button>
           </div>
         </div>
       )}
 
-      {/* ИГРОВОЙ ПРОЦЕСС */}
-      {screen === 'game' && (
-        <div className="neon-game fade-in">
-          <div className={`neon-card ${level}`}>
-            <div className="card-glare"></div>
-            <p className="neon-text">“{NEVER_QUESTIONS[level][index]}”</p>
+      {/* ЭКРАН 2: ИГРОКИ */}
+      {screen === 'setup' && (
+        <div className="brutal-container fade-in">
+          <h2 className="brutal-h2">КТО В ИГРЕ?</h2>
+          <div className="brutal-input-group">
+            <input 
+              type="text" 
+              className="brutal-input" 
+              placeholder="ИМЯ..." 
+              value={newPlayerName}
+              onChange={(e) => setNewPlayerName(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+            />
+            <button className="brutal-add-btn" onClick={addPlayer}>+</button>
           </div>
 
-          <div className="neon-controls">
-            <button className="neon-btn small" onClick={() => setScreen('menu')}>МЕНЮ</button>
-            <button className="neon-btn big" onClick={nextStep}>ДАЛЬШЕ</button>
+          <div className="brutal-player-list">
+            {players.map((p, i) => (
+              <div key={i} className="brutal-chip">
+                {p} <span className="brutal-del" onClick={() => removePlayer(i)}>×</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="brutal-actions">
+            <button className="brutal-btn secondary" onClick={() => setScreen('menu')}>НАЗАД</button>
+            <button className="brutal-btn primary" onClick={startGame}>ИГРАТЬ!</button>
+          </div>
+        </div>
+      )}
+
+      {/* ЭКРАН 3: ИГРА */}
+      {screen === 'game' && (
+        <div className="brutal-game-box fade-in">
+          <div className="brutal-turn">
+            СЕЙЧАС: <mark>{players[currentPlayerIndex]}</mark>
+          </div>
+
+          <div className={`brutal-main-card ${level}`}>
+            <div className="brutal-word-wrap">
+              <p className="brutal-question">{NEVER_QUESTIONS[level][index]}</p>
+            </div>
+          </div>
+
+          <div className="brutal-actions">
+            <button className="brutal-btn secondary" onClick={() => setScreen('menu')}>МЕНЮ</button>
+            <button className="brutal-btn primary" onClick={nextStep}>ДАЛЬШЕ →</button>
           </div>
         </div>
       )}
@@ -69,74 +125,109 @@ const NeverHaveIEver = ({ onBack }) => {
   );
 };
 
-// // ПОЛНЫЙ CSS (БЕЗ КОММЕНТАРИЕВ, С ПРИОРИТЕТОМ)
-const neonStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Monoton&family=Orbitron:wght@400;900&display=swap');
+// // CSS В СТИЛЕ НЕОБРУТАЛИЗМ
+const brutalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@900&family=Inter:wght@400;800&display=swap');
 
-  .neon-root {
+  .brutal-root {
     position: fixed !important; inset: 0 !important;
-    background: #0a0a0c !important;
-    display: flex !important; flex-direction: column !important;
-    align-items: center !important; justify-content: center !important;
-    font-family: 'Orbitron', sans-serif !important;
-    z-index: 10000 !important; color: #fff !important;
-  }
-
-  .neon-back {
-    position: absolute !important; top: 30px !important; left: 20px !important;
-    background: none !important; border: 1px solid #444 !important;
-    color: #888 !important; padding: 5px 15px !important; border-radius: 5px !important;
-    cursor: pointer !important; z-index: 10001 !important;
-  }
-
-  .neon-logo {
-    font-family: 'Monoton', cursive !important; font-size: 3rem !important;
-    text-align: center !important; color: #fff !important;
-    text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de !important;
-    margin-bottom: 40px !important; line-height: 1.2 !important;
-  }
-  .neon-logo span { display: block !important; font-size: 2rem !important; color: #00f7ff !important; text-shadow: 0 0 10px #00f7ff !important; }
-
-  .neon-list { display: flex !important; flex-direction: column !important; gap: 20px !important; width: 100% !important; max-width: 320px !important; padding: 20px !important; }
-  
-  .neon-item {
-    background: rgba(255,255,255,0.02) !important; border: 2px solid !important;
-    padding: 20px !important; border-radius: 12px !important;
-    font-family: 'Orbitron', sans-serif !important; font-weight: 900 !important;
-    font-size: 1.2rem !important; cursor: pointer !important; text-align: left !important;
-    display: flex !important; flex-direction: column !important;
-  }
-  .n-desc { font-size: 0.7rem !important; opacity: 0.6 !important; font-weight: 400 !important; margin-top: 4px !important; }
-
-  .blue { color: #00f7ff !important; border-color: #00f7ff !important; box-shadow: 0 0 10px #00f7ff !important; }
-  .yellow { color: #fff600 !important; border-color: #fff600 !important; box-shadow: 0 0 10px #fff600 !important; }
-  .red { color: #ff0055 !important; border-color: #ff0055 !important; box-shadow: 0 0 10px #ff0055 !important; }
-
-  .neon-game { width: 100% !important; max-width: 350px !important; display: flex !important; flex-direction: column !important; gap: 30px !important; }
-  
-  .neon-card {
-    height: 350px !important; background: rgba(255,255,255,0.03) !important;
-    border: 3px solid !important; border-radius: 20px !important;
+    background-color: #f0f0f0 !important;
+    background-image: radial-gradient(#000 0.5px, transparent 0.5px) !important;
+    background-size: 20px 20px !important; /* Точечный фон как на бумаге */
     display: flex !important; align-items: center !important; justify-content: center !important;
-    padding: 30px !important; text-align: center !important; position: relative !important;
+    font-family: 'Inter', sans-serif !important; z-index: 10000 !important; color: #000 !important;
+    padding: 20px !important;
   }
-  .neon-card.soft { color: #00f7ff !important; border-color: #00f7ff !important; }
-  .neon-card.party { color: #fff600 !important; border-color: #fff600 !important; }
-  .neon-card.spicy { color: #ff0055 !important; border-color: #ff0055 !important; }
 
-  .neon-text { font-size: 1.6rem !important; font-weight: 700 !important; line-height: 1.4 !important; text-shadow: 0 0 5px currentColor !important; }
+  /* Кнопка выхода */
+  .brutal-back {
+    position: absolute !important; top: 20px !important; left: 20px !important;
+    background: #fff !important; border: 3px solid #000 !important;
+    box-shadow: 4px 4px 0px #000 !important; padding: 8px 15px !important;
+    font-weight: 800 !important; font-size: 12px !important; cursor: pointer !important;
+  }
+  .brutal-back:active { transform: translate(2px, 2px) !important; box-shadow: 2px 2px 0px #000 !important; }
 
-  .neon-controls { display: grid !important; grid-template-columns: 1fr 2fr !important; gap: 15px !important; }
+  /* Контейнеры */
+  .brutal-container {
+    background: #fff !important; border: 4px solid #000 !important;
+    box-shadow: 12px 12px 0px #000 !important; padding: 30px !important;
+    width: 100% !important; max-width: 380px !important; text-align: center !important;
+  }
+
+  .brutal-title-box {
+    background: #A3E635 !important; border: 4px solid #000 !important;
+    padding: 15px !important; transform: rotate(-2deg) !important; margin-bottom: 30px !important;
+  }
+  .brutal-logo { font-family: 'Unbounded' !important; font-weight: 900 !important; font-size: 1.8rem !important; line-height: 1 !important; }
+  .brutal-logo span { display: block !important; font-size: 1.4rem !important; text-decoration: underline !important; }
+
+  .brutal-label { font-weight: 800 !important; margin-bottom: 15px !important; font-size: 0.9rem !important; text-transform: uppercase !important; }
+
+  /* Кнопки выбора уровней */
+  .brutal-grid { display: flex !important; flex-direction: column !important; gap: 15px !important; }
+  .brutal-card-btn {
+    padding: 18px !important; font-family: 'Unbounded' !important; font-weight: 900 !important;
+    font-size: 1.2rem !important; border: 4px solid #000 !important; cursor: pointer !important;
+    transition: 0.1s !important; box-shadow: 6px 6px 0px #000 !important;
+  }
+  .brutal-card-btn:active { transform: translate(3px, 3px) !important; box-shadow: 0px 0px 0px #000 !important; }
   
-  .neon-btn {
-    background: none !important; border: 2px solid #fff !important; color: #fff !important;
-    font-family: 'Orbitron', sans-serif !important; font-weight: 900 !important;
-    cursor: pointer !important; border-radius: 10px !important; padding: 15px !important;
-  }
-  .neon-btn.big { background: #fff !important; color: #000 !important; }
+  .soft { background-color: #60A5FA !important; }
+  .party { background-color: #F472B6 !important; }
+  .spicy { background-color: #F87171 !important; }
 
-  .fade-in { animation: fIn 0.5s ease !important; }
-  @keyframes fIn { from { opacity: 0; } to { opacity: 1; } }
+  /* Игроки */
+  .brutal-h2 { font-family: 'Unbounded' !important; font-size: 1.2rem !important; margin-bottom: 20px !important; }
+  .brutal-input-group { display: flex !important; gap: 10px !important; margin-bottom: 20px !important; }
+  .brutal-input {
+    flex: 1 !important; border: 3px solid #000 !important; padding: 12px !important;
+    font-weight: 700 !important; font-size: 1rem !important; outline: none !important;
+  }
+  .brutal-add-btn {
+    background: #000 !important; color: #fff !important; border: none !important;
+    padding: 0 20px !important; font-size: 24px !important; font-weight: 900 !important; cursor: pointer !important;
+  }
+
+  .brutal-player-list { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; justify-content: center !important; margin-bottom: 25px !important; }
+  .brutal-chip {
+    background: #fff !important; border: 2px solid #000 !important; padding: 5px 12px !important;
+    font-weight: 800 !important; font-size: 0.8rem !important; box-shadow: 3px 3px 0px #000 !important;
+  }
+  .brutal-del { color: #EF4444 !important; margin-left: 8px !important; cursor: pointer !important; }
+
+  /* Экран игры */
+  .brutal-game-box { width: 100% !important; max-width: 400px !important; }
+  .brutal-turn { 
+    font-family: 'Unbounded' !important; background: #000 !important; color: #fff !important;
+    display: inline-block !important; padding: 5px 15px !important; margin-bottom: 15px !important;
+    font-size: 0.8rem !important;
+  }
+  .brutal-turn mark { background: #A3E635 !important; padding: 0 5px !important; }
+
+  .brutal-main-card {
+    background: #fff !important; border: 5px solid #000 !important;
+    box-shadow: 15px 15px 0px #000 !important; min-height: 320px !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    padding: 30px !important; margin-bottom: 40px !important; position: relative !important;
+  }
+  .brutal-question {
+    font-family: 'Unbounded' !important; font-size: 1.6rem !important;
+    line-height: 1.3 !important; font-weight: 900 !important; text-align: center !important;
+  }
+
+  /* Кнопки управления */
+  .brutal-actions { display: grid !important; grid-template-columns: 1fr 2fr !important; gap: 15px !important; }
+  .brutal-btn {
+    padding: 15px !important; font-family: 'Unbounded' !important; font-weight: 900 !important;
+    border: 4px solid #000 !important; cursor: pointer !important; font-size: 1rem !important;
+  }
+  .brutal-btn.primary { background: #A3E635 !important; box-shadow: 6px 6px 0px #000 !important; }
+  .brutal-btn.secondary { background: #fff !important; box-shadow: 6px 6px 0px #000 !important; }
+  .brutal-btn:active { transform: translate(3px, 3px) !important; box-shadow: 0px 0px 0px #000 !important; }
+
+  .fade-in { animation: fIn 0.3s ease-out !important; }
+  @keyframes fIn { from { opacity: 0; transform: scale(0.9) rotate(1deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 `;
 
 export default NeverHaveIEver;
