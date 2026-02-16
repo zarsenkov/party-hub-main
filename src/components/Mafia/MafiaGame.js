@@ -1,232 +1,260 @@
 import React, { useState, useEffect } from 'react';
-// // Используем минимальный набор иконок для акцентов
-import { Search, X, Heart, Skull, Zap, RotateCcw } from 'lucide-react';
+// // Импорт иконок для интерфейса
+import { Moon, Sun, ArrowLeft, Users, Skull, Heart, Timer, RefreshCw, Eye, ShieldOff } from 'lucide-react';
+import { mafiaRoles } from './mafiaData';
 
-const MafiaScrapbook = ({ onBack }) => {
-  // === ГЛОБАЛЬНЫЙ КОНТЕКСТ ===
-  const [mode, setMode] = useState('folder'); // // folder (ввод), desk (игра), morgue (убитые)
+// // Список кличек для атмосферы
+const NICKNAMES = ["Крот", "Шустрый", "Барон", "Доцент", "Бритва", "Молчун", "Артист", "Счастливчик", "Шериф", "Лис", "Призрак", "Кабан", "Акула", "Маэстро", "Стукач"];
+
+export default function MafiaGame({ onBack }) {
+  // // Глобальные состояния игры
+  const [gameState, setGameState] = useState('setup'); // setup, dealing, action, results
+  const [phase, setPhase] = useState('night');
+  const [playerCount, setPlayerCount] = useState(6);
+  const [useManiac, setUseManiac] = useState(false);
+  const [useProstitute, setUseProstitute] = useState(false);
   const [players, setPlayers] = useState([]);
-  const [names, setNames] = useState("");
-  const [nightAction, setNightAction] = useState({ target: null, type: null }); // // 'kill', 'save', 'check'
-  const [log, setLog] = useState(["Дело открыто..."]);
+  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
+  const [showRole, setShowRole] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [timerActive, setTimerActive] = useState(false);
+  const [winner, setWinner] = useState(null);
 
-  // === ЛОГИКА СТАРТА ===
-  const openCase = () => {
-    const list = names.split('\n').filter(n => n.trim());
-    if (list.length < 4) return;
+  // // Логика таймера для обсуждения
+  useEffect(() => {
+    let interval;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    } else { setTimerActive(false); }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft]);
 
-    // // Раздаем роли (ведущий видит их в досье, игроки — при передаче телефона)
-    let roles = ['Мафия', 'Комиссар', 'Доктор'];
-    if (list.length > 8) roles.push('Мафия');
-    while (roles.length < list.length) roles.push('Мирный');
-    roles = roles.sort(() => Math.random() - 0.5);
+  // // Функция перемешивания и раздачи ролей
+  const startDealing = () => {
+    // // Создаем массив ролей исходя из количества игроков
+    let rolesPool = [];
+    const mafiaCount = Math.floor(playerCount / 3);
 
-    setPlayers(list.map((n, i) => ({
-      id: i,
-      name: n.trim(),
-      role: roles[i],
+    // // Наполнение пула: Мафия, Доктор, Комиссар всегда (минимум)
+    for (let i = 0; i < mafiaCount; i++) rolesPool.push(mafiaRoles.find(r => r.id === 'mafia'));
+    rolesPool.push(mafiaRoles.find(r => r.id === 'doctor'));
+    rolesPool.push(mafiaRoles.find(r => r.id === 'detective'));
+
+    // // Добавляем спецроли по желанию
+    if (useManiac) rolesPool.push(mafiaRoles.find(r => r.id === 'maniac'));
+    if (useProstitute) rolesPool.push(mafiaRoles.find(r => r.id === 'prostitute'));
+
+    // // Заполняем остаток мирными жителями
+    while (rolesPool.length < playerCount) rolesPool.push(mafiaRoles.find(r => r.id === 'civilian'));
+
+    // // Рандомизация ролей и имен
+    rolesPool = rolesPool.slice(0, playerCount).sort(() => Math.random() - 0.5);
+    const shuffledNames = [...NICKNAMES].sort(() => Math.random() - 0.5);
+
+    // // Формируем итоговый объект игроков
+    setPlayers(rolesPool.map((role, i) => ({
+      id: i + 1,
+      name: shuffledNames[i] || `Игрок ${i + 1}`,
+      role: role,
       alive: true,
-      fouls: 0,
-      checked: false
+      statusEffect: null, // // Может быть 'killed', 'healed', 'checked'
+      fouls: 0
     })));
-    setMode('desk');
+    setCurrentPlayerIdx(0);
+    setGameState('dealing');
   };
 
-  // === ЛОГИКА ВЗАИМОДЕЙСТВИЯ (Drag & Drop Logic Sim) ===
-  const applyAction = (playerId, type) => {
-    setPlayers(prev => prev.map(p => {
-      if (p.id === playerId) {
-        if (type === 'kill') return { ...p, alive: false };
-        if (type === 'check') return { ...p, checked: true };
-        if (type === 'foul') return { ...p, fouls: p.fouls + 1 };
+  // // Проверка условий победы (Мафия/Мирные/Маньяк)
+  const checkVictory = (currentPlayers) => {
+    const alive = currentPlayers.filter(p => p.alive);
+    const mafia = alive.filter(p => p.role.side === 'evil' && p.role.id !== 'maniac');
+    const maniac = alive.filter(p => p.role.id === 'maniac');
+    const civilians = alive.filter(p => p.role.side === 'good');
+
+    // // Если мафии и маньяка нет — победа города
+    if (mafia.length === 0 && maniac.length === 0) return 'Мирные жители';
+    // // Если мафия сравнялась по количеству или превзошла (стандартные правила)
+    if (mafia.length >= (alive.length - mafia.length)) return 'Мафия';
+    // // Если остался только маньяк и 1 игрок
+    if (maniac.length > 0 && alive.length <= 2) return 'Маньяк';
+    return null;
+  };
+
+  // // Обработка смены фазы с расчетом ночных событий
+  const confirmAction = () => {
+    // // Исправленная логика: проверяем 'killed' ТОЛЬКО если нет 'healed'
+    const updated = players.map(p => {
+      let isAlive = p.alive;
+      if (p.statusEffect === 'killed' && p.statusEffect !== 'healed') {
+        isAlive = false;
+      }
+      // // Сбрасываем временные статусы, но оставляем результат проверки комиссара (checked)
+      return { 
+        ...p, 
+        alive: isAlive, 
+        statusEffect: p.statusEffect === 'checked' ? 'checked' : null 
+      };
+    });
+
+    setPlayers(updated);
+    const v = checkVictory(updated);
+
+    if (v) {
+      setWinner(v);
+      setGameState('results');
+    } else {
+      setPhase(phase === 'night' ? 'day' : 'night');
+      setTimerActive(false);
+      setTimeLeft(60);
+    }
+  };
+
+  // // Функция переключения статусов (точечное внесение функционала)
+  const toggleStatus = (id, status) => {
+    setPlayers(players.map(p => {
+      if (p.id === id) {
+        return { ...p, statusEffect: p.statusEffect === status ? null : status };
       }
       return p;
     }));
-    
-    const actionName = type === 'kill' ? "ликвидирован" : type === 'check' ? "проверен" : "получил фол";
-    setLog([`Игрок ${players[playerId].name} ${actionName}`, ...log]);
   };
 
+  // --- ЭКРАН 1: НАСТРОЙКА ---
+  if (gameState === 'setup') {
+    return (
+      <div style={ui.container('day')}>
+        <header style={ui.header}>
+          <button onClick={onBack} style={ui.backBtn}><ArrowLeft size={20}/></button>
+          <div style={ui.badge}>SETUP</div>
+        </header>
+        <h1 style={ui.neoTitle}>MAFIA_GAME</h1>
+        <div style={ui.setupBox}>
+          <p style={ui.label}>КОЛИЧЕСТВО ИГРОКОВ: <b>{playerCount}</b></p>
+          <input type="range" min="4" max="15" value={playerCount} onChange={(e) => setPlayerCount(parseInt(e.target.value))} style={ui.range} />
+
+          <div style={ui.optionsList}>
+            <label style={ui.optionItem}>
+              <span>ДОБАВИТЬ МАНЬЯКА</span>
+              <input type="checkbox" checked={useManiac} onChange={() => setUseManiac(!useManiac)} />
+            </label>
+            <label style={ui.optionItem}>
+              <span>ДОБАВИТЬ ПУТАНУ</span>
+              <input type="checkbox" checked={useProstitute} onChange={() => setUseProstitute(!useProstitute)} />
+            </label>
+          </div>
+          <button onClick={startDealing} style={ui.mainBtn}>РАСПРЕДЕЛИТЬ РОЛИ</button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ЭКРАН 2: РАЗДАЧА РОЛЕЙ ---
+  if (gameState === 'dealing') {
+    const p = players[currentPlayerIdx];
+    return (
+      <div style={ui.container('night')}>
+        <h2 style={{fontWeight: '900', letterSpacing: '2px', marginBottom: '30px', color: '#fff'}}>ПЕРЕДАЙ ТЕЛЕФОН</h2>
+        <div style={ui.card('night')}>
+          <p style={{color: '#ff4444', fontWeight: '900', fontSize: '1.4rem'}}>ЭЙ, {p.name.toUpperCase()}!</p>
+          {!showRole ? (
+            <button onClick={() => setShowRole(true)} style={ui.mainBtn}>КТО Я?</button>
+          ) : (
+            <>
+              <h1 style={{color: p.role.side === 'evil' ? '#ff4444' : '#44ff44', fontSize: '2.5rem', margin: '20px 0'}}>{p.role.name}</h1>
+              <p style={{fontSize: '0.8rem', marginBottom: '20px', color: '#fff'}}>{p.role.desc}</p>
+              <button onClick={() => { setShowRole(false); currentPlayerIdx < playerCount - 1 ? setCurrentPlayerIdx(c => c + 1) : setGameState('action'); }} style={{...ui.mainBtn, background: '#fff', color: '#000'}}>ЗАПОМНИЛ</button>
+            </>
+          )}
+        </div>
+        <p style={{marginTop: '20px', opacity: 0.5, color: '#fff'}}>ИГРОК {currentPlayerIdx + 1} / {playerCount}</p>
+      </div>
+    );
+  }
+
+  // --- ЭКРАН 3: РЕЗУЛЬТАТЫ ---
+  if (gameState === 'results') {
+    return (
+      <div style={ui.container('day')}>
+        <h1 style={{fontSize: '3rem', fontWeight: '900', marginTop: '100px'}}>КОНЕЦ</h1>
+        <div style={{background: '#ff4444', color: '#fff', padding: '15px 30px', fontWeight: '900', fontSize: '1.5rem', transform: 'rotate(-2deg)'}}>
+          ПОБЕДА: {winner.toUpperCase()}
+        </div>
+        <button onClick={() => setGameState('setup')} style={{...ui.mainBtn, marginTop: '50px'}}>ИГРАТЬ СНОВА</button>
+      </div>
+    );
+  }
+
+  // --- ЭКРАН 4: ПУЛЬТ ВЕДУЩЕГО ---
   return (
-    <div className="scrapbook-root">
-      <style>{scrapbookStyles}</style>
+    <div style={ui.container(phase)}>
+      <header style={ui.header}>
+        <button onClick={() => {setTimerActive(!timerActive); if(timeLeft === 0) setTimeLeft(60)}} style={ui.iconBtn}>
+          <Timer size={18} color={timerActive ? '#ff4444' : 'inherit'}/> <b>{timeLeft}с</b>
+        </button>
+        <div style={ui.badge}>{phase === 'night' ? 'NIGHT' : 'DAY'}</div>
+        <button onClick={() => setPhase(phase === 'night' ? 'day' : 'night')} style={ui.iconBtn}><RefreshCw/></button>
+      </header>
 
-      {/* ЭКРАН 1: СТАРАЯ ПАПКА (ВВОД) */}
-      {mode === 'folder' && (
-        <div className="folder-view fade-in">
-          <div className="paper-stack">
-            <h1 className="noir-header">ПРОТОКОЛ №{Math.floor(Math.random()*900 + 100)}</h1>
-            <p className="instruction">Перечислите подозреваемых:</p>
-            <textarea 
-              className="typewriter-input"
-              value={names}
-              onChange={(e) => setNames(e.target.value)}
-              placeholder="ИМЯ ФАМИЛИЯ..."
-            />
-            <button className="stamp-btn" onClick={openCase}>НАЧАТЬ СЛЕДСТВИЕ</button>
-            <button className="exit-link" onClick={onBack}>ОТМЕНИТЬ</button>
-          </div>
-        </div>
-      )}
-
-      {/* ЭКРАН 2: СТОЛ СЛЕДОВАТЕЛЯ (ИГРА) */}
-      {mode === 'desk' && (
-        <div className="desk-view">
-          <div className="desk-header">
-            <div className="case-info">ДЕЛО: "ТЕНИ ГОРОДА"</div>
-            <button className="morgue-trigger" onClick={() => setMode('morgue')}>МОРГ ({players.filter(p => !p.alive).length})</button>
-          </div>
-
-          <div className="evidence-grid">
-            {players.filter(p => p.alive).map(p => (
-              <div key={p.id} className={`dossier-card ${p.checked ? 'is-checked' : ''}`}>
-                <div className="card-photo">
-                  <div className="photo-placeholder">{p.name[0]}</div>
-                  {p.checked && <div className="role-stamp">{p.role}</div>}
-                </div>
-                <div className="card-info">
-                  <h3 className="name">{p.name}</h3>
-                  <div className="foul-marks">
-                    {[...Array(p.fouls)].map((_, i) => <Zap key={i} size={10} fill="#d35400" color="#d35400"/>)}
-                  </div>
-                </div>
-                
-                {/* Быстрые действия "как пометки на фото" */}
-                <div className="card-actions">
-                  <button onClick={() => applyAction(p.id, 'kill')} title="Убрать"><Skull size={16}/></button>
-                  <button onClick={() => applyAction(p.id, 'check')} title="Проверить"><Search size={16}/></button>
-                  <button onClick={() => applyAction(p.id, 'foul')} title="Фол"><Zap size={16}/></button>
-                </div>
+      <div style={ui.playerGrid}>
+        {players.map(p => (
+          <div key={p.id} style={ui.playerRow(p.alive, phase)}>
+            <div style={{textAlign: 'left'}}>
+              <div style={{fontWeight: '900', fontSize: '1.1rem', color: p.statusEffect === 'checked' ? '#d4af37' : 'inherit'}}>
+                {p.name} {p.statusEffect === 'checked' && '🔍'}
               </div>
-            ))}
+              <div style={{fontSize: '0.6rem', opacity: 0.6}}>{p.role.name.toUpperCase()}</div>
+            </div>
+            <div style={{display: 'flex', gap: '5px'}}>
+              {p.alive ? (
+                <>
+                  {/* Кнопка смерти */}
+                  <button onClick={() => toggleStatus(p.id, 'killed')} style={ui.actionBtn(p.statusEffect === 'killed', '#ff4444')}><Skull size={18}/></button>
+                  {/* Кнопка лечения */}
+                  <button onClick={() => toggleStatus(p.id, 'healed')} style={ui.actionBtn(p.statusEffect === 'healed', '#44ff44')}><Heart size={18}/></button>
+                  {/* Кнопка проверки (только ночью для Комиссара) */}
+                  <button onClick={() => toggleStatus(p.id, 'checked')} style={ui.actionBtn(p.statusEffect === 'checked', '#d4af37')}><Eye size={18}/></button>
+                </>
+              ) : <div style={{color: '#ff4444', fontWeight: '900', fontSize: '0.8rem'}}>DIED</div>}
+            </div>
           </div>
+        ))}
+      </div>
 
-          <div className="bottom-log">
-            {log.slice(0, 2).map((l, i) => <div key={i} className="log-line">{`> ${l}`}</div>)}
-          </div>
-        </div>
-      )}
-
-      {/* ЭКРАН 3: МОРГ (АРХИВ) */}
-      {mode === 'morgue' && (
-        <div className="morgue-view fade-in">
-          <button className="close-morgue" onClick={() => setMode('desk')}><X size={24}/></button>
-          <h2 className="noir-header">АРХИВ ПОГИБШИХ</h2>
-          <div className="dead-list">
-            {players.filter(p => !p.alive).map(p => (
-              <div key={p.id} className="dead-entry">
-                <span className="dead-name">{p.name}</span>
-                <span className="dead-role">[{p.role}]</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <button onClick={confirmAction} style={ui.confirmBtn}>
+        {phase === 'night' ? 'ПОДВЕСТИ ИТОГИ НОЧИ' : 'ЗАВЕРШИТЬ ГОЛОСОВАНИЕ'}
+      </button>
     </div>
   );
+}
+
+const ui = {
+  container: (p) => ({
+    position: 'fixed', inset: 0, padding: '20px', zIndex: 1000,
+    background: p === 'night' ? '#0a0a0a' : '#e4e0d9', color: p === 'night' ? '#fff' : '#1a1a1a',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'monospace', overflowY: 'auto'
+  }),
+  header: { display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '20px', alignItems: 'center' },
+  badge: { background: '#1a1a1a', color: '#fff', padding: '2px 10px', fontWeight: '900', transform: 'rotate(-1deg)' },
+  neoTitle: { fontSize: '2.5rem', fontWeight: '900', margin: '20px 0', borderBottom: '4px solid #1a1a1a' },
+  setupBox: { width: '100%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' },
+  label: { fontSize: '0.8rem', fontWeight: '900' },
+  range: { width: '100%', accentColor: '#1a1a1a' },
+  optionsList: { display: 'flex', flexDirection: 'column', gap: '10px' },
+  optionItem: { display: 'flex', justifyContent: 'space-between', padding: '10px', border: '2px solid #1a1a1a', background: '#fff', color: '#000', fontWeight: '900', fontSize: '0.7rem' },
+  mainBtn: { background: '#1a1a1a', color: '#fff', border: 'none', padding: '15px', fontWeight: '900', cursor: 'pointer', boxShadow: '4px 4px 0 #ff4444' },
+  card: (p) => ({ background: p === 'night' ? '#111' : '#fff', padding: '30px', border: '3px solid #1a1a1a', width: '100%', textAlign: 'center', boxShadow: '8px 8px 0 rgba(0,0,0,0.2)' }),
+  playerGrid: { width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' },
+  playerRow: (alive, p) => ({
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px',
+    background: alive ? (p === 'night' ? '#1a1a1a' : '#fff') : 'rgba(0,0,0,0.05)',
+    border: '2px solid #1a1a1a', opacity: alive ? 1 : 0.5, boxShadow: alive ? '4px 4px 0 rgba(0,0,0,0.1)' : 'none'
+  }),
+  actionBtn: (active, color) => ({
+    background: active ? color : 'none', color: active ? '#fff' : 'inherit',
+    border: `2px solid #1a1a1a`, padding: '8px', cursor: 'pointer', transform: active ? 'translate(1px, 1px)' : 'none',
+    boxShadow: active ? '0 0 0' : '2px 2px 0 #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center'
+  }),
+  confirmBtn: { marginTop: '20px', width: '100%', padding: '20px', background: '#1a1a1a', color: '#fff', border: 'none', fontWeight: '900', letterSpacing: '2px', cursor: 'pointer', flexShrink: 0 },
+  iconBtn: { background: 'none', border: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '5px' },
+  backBtn: { background: '#1a1a1a', color: '#fff', border: 'none', padding: '5px' }
 };
-
-// // CSS: NOIR SCRAPBOOK DESIGN
-const scrapbookStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
-
-  .scrapbook-root {
-    position: fixed; inset: 0; background: #2c2c2c;
-    color: #2c1e1e; font-family: 'EB Garamond', serif;
-    z-index: 100000; overflow: hidden;
-  }
-
-  /* Текстура бумаги */
-  .paper-stack {
-    background: #f4f1ea; width: 90%; max-width: 400px; margin: 40px auto;
-    padding: 30px; box-shadow: 5px 5px 0 #1a1a1a, 10px 10px 0 #d4af37;
-    position: relative; border: 1px solid #dcd7c9;
-  }
-
-  .noir-header {
-    font-family: 'Special Elite', cursive; font-size: 1.5rem;
-    border-bottom: 2px solid #2c1e1e; padding-bottom: 10px; margin-bottom: 20px;
-    text-transform: uppercase; letter-spacing: 2px;
-  }
-
-  .typewriter-input {
-    width: 100%; height: 200px; background: transparent; border: none;
-    font-family: 'Special Elite', cursive; font-size: 1.1rem; line-height: 1.5;
-    background-image: radial-gradient(#d1cfc0 1px, transparent 1px);
-    background-size: 20px 20px; outline: none; resize: none;
-  }
-
-  .stamp-btn {
-    width: 100%; padding: 15px; margin-top: 20px;
-    background: #c0392b; color: #fff; border: none;
-    font-family: 'Special Elite', cursive; font-size: 1.2rem;
-    cursor: pointer; transform: rotate(-1deg);
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-  }
-
-  /* Рабочий стол */
-  .desk-view {
-    height: 100%; background: #1a1a1a url('https://www.transparenttextures.com/patterns/dark-leather.png');
-    display: flex; flex-direction: column; padding: 15px;
-  }
-
-  .desk-header { display: flex; justify-content: space-between; align-items: center; color: #d4af37; margin-bottom: 20px; }
-  .case-info { font-family: 'Special Elite'; font-size: 0.8rem; border: 1px solid #d4af37; padding: 4px 8px; }
-
-  .evidence-grid {
-    flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; overflow-y: auto;
-  }
-
-  .dossier-card {
-    background: #e4e0d5; padding: 10px; box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
-    position: relative; display: flex; flex-direction: column; align-items: center;
-    transform: rotate(${Math.random() * 4 - 2}deg);
-  }
-
-  .card-photo {
-    width: 100%; aspect-ratio: 1/1; background: #ccc; margin-bottom: 10px;
-    position: relative; overflow: hidden; border: 4px solid #fff;
-  }
-  .photo-placeholder { 
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-    font-size: 3rem; font-family: 'Special Elite'; color: #aaa; background: #eee;
-  }
-
-  .role-stamp {
-    position: absolute; bottom: 5px; right: 5px; background: rgba(192, 57, 43, 0.8);
-    color: #fff; font-size: 0.6rem; padding: 2px 5px; transform: rotate(-15deg);
-    font-family: 'Special Elite';
-  }
-
-  .name { font-family: 'Special Elite'; font-size: 0.9rem; margin: 5px 0; text-align: center; }
-
-  .card-actions {
-    display: flex; gap: 10px; margin-top: auto; border-top: 1px solid #ccc; padding-top: 8px;
-  }
-  .card-actions button { 
-    background: none; border: none; color: #555; cursor: pointer; 
-    transition: 0.2s; 
-  }
-  .card-actions button:hover { color: #c0392b; }
-
-  .bottom-log {
-    margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.6);
-    color: #00ff41; font-family: 'Special Elite'; font-size: 10px;
-  }
-
-  /* Морг */
-  .morgue-view {
-    position: absolute; inset: 0; background: #000; color: #fff; padding: 40px;
-  }
-  .dead-entry { 
-    display: flex; justify-content: space-between; border-bottom: 1px dashed #444;
-    padding: 10px 0; font-family: 'Special Elite';
-  }
-  .dead-role { color: #c0392b; }
-  .close-morgue { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; }
-
-  .fade-in { animation: fadeIn 0.5s ease; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-`;
-
-export default MafiaScrapbook;
