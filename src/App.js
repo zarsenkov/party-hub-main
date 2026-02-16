@@ -97,7 +97,7 @@ export default function App() {
       </main>
 
       <footer className="neo-footer-links">
-        <a href="https://lovecouple.ru" className="footer-link">LOVECOUPLE.RU</a>
+        <a href="https://pay.cloudtips.ru/p/d2723585" className="footer-link">ПОДДЕРЖАТЬ ПРОЕКТ</a>
         <a href="https://t.me/LoveCouple_news" className="footer-link">TELEGRAM CHANNEL</a>
       </footer>
 
