@@ -202,3 +202,12 @@ body {
     background: var(--card-alias); border: none; padding: 8px 20px; 
     border-radius: 12px; font-weight: 900; margin-top: 10px; 
 }
+/* Анимация появления для всех окон */
+.fade-in {
+    animation: fadeInAnim 0.4s ease-out forwards;
+}
+
+@keyframes fadeInAnim {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
