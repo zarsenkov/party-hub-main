@@ -69,7 +69,7 @@ const QuizGame = ({ onBack }) => {
               <span className="btn-decoration">⚡</span>
             </button>
             <button className="d-btn pink" onClick={() => startGame('love')}>
-              РОМАНТИКА
+              РОМАНТИКА и 18+
               <span className="btn-decoration">♥</span>
             </button>
           </div>
