@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { WHO_AM_I_CATEGORIES } from './whoAmI_data';
 
 const WhoAmIGame = ({ onBack }) => {
-  // === СОСТОЯНИЕ ===
-  const [screen, setScreen] = useState('setup'); // setup, play, results
+  // // === СОСТОЯНИЕ ===
+  const [screen, setScreen] = useState('setup'); // // setup, play, results
   const [selectedCats, setSelectedCats] = useState([]);
   const [characters, setCharacters] = useState([]);
   const [index, setIndex] = useState(0);
@@ -13,27 +13,31 @@ const WhoAmIGame = ({ onBack }) => {
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
-  // === ЛОГИКА (ВСЁ СОБЛЮДЕНО) ===
+  // // === ЛОГИКА ===
 
-  // // Сборка колоды и старт (с проверкой данных)
+  // // Сборка колоды и старт
   const startGame = () => {
+    // // Проверка, выбраны ли категории
     if (selectedCats.length === 0) return;
     let deck = [];
     selectedCats.forEach(id => {
       const cat = WHO_AM_I_CATEGORIES.find(c => c.id === id);
       if (cat && cat.characters) deck = [...deck, ...cat.characters];
     });
+    
+    // // Если в выбранных категориях есть персонажи
     if (deck.length === 0) return;
 
-    setCharacters(deck.sort(() => Math.random() - 0.5)); // Перемешивание
+    setCharacters(deck.sort(() => Math.random() - 0.5)); // // Перемешивание колоды
     setIndex(0);
     setScore(0);
-    setTimeLeft(60); // Сброс таймера
+    setTimeLeft(60); // // Сброс таймера на 60 секунд
     setScreen('play');
     setIsActive(true);
     setIsPaused(false);
   };
 
+  // // Завершение игры
   const finishGame = () => {
     setIsActive(false);
     setScreen('results');
@@ -50,16 +54,17 @@ const WhoAmIGame = ({ onBack }) => {
     return () => clearInterval(timer);
   }, [isActive, isPaused, timeLeft]);
 
-  // // Выбор категорий
+  // // Функция выбора/отмены категории
   const toggleCat = (id) => {
     setSelectedCats(s => s.includes(id) ? s.filter(i => i !== id) : [...s, id]);
   };
 
-  // // Действия игрока
+  // // Обработка ответа (Угадал / Пропустил)
   const handleAction = (isHit) => {
     if (isPaused) return;
     if (isHit) setScore(s => s + 1);
     
+    // // Переход к следующему персонажу или финиш
     if (index + 1 < characters.length) {
       setIndex(i => i + 1);
     } else {
@@ -83,17 +88,20 @@ const WhoAmIGame = ({ onBack }) => {
           </div>
           <p className="toon-subtitle">ВЫБИРАЙ КАРТЫ ДЛЯ ВЕСЕЛЬЯ!</p>
           
-          <div className="toon-grid">
-            {WHO_AM_I_CATEGORIES.map(c => (
-              <div 
-                key={c.id} 
-                className={`toon-cat-card ${selectedCats.includes(c.id) ? 'active' : ''}`}
-                onClick={() => toggleCat(c.id)}
-              >
-                <div className="toon-check"></div>
-                {c.name}
-              </div>
-            ))}
+          {/* // // Новая область прокрутки для категорий */}
+          <div className="toon-grid-scroll-container">
+            <div className="toon-grid">
+              {WHO_AM_I_CATEGORIES.map(c => (
+                <div 
+                  key={c.id} 
+                  className={`toon-cat-card ${selectedCats.includes(c.id) ? 'active' : ''}`}
+                  onClick={() => toggleCat(c.id)}
+                >
+                  <div className="toon-check"></div>
+                  {c.name}
+                </div>
+              ))}
+            </div>
           </div>
 
           <button 
@@ -155,13 +163,13 @@ const WhoAmIGame = ({ onBack }) => {
   );
 };
 
-// // CSS СТИЛИ: РЕТРО-МУЛЬТФИЛЬМ
+// // CSS СТИЛИ: РЕТРО-МУЛЬТФИЛЬМ (С точечными правками скролла)
 const toonStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Bangers&display=swap');
 
   .toon-root {
     position: fixed !important; inset: 0 !important;
-    background: #fdf5e6 !important; /* Кремовый фон */
+    background: #fdf5e6 !important;
     background-image: radial-gradient(#dcd0b9 2px, transparent 2px) !important;
     background-size: 30px 30px !important;
     display: flex !important; align-items: center !important; justify-content: center !important;
@@ -182,6 +190,8 @@ const toonStyles = `
     width: 100% !important; max-width: 380px !important;
     box-shadow: 0 15px 0 rgba(0,0,0,0.1) !important; text-align: center !important;
     position: relative !important;
+    display: flex !important; flex-direction: column !important;
+    max-height: 90vh !important;
   }
 
   .toon-header-group { display: flex !important; justify-content: center !important; align-items: center !important; gap: 10px !important; margin-bottom: 20px !important; }
@@ -189,10 +199,22 @@ const toonStyles = `
   
   .toon-title { font-family: 'Bangers' !important; font-size: 4.5rem !important; line-height: 0.8 !important; color: #000 !important; margin: 0 !important; }
   .toon-title.small { font-size: 3rem !important; }
-
   .toon-subtitle { font-size: 0.8rem !important; font-weight: 900 !important; margin-bottom: 25px !important; color: #555 !important; }
 
-  .toon-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; margin-bottom: 30px !important; }
+  /* // // СТИЛИ СКРОЛЛА */
+  .toon-grid-scroll-container {
+    max-height: 280px !important; 
+    overflow-y: auto !important;
+    margin-bottom: 30px !important;
+    padding: 10px 5px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #000 transparent !important;
+  }
+  .toon-grid-scroll-container::-webkit-scrollbar { width: 6px !important; }
+  .toon-grid-scroll-container::-webkit-scrollbar-thumb { background: #000 !important; border-radius: 10px !important; }
+
+  .toon-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+  
   .toon-cat-card {
     background: #f0f0f0 !important; border: 4px solid #000 !important;
     padding: 15px !important; border-radius: 20px !important;
@@ -206,15 +228,16 @@ const toonStyles = `
     border: 5px solid #000 !important; border-radius: 25px !important;
     padding: 15px !important; font-family: 'Bangers' !important; font-size: 2rem !important;
     cursor: pointer !important; box-shadow: 0 8px 0 #000 !important; transition: 0.1s !important;
+    flex-shrink: 0 !important;
   }
   .toon-btn-play:active { transform: translateY(4px) !important; box-shadow: 0 4px 0 #000 !important; }
 
-  /* ИГРОВОЙ ЭКРАН */
   .toon-play-container { width: 100% !important; max-width: 400px !important; }
   .toon-stats { display: flex !important; justify-content: space-between !important; margin-bottom: 20px !important; }
   .toon-pill { background: #fff !important; border: 4px solid #000 !important; padding: 10px 20px !important; border-radius: 30px !important; font-weight: 900 !important; }
-  .timer.shake { animation: shake 0.2s infinite !important; color: #ff6b6b !important; }
+  
   @keyframes shake { 0% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
+  .timer.shake { animation: shake 0.2s infinite !important; color: #ff6b6b !important; }
 
   .toon-pause-btn { background: #000 !important; color: #fff !important; border: none !important; width: 50px !important; border-radius: 20px !important; cursor: pointer !important; font-weight: 900 !important; }
 
@@ -223,7 +246,6 @@ const toonStyles = `
     border-radius: 50px !important; display: flex !important; flex-direction: column !important;
     align-items: center !important; justify-content: center !important;
     box-shadow: 0 15px 0 rgba(0,0,0,0.05) !important; margin-bottom: 30px !important;
-    position: relative !important;
   }
   .toon-char-text { font-family: 'Bangers' !important; font-size: 3.5rem !important; text-align: center !important; line-height: 1 !important; padding: 0 20px !important; }
   .toon-label { font-size: 0.7rem !important; opacity: 0.4 !important; font-weight: 900 !important; margin-bottom: 10px !important; }
@@ -237,7 +259,6 @@ const toonStyles = `
   .toon-btn-ctrl.hit { background: #4ecdc4 !important; }
   .toon-btn-ctrl:active { transform: translateY(3px) !important; box-shadow: 0 3px 0 #000 !important; }
 
-  /* РЕЗУЛЬТАТ */
   .toon-result-circle {
     width: 160px !important; height: 160px !important; border: 6px solid #000 !important;
     border-radius: 50% !important; margin: 30px auto !important;
