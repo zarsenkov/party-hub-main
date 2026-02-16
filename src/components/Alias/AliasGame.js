@@ -23,14 +23,14 @@ const AliasGame = ({ onBack }) => {
   const timerRef = useRef(null);
 
   // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-  // // Виброотклик для физического фидбека
+  // // Виброотклик (Haptic Feedback)
   const triggerHaptic = (type = 'light') => {
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(type === 'heavy' ? [50, 30, 50] : 30);
     }
   };
 
-  // // Логика таймера
+  // // Таймер
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       timerRef.current = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
@@ -129,21 +129,32 @@ const AliasGame = ({ onBack }) => {
         .source-grid { display: flex; flex-direction: column; gap: 16px; width: 90%; max-width: 400px; margin: 0 auto; }
         .btn-source { background: #fff; border: 6px solid #000; border-radius: 16px; padding: 24px 16px; cursor: pointer; box-shadow: 8px 8px 0 #000; display: flex; flex-direction: column; align-items: center; color: #000; font-weight: 900; text-transform: uppercase; width: 100%; }
 
-        .list-container { width: 90%; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding: 10px; }
+        /* СПИСОК: Поправил высоту и отступы */
+        .list-container { 
+            width: 90%; 
+            max-width: 400px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            overflow-y: auto; 
+            padding: 20px 10px 120px 10px; /* Нижний отступ для кнопки Далее */
+            max-height: 75vh; 
+        }
         .btn-category { background: #fff; border: 4px solid #000; border-radius: 12px; padding: 16px; font-weight: 700; color: #000; cursor: pointer; box-shadow: 4px 4px 0 #000; width: 100%; margin-bottom: 12px; text-align: left; }
         .btn-category.selected { background: #58E08E; }
+
+        /* Кнопка Далее зафиксирована снизу для удобства */
+        .sticky-footer { position: absolute; bottom: 24px; left: 0; right: 0; display: flex; justify-content: center; z-index: 20; }
 
         .pill { border: 4px solid #000; padding: 10px 18px; border-radius: 50px; font-weight: 900; box-shadow: 4px 4px 0 #000; display: flex; align-items: center; gap: 8px; font-size: 14px; }
         .pill.timer.warning { background: #FF5C5C; animation: pulse 0.6s infinite; }
         
-        /* КАРТОЧКА: Теперь широкая и заметная */
         .card { background: #fff; border: 6px solid #000; border-radius: 24px; padding: 32px 20px; margin: 20px auto; box-shadow: 10px 10px 0 #000; width: 90%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #000; position: relative; min-height: 220px; }
         .card-label { position: absolute; top: -16px; left: 20px; background: #FFD32D; border: 3px solid #000; padding: 6px 16px; font-weight: 900; color: #000; font-size: 12px; text-transform: uppercase; }
         .word-display { font-size: 3rem; font-weight: 950; text-transform: uppercase; line-height: 1.1; word-wrap: break-word; }
 
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 90%; max-width: 500px; margin: 0 auto; }
         .btn-action { border: 4px solid #000; padding: 22px; border-radius: 20px; box-shadow: 6px 6px 0 #000; cursor: pointer; font-weight: 900; font-size: 1.8rem; }
-        .btn-action:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0 #000; }
         
         .setting-card { background: #fff; color: #000; border: 4px solid #000; border-radius: 16px; padding: 24px; box-shadow: 8px 8px 0 #000; width: 90%; max-width: 400px; margin: 0 auto; text-align: left; }
         .setting-input { width: 100%; padding: 14px; border: 3px solid #000; border-radius: 12px; font-weight: 800; font-size: 18px; margin-top: 8px; background: #F8F9FA; }
@@ -185,16 +196,18 @@ const AliasGame = ({ onBack }) => {
                 {cat === 'animals' ? '🐾 Животные' : cat === 'food' ? '🍕 Еда' : cat === 'movies' ? '🎬 Фильмы' : cat === 'sports' ? '⚽ Спорт' : cat === 'professions' ? '👔 Профессии' : cat === 'countries' ? '🌍 Страны' : '🎯 Микс'}
               </button>
             ))}
-            {selectedCategories.size > 0 && (
-              <button className="btn-main" style={{ marginTop: '20px' }} onClick={() => {
+          </div>
+          {selectedCategories.size > 0 && (
+            <div className="sticky-footer">
+              <button className="btn-main" onClick={() => {
                 let combined = [];
                 selectedCategories.forEach(cat => { combined = [...combined, ...wordBanks[cat]]; });
                 setWords(combined);
                 setShowWordsGroup(false);
                 setScreen('setup');
               }}>ДАЛЕЕ →</button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -220,7 +233,7 @@ const AliasGame = ({ onBack }) => {
           <div style={{ width: '90%', maxWidth: '500px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div className={`pill timer ${timeLeft <= 10 ? 'warning' : ''}`}>⏱️ {timeLeft}</div>
             <div className="pill score">ОЧКИ: {score}</div>
-            <button style={{ background: '#000', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '12px', fontWeight: 'bold', fontSize: '12px' }} onClick={() => setIsConfirmModalOpen(true)}>ПАУЗА</button>
+            <button style={{ background: '#000', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '12px', fontWeight: 'bold' }} onClick={() => setIsConfirmModalOpen(true)}>ПАУЗА</button>
           </div>
           <div className="card">
             <div className="card-label">ОБЪЯСНИ:</div>
