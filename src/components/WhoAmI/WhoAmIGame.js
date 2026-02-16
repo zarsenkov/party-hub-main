@@ -15,9 +15,8 @@ const WhoAmIGame = ({ onBack }) => {
 
   // // === ЛОГИКА ===
 
-  // // Сборка колоды и старт
+  // // Сборка колоды и старт игры
   const startGame = () => {
-    // // Проверка, выбраны ли категории
     if (selectedCats.length === 0) return;
     let deck = [];
     selectedCats.forEach(id => {
@@ -25,13 +24,12 @@ const WhoAmIGame = ({ onBack }) => {
       if (cat && cat.characters) deck = [...deck, ...cat.characters];
     });
     
-    // // Если в выбранных категориях есть персонажи
     if (deck.length === 0) return;
 
-    setCharacters(deck.sort(() => Math.random() - 0.5)); // // Перемешивание колоды
+    setCharacters(deck.sort(() => Math.random() - 0.5)); // // Перемешивание
     setIndex(0);
     setScore(0);
-    setTimeLeft(60); // // Сброс таймера на 60 секунд
+    setTimeLeft(60);
     setScreen('play');
     setIsActive(true);
     setIsPaused(false);
@@ -54,7 +52,7 @@ const WhoAmIGame = ({ onBack }) => {
     return () => clearInterval(timer);
   }, [isActive, isPaused, timeLeft]);
 
-  // // Функция выбора/отмены категории
+  // // Выбор/отмена категории
   const toggleCat = (id) => {
     setSelectedCats(s => s.includes(id) ? s.filter(i => i !== id) : [...s, id]);
   };
@@ -64,7 +62,6 @@ const WhoAmIGame = ({ onBack }) => {
     if (isPaused) return;
     if (isHit) setScore(s => s + 1);
     
-    // // Переход к следующему персонажу или финиш
     if (index + 1 < characters.length) {
       setIndex(i => i + 1);
     } else {
@@ -76,6 +73,7 @@ const WhoAmIGame = ({ onBack }) => {
     <div className="toon-root">
       <style>{toonStyles}</style>
       
+      {/* Точечно исправленная кнопка назад */}
       <button className="toon-back-btn" onClick={onBack}>← ДОМОЙ</button>
 
       {/* ЭКРАН 1: НАСТРОЙКИ */}
@@ -88,7 +86,6 @@ const WhoAmIGame = ({ onBack }) => {
           </div>
           <p className="toon-subtitle">ВЫБИРАЙ КАРТЫ ДЛЯ ВЕСЕЛЬЯ!</p>
           
-          {/* // // Новая область прокрутки для категорий */}
           <div className="toon-grid-scroll-container">
             <div className="toon-grid">
               {WHO_AM_I_CATEGORIES.map(c => (
@@ -163,7 +160,7 @@ const WhoAmIGame = ({ onBack }) => {
   );
 };
 
-// // CSS СТИЛИ: РЕТРО-МУЛЬТФИЛЬМ (С точечными правками скролла)
+// // CSS СТИЛИ (Только необходимые правки для видимости кнопки)
 const toonStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Bangers&display=swap');
 
@@ -177,11 +174,13 @@ const toonStyles = `
     padding: 20px !important; z-index: 100000 !important; overflow: hidden !important;
   }
 
+  /* // // Точечный фикс кнопки: добавлен z-index и нормальный отступ */
   .toon-back-btn {
-    position: absolute !important; top: 20px !important; left: 20px !important;
+    position: absolute !important; top: 25px !important; left: 20px !important;
     background: #ff6b6b !important; color: #fff !important; border: 4px solid #000 !important;
     padding: 8px 15px !important; border-radius: 50px !important; font-weight: 900 !important;
-    font-size: 0.7rem !important; cursor: pointer !important; box-shadow: 0 4px 0 #000 !important;
+    font-size: 0.75rem !important; cursor: pointer !important; box-shadow: 0 4px 0 #000 !important;
+    z-index: 100005 !important;
   }
 
   .toon-card {
@@ -189,8 +188,7 @@ const toonStyles = `
     border-radius: 40px !important; padding: 40px 20px !important;
     width: 100% !important; max-width: 380px !important;
     box-shadow: 0 15px 0 rgba(0,0,0,0.1) !important; text-align: center !important;
-    position: relative !important;
-    display: flex !important; flex-direction: column !important;
+    position: relative !important; display: flex !important; flex-direction: column !important;
     max-height: 90vh !important;
   }
 
@@ -201,14 +199,9 @@ const toonStyles = `
   .toon-title.small { font-size: 3rem !important; }
   .toon-subtitle { font-size: 0.8rem !important; font-weight: 900 !important; margin-bottom: 25px !important; color: #555 !important; }
 
-  /* // // СТИЛИ СКРОЛЛА */
   .toon-grid-scroll-container {
-    max-height: 280px !important; 
-    overflow-y: auto !important;
-    margin-bottom: 30px !important;
-    padding: 10px 5px !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: #000 transparent !important;
+    max-height: 280px !important; overflow-y: auto !important;
+    margin-bottom: 30px !important; padding: 10px 5px !important;
   }
   .toon-grid-scroll-container::-webkit-scrollbar { width: 6px !important; }
   .toon-grid-scroll-container::-webkit-scrollbar-thumb { background: #000 !important; border-radius: 10px !important; }
@@ -228,7 +221,6 @@ const toonStyles = `
     border: 5px solid #000 !important; border-radius: 25px !important;
     padding: 15px !important; font-family: 'Bangers' !important; font-size: 2rem !important;
     cursor: pointer !important; box-shadow: 0 8px 0 #000 !important; transition: 0.1s !important;
-    flex-shrink: 0 !important;
   }
   .toon-btn-play:active { transform: translateY(4px) !important; box-shadow: 0 4px 0 #000 !important; }
 
