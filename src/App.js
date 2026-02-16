@@ -123,9 +123,9 @@ export default function App() {
       ) : (
               // Вид для iOS
               <>
-                <p>Добавь игру на экран <b>«Домой»</b></p>
+                <p>Добавь игру на экран <b>«как обычное приложение»</b></p>
                 <div className="install-hint">
-                  Нажми <span className="ios-share-icon">⎋</span> а затем <b>«На экран Домой»</b>
+                  Нажми <span className="ios-share-icon">⎋</span> а затем <b>«Добавить на экран Домой»</b>
                 </div>
                 <button onClick={() => setShowInstallPrompt(false)} className="close-prompt">ОК</button>
               </>
