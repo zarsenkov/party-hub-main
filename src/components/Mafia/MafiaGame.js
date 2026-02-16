@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 // // Иконки в стиле классики
 import { Moon, Sun, ArrowLeft, Skull, Heart, Timer, RefreshCw, Eye, UserPlus, Trash2, CheckCircle2 } from 'lucide-react';
+// // Данные ролей
 import { mafiaRoles } from './mafiaData';
 
+// // Имена по умолчанию для атмосферы
 const NICKNAMES = ["Дон", "Капо", "Советник", "Красотка", "Букмекер", "Адвокат", "Судья", "Счастливчик", "Громила", "Интуит"];
 
 const MafiaGame = ({ onBack }) => {
+  // === СОСТОЯНИЯ ===
   const [gameState, setGameState] = useState('setup');
   const [phase, setPhase] = useState('night');
   const [tempNames, setTempNames] = useState(['', '', '', '']);
@@ -18,6 +21,7 @@ const MafiaGame = ({ onBack }) => {
   const [timerActive, setTimerActive] = useState(false);
   const [winner, setWinner] = useState(null);
 
+  // === ТАЙМЕР ===
   useEffect(() => {
     let interval;
     if (timerActive && timeLeft > 0) {
@@ -26,27 +30,34 @@ const MafiaGame = ({ onBack }) => {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
 
+  // === ЛОГИКА СПИСКА ИГРОКОВ ===
+  // // Добавить новое поле
   const addPlayerField = () => setTempNames([...tempNames, '']);
+  // // Удалить поле (минимум 4)
   const removePlayerField = (idx) => {
     if (tempNames.length > 4) setTempNames(tempNames.filter((_, i) => i !== idx));
   };
+  // // Обновить имя
   const handleNameChange = (idx, val) => {
     const next = [...tempNames];
     next[idx] = val;
     setTempNames(next);
   };
 
+  // === СТАРТ ИГРЫ ===
   const startDealing = () => {
     let rolesPool = [];
     const count = tempNames.length;
     const mafiaCount = Math.max(1, Math.floor(count / 4));
     
+    // // Наполнение пула
     for (let i = 0; i < mafiaCount; i++) rolesPool.push(mafiaRoles.find(r => r.id === 'mafia'));
     rolesPool.push(mafiaRoles.find(r => r.id === 'doctor'), mafiaRoles.find(r => r.id === 'detective'));
     if (useManiac) rolesPool.push(mafiaRoles.find(r => r.id === 'maniac'));
     if (useProstitute) rolesPool.push(mafiaRoles.find(r => r.id === 'prostitute'));
     while (rolesPool.length < count) rolesPool.push(mafiaRoles.find(r => r.id === 'civilian'));
     
+    // // Перемешивание
     rolesPool = rolesPool.slice(0, count).sort(() => Math.random() - 0.5);
     
     setPlayers(tempNames.map((name, i) => ({
@@ -62,6 +73,7 @@ const MafiaGame = ({ onBack }) => {
     setGameState('dealing');
   };
 
+  // === ИГРОВОЙ ЦИКЛ ===
   const confirmCycle = () => {
     const updated = players.map(p => {
       if (p.statusEffect === 'killed') return { ...p, alive: false, statusEffect: null };
@@ -88,9 +100,9 @@ const MafiaGame = ({ onBack }) => {
     <div className={`estate-root ${phase}`}>
       <style>{estateStyles}</style>
 
-      {/* ЭКРАН 1: СПИСОК ПРИГЛАШЕННЫХ */}
+      {/* ЭКРАН 1: НАСТРОЙКА (С фиксом кнопки) */}
       {gameState === 'setup' && (
-        <div className="estate-view fade-in">
+        <div className="estate-view setup-layout fade-in">
           <header className="e-header">
             <button onClick={onBack} className="e-back"><ArrowLeft size={18}/> ВЫЙТИ</button>
             <div className="e-logo">THE SYNDICATE</div>
@@ -98,36 +110,39 @@ const MafiaGame = ({ onBack }) => {
 
           <h1 className="e-title">Список<span>Гостей</span></h1>
 
-          <div className="e-guest-list">
-            {tempNames.map((name, i) => (
-              <div key={i} className="e-guest-row">
-                <span className="e-guest-number">{String(i + 1).padStart(2, '0')}</span>
-                <input 
-                  type="text" 
-                  placeholder="Введите имя гостя..."
-                  value={name}
-                  onChange={(e) => handleNameChange(i, e.target.value)}
-                />
-                <button onClick={() => removePlayerField(i)} className="e-guest-del"><Trash2 size={16}/></button>
-              </div>
-            ))}
-            <button onClick={addPlayerField} className="e-add-guest"><UserPlus size={16}/> Пригласить еще</button>
+          <div className="e-scroll-container">
+            <div className="e-guest-list">
+              {tempNames.map((name, i) => (
+                <div key={i} className="e-guest-row">
+                  <span className="e-guest-number">{String(i + 1).padStart(2, '0')}</span>
+                  <input 
+                    type="text" 
+                    placeholder="Имя гостя..."
+                    value={name}
+                    onChange={(e) => handleNameChange(i, e.target.value)}
+                  />
+                  <button onClick={() => removePlayerField(i)} className="e-guest-del"><Trash2 size={16}/></button>
+                </div>
+              ))}
+              <button onClick={addPlayerField} className="e-add-guest"><UserPlus size={16}/> Пригласить еще</button>
+            </div>
           </div>
 
-          <div className="e-settings">
-            <div className={`e-check ${useManiac ? 'active' : ''}`} onClick={() => setUseManiac(!useManiac)}>Маньяк</div>
-            <div className={`e-check ${useProstitute ? 'active' : ''}`} onClick={() => setUseProstitute(!useProstitute)}>Путана</div>
+          <div className="e-footer-controls">
+            <div className="e-settings">
+              <div className={`e-check ${useManiac ? 'active' : ''}`} onClick={() => setUseManiac(!useManiac)}>Маньяк</div>
+              <div className={`e-check ${useProstitute ? 'active' : ''}`} onClick={() => setUseProstitute(!useProstitute)}>Путана</div>
+            </div>
+            <button onClick={startDealing} className="e-btn-gold">Начать встречу</button>
           </div>
-
-          <button onClick={startDealing} className="e-btn-gold">Начать встречу</button>
         </div>
       )}
 
-      {/* ЭКРАН 2: ПРИВАТНЫЙ ЗАЛ (РАЗДАЧА) */}
+      {/* ЭКРАН 2: РАЗДАЧА */}
       {gameState === 'dealing' && (
         <div className="estate-view center fade-in">
           <div className="e-role-envelope">
-            <div className="e-env-header">Строго конфиденциально</div>
+            <div className="e-env-header">Конфиденциально</div>
             <div className="e-env-content">
               <h2 className="e-env-name">{players[currentPlayerIdx].name}</h2>
               {!showRole ? (
@@ -144,7 +159,7 @@ const MafiaGame = ({ onBack }) => {
         </div>
       )}
 
-      {/* ЭКРАН 3: ПУЛЬТ РАСПОРЯДИТЕЛЯ */}
+      {/* ЭКРАН 3: ИГРОВОЙ ПРОЦЕСС */}
       {gameState === 'action' && (
         <div className="estate-action-view fade-in">
           <header className="e-action-header">
@@ -177,18 +192,18 @@ const MafiaGame = ({ onBack }) => {
           </div>
 
           <button onClick={confirmCycle} className="e-btn-confirm">
-            {phase === 'night' ? 'Завершить ночь' : 'Подтвердить итоги дня'}
+            {phase === 'night' ? 'Завершить ночь' : 'Итоги голосования'}
           </button>
         </div>
       )}
 
-      {/* ЭКРАН 4: ИТОГИ */}
+      {/* ЭКРАН 4: ПОБЕДА */}
       {gameState === 'results' && (
         <div className="estate-view center fade-in">
           <div className="e-victory-card">
-            <p>Встреча окончена</p>
+            <p>Финал встречи</p>
             <h1>Победила {winner}</h1>
-            <button onClick={() => setGameState('setup')} className="e-btn-gold">Новый раунд</button>
+            <button onClick={() => setGameState('setup')} className="e-btn-gold">Новая партия</button>
           </div>
         </div>
       )}
@@ -203,85 +218,86 @@ const estateStyles = `
     position: fixed !important; inset: 0 !important;
     font-family: 'Montserrat', sans-serif !important;
     display: flex !important; flex-direction: column !important;
-    z-index: 100000 !important; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 100000 !important; transition: all 0.6s ease !important;
+    overflow: hidden !important;
   }
   
   .estate-root.night { background: #0a0e14 !important; color: #d4af37 !important; }
   .estate-root.day { background: #fdfaf1 !important; color: #2c1e1e !important; }
 
-  .estate-view { width: 100% !important; max-width: 440px !important; margin: 0 auto !important; padding: 25px !important; }
-  .estate-view.center { display: flex; align-items: center; justify-content: center; height: 100%; }
+  .estate-view { width: 100% !important; max-width: 440px !important; margin: 0 auto !important; height: 100% !important; display: flex !important; flex-direction: column !important; padding: 20px !important; box-sizing: border-box !important; }
+  .estate-view.center { justify-content: center !important; }
 
-  .e-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-  .e-back { background: none; border: 1px solid currentColor; color: inherit; padding: 6px 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border-radius: 40px; }
+  /* Специфичный лейаут для настройки */
+  .setup-layout { display: flex !important; flex-direction: column !important; }
+  .e-scroll-container { flex: 1 !important; overflow-y: auto !important; margin: 15px 0 !important; padding-right: 5px !important; }
+
+  .e-header { display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
+  .e-back { background: none; border: 1px solid currentColor; color: inherit; padding: 6px 14px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border-radius: 40px; }
   .e-logo { font-family: 'Playfair Display'; font-weight: 900; font-style: italic; font-size: 0.9rem; letter-spacing: 2px; }
 
-  .e-title { font-family: 'Playfair Display'; font-size: 3rem; line-height: 1; margin-bottom: 40px; text-align: center; font-weight: 900; }
+  .e-title { font-family: 'Playfair Display'; font-size: 2.5rem; line-height: 1; margin: 20px 0; text-align: center; font-weight: 900; }
   .e-title span { display: block; font-style: italic; font-weight: 400; color: #c41e3a; }
 
-  /* Списки гостей */
-  .e-guest-list { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); padding: 20px; border-radius: 12px; margin-bottom: 30px; }
+  /* Список */
+  .e-guest-list { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; }
   .estate-root.night .e-guest-list { background: rgba(255,255,255,0.02); border-color: rgba(212, 175, 55, 0.2); }
-  
-  .e-guest-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; }
-  .e-guest-number { font-family: 'Playfair Display'; font-weight: 700; opacity: 0.4; font-size: 0.8rem; }
+  .e-guest-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; }
+  .e-guest-number { font-family: 'Playfair Display'; font-weight: 700; opacity: 0.4; font-size: 0.8rem; width: 25px; }
   .e-guest-row input { flex: 1; background: none; border: none; font-family: inherit; font-size: 1rem; color: inherit; outline: none; }
-  .e-guest-del { background: none; border: none; color: #c41e3a; cursor: pointer; opacity: 0.6; }
+  .e-guest-del { background: none; border: none; color: #c41e3a; cursor: pointer; }
+  .e-add-guest { width: 100%; padding: 10px; background: none; border: 1px dashed currentColor; color: inherit; border-radius: 8px; cursor: pointer; font-weight: 700; }
 
-  .e-add-guest { width: 100%; padding: 12px; background: none; border: 1px dashed currentColor; color: inherit; border-radius: 8px; cursor: pointer; font-weight: 700; margin-top: 10px; }
-
-  .e-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-  .e-check { padding: 12px; border: 1px solid currentColor; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+  /* Нижняя часть настроек */
+  .e-footer-controls { padding-top: 15px; border-top: 1px solid rgba(212, 175, 55, 0.2); }
+  .e-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+  .e-check { padding: 10px; border: 1px solid currentColor; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
   .e-check.active { background: #d4af37 !important; color: #fff !important; border-color: #d4af37 !important; }
 
   .e-btn-gold { 
-    width: 100%; padding: 20px; background: #d4af37; color: #fff; border: none; border-radius: 12px; 
-    font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
-    text-transform: uppercase; letter-spacing: 1px;
+    width: 100%; padding: 18px; background: #d4af37; color: #fff; border: none; border-radius: 12px; 
+    font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    text-transform: uppercase;
   }
 
-  /* Конверт роли */
-  .e-role-envelope { background: #fff; padding: 40px 20px; border-radius: 4px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 100%; max-width: 320px; position: relative; border-top: 40px solid #f0f0f0; }
+  /* Конверт */
+  .e-role-envelope { background: #fff; padding: 30px 20px; border-radius: 4px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); width: 100%; max-width: 300px; position: relative; border-top: 30px solid #f0f0f0; }
   .estate-root.night .e-role-envelope { background: #1a1e26; border-top-color: #12151c; }
-  .e-env-header { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; color: #888; }
-  .e-env-name { font-family: 'Playfair Display'; font-size: 2rem; margin-bottom: 30px; }
-  .e-role-reveal h3 { font-family: 'Playfair Display'; font-size: 2.5rem; margin-bottom: 10px; }
+  .e-env-header { position: absolute; top: -22px; left: 0; width: 100%; text-align: center; font-size: 0.5rem; text-transform: uppercase; color: #888; letter-spacing: 2px; }
+  .e-env-name { font-family: 'Playfair Display'; font-size: 1.8rem; margin-bottom: 20px; }
+  .e-role-reveal h3 { font-family: 'Playfair Display'; font-size: 2.2rem; margin-bottom: 8px; }
   .e-role-reveal .evil { color: #c41e3a; }
   .e-role-reveal .good { color: #2e7d32; }
-  .e-role-reveal p { font-size: 0.8rem; opacity: 0.7; margin-bottom: 25px; line-height: 1.6; }
-  .e-btn-outline { background: none; border: 1px solid currentColor; color: inherit; padding: 10px 25px; border-radius: 30px; cursor: pointer; font-weight: 700; }
+  .e-role-reveal p { font-size: 0.8rem; opacity: 0.8; margin-bottom: 20px; }
+  .e-btn-outline { background: none; border: 1px solid currentColor; color: inherit; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; }
 
-  /* Пульт распорядителя */
-  .estate-action-view { flex: 1; display: flex; flex-direction: column; padding: 20px; }
-  .e-action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid rgba(212, 175, 55, 0.3); }
-  .e-timer { font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-  .e-phase-title { font-family: 'Playfair Display'; font-weight: 900; font-size: 1.2rem; }
-  .e-swap { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.5; }
+  /* Экран действий */
+  .estate-action-view { height: 100%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+  .e-action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 10px; }
+  .e-timer { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .e-phase-title { font-family: 'Playfair Display'; font-weight: 900; }
+  .e-swap { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.4; }
 
-  .e-cards-grid { flex: 1; overflow-y: auto; display: grid; gap: 12px; }
-  .e-player-card { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-  .e-player-card.selected { border-color: #d4af37; background: rgba(212, 175, 55, 0.1); }
-  .e-player-card.dead { opacity: 0.4; filter: sepia(1); }
+  .e-cards-grid { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .e-player-card { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .e-player-card.selected { border-color: #d4af37; background: rgba(212, 175, 55, 0.15); }
+  .e-player-card.dead { opacity: 0.4; }
+  .e-card-name { font-weight: 700; font-family: 'Playfair Display'; font-size: 1rem; }
+  .e-badge { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; opacity: 0.6; margin-right: 5px; }
 
-  .e-card-main { display: flex; flex-direction: column; gap: 4px; }
-  .e-card-name { font-weight: 700; font-size: 1.1rem; font-family: 'Playfair Display'; }
-  .e-card-badges { display: flex; align-items: center; gap: 8px; }
-  .e-badge { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; opacity: 0.7; }
-
-  .e-card-actions { display: flex; gap: 8px; }
-  .e-action-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(212, 175, 55, 0.3); color: inherit; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+  .e-card-actions { display: flex; gap: 6px; }
+  .e-action-btn { background: none; border: 1px solid rgba(212, 175, 55, 0.3); color: inherit; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .e-action-btn.active { background: #d4af37 !important; color: #fff !important; }
-  .e-eliminated { font-size: 0.6rem; font-weight: 700; letter-spacing: 1px; color: #c41e3a; }
+  .e-eliminated { font-size: 0.6rem; font-weight: 700; color: #c41e3a; }
 
-  .e-btn-confirm { width: 100%; padding: 22px; background: #2c1e1e; color: #fff; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 15px; border-radius: 12px; text-transform: uppercase; letter-spacing: 2px; }
+  .e-btn-confirm { width: 100%; padding: 20px; background: #2c1e1e; color: #fff; border: none; font-weight: 700; border-radius: 12px; cursor: pointer; margin-top: 10px; }
   .estate-root.night .e-btn-confirm { background: #d4af37; color: #000; }
 
   .e-victory-card { text-align: center; }
-  .e-victory-card p { font-family: 'Playfair Display'; font-style: italic; font-size: 1.2rem; margin-bottom: 10px; }
-  .e-victory-card h1 { font-family: 'Playfair Display'; font-size: 3.5rem; font-weight: 900; margin-bottom: 40px; }
+  .e-victory-card h1 { font-family: 'Playfair Display'; font-size: 2.8rem; font-weight: 900; margin: 20px 0; }
 
-  .fade-in { animation: eIn 0.6s ease-out forwards; }
-  @keyframes eIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: eIn 0.4s ease-out forwards; }
+  @keyframes eIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 `;
 
 export default MafiaGame;
