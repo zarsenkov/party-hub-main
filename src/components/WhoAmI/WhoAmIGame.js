@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
+// // Данные категорий и персонажей
 import { WHO_AM_I_CATEGORIES } from './whoAmI_data';
 
-// // Игра "Кто я?" в стиле матового стекла
-const WhoAmIGame = () => {
-  const [screen, setScreen] = useState('setup'); // // setup, play, results
+const WhoAmIGame = ({ onBack }) => {
+  // === СОСТОЯНИЕ ===
+  const [screen, setScreen] = useState('setup'); // setup, play, results
   const [selectedCats, setSelectedCats] = useState([]);
   const [characters, setCharacters] = useState([]);
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isActive, setIsActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
-  // // Редирект на главную
-  const goHome = () => window.location.href = 'https://lovecouple.ru';
+  // === ЛОГИКА ИГРЫ ===
 
   // // Сборка колоды и старт
   const startGame = () => {
@@ -20,117 +21,135 @@ const WhoAmIGame = () => {
     let deck = [];
     selectedCats.forEach(id => {
       const cat = WHO_AM_I_CATEGORIES.find(c => c.id === id);
-      if (cat) deck = [...deck, ...cat.characters];
+      if (cat && cat.characters) deck = [...deck, ...cat.characters];
     });
+    
+    if (deck.length === 0) {
+      alert("В выбранных категориях нет персонажей!");
+      return;
+    }
+
     setCharacters(deck.sort(() => Math.random() - 0.5));
     setIndex(0);
     setScore(0);
     setTimeLeft(60);
     setScreen('play');
     setIsActive(true);
+    setIsPaused(false);
   };
 
-  // // Логика окончания игры
   const finishGame = () => {
     setIsActive(false);
     setScreen('results');
   };
 
-  // // Эффект таймера
+  // // Таймер
   useEffect(() => {
     let timer;
-    if (isActive && timeLeft > 0) {
+    if (isActive && !isPaused && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
     } else if (timeLeft === 0 && isActive) {
-      finishGame(); // // Конец по времени
+      finishGame();
     }
     return () => clearInterval(timer);
-  }, [isActive, timeLeft]);
+  }, [isActive, isPaused, timeLeft]);
 
   // // Выбор категорий
   const toggleCat = (id) => {
     setSelectedCats(s => s.includes(id) ? s.filter(i => i !== id) : [...s, id]);
   };
 
-  // // Переключение персонажа
+  // // Ответ (угадал / пропустил)
   const handleAction = (isHit) => {
+    if (isPaused) return;
     if (isHit) setScore(s => s + 1);
     
     if (index + 1 < characters.length) {
       setIndex(i => i + 1);
     } else {
-      finishGame(); // // Конец, если персонажи закончились
+      finishGame();
     }
   };
 
   return (
-    <div className="who-glass-root">
-      <style>{glassStyles}</style>
+    <div className="pop-root">
+      <style>{popStyles}</style>
       
-      <button className="back-link" onClick={goHome}>← МЕНЮ</button>
+      <button className="pop-back" onClick={onBack}>← ВЫХОД</button>
 
       {/* ЭКРАН 1: НАСТРОЙКИ */}
       {screen === 'setup' && (
-        <div className="glass-container fade-in">
-          <h1 className="main-title">КТО Я?</h1>
-          <p className="hint">Выбери темы для игры</p>
+        <div className="pop-container fade-in">
+          <div className="pop-title-wrap">
+            <h1 className="pop-title">КТО Я?</h1>
+          </div>
+          <p className="pop-subtitle">ВЫБЕРИ СВОИ МИРЫ:</p>
           
-          <div className="cats-list">
+          <div className="pop-cats-grid">
             {WHO_AM_I_CATEGORIES.map(c => (
-              <div 
+              <button 
                 key={c.id} 
-                className={`cat-card ${selectedCats.includes(c.id) ? 'active' : ''}`}
+                className={`pop-cat-card ${selectedCats.includes(c.id) ? 'active' : ''}`}
                 onClick={() => toggleCat(c.id)}
               >
                 {c.name}
-              </div>
+              </button>
             ))}
           </div>
 
           <button 
-            className="start-button" 
+            className="pop-btn-primary main-start" 
             disabled={selectedCats.length === 0}
             onClick={startGame}
           >
-            ПОЕХАЛИ
+            ПОГНАЛИ!
           </button>
         </div>
       )}
 
       {/* ЭКРАН 2: ПРОЦЕСС ИГРЫ */}
       {screen === 'play' && (
-        <div className="play-wrapper fade-in">
-          <div className="stats-row">
-            <div className="glass-pill">СЧЕТ: {score}</div>
-            <div className={`glass-pill timer ${timeLeft < 10 ? 'low' : ''}`}>
-              0:{(timeLeft).toString().padStart(2, '0')}
+        <div className="pop-play-area fade-in">
+          <div className="pop-top-bar">
+            <div className="pop-stat-box">ОЧКИ: {score}</div>
+            <button className="pop-pause-btn" onClick={() => setIsPaused(!isPaused)}>
+              {isPaused ? '▶' : 'II'}
+            </button>
+            <div className={`pop-stat-box timer ${timeLeft < 10 ? 'critical' : ''}`}>
+              {timeLeft}с
             </div>
           </div>
 
-          <div className="character-card">
-            <span className="card-label">ТЫ СЕЙЧАС:</span>
-            <h2 className="char-name">{characters[index]}</h2>
+          <div className={`pop-main-card ${isPaused ? 'paused' : ''}`}>
+            {isPaused ? (
+              <h2 className="pop-char-name">ПАУЗА</h2>
+            ) : (
+              <>
+                <span className="pop-card-hint">ПОКАЖИ ДРУЗЬЯМ:</span>
+                <h2 className="pop-char-name">{characters[index]}</h2>
+              </>
+            )}
           </div>
 
-          <div className="controls-row">
-            <button className="glass-btn skip" onClick={() => handleAction(false)}>ПРОПУСТИТЬ</button>
-            <button className="glass-btn hit" onClick={() => handleAction(true)}>УГАДАЛ</button>
+          <div className="pop-controls">
+            <button className="pop-btn-action skip" onClick={() => handleAction(false)}>МАТ! (ПРОПУСК)</button>
+            <button className="pop-btn-action hit" onClick={() => handleAction(true)}>ЕСТЬ! (УГАДАЛ)</button>
           </div>
         </div>
       )}
 
       {/* ЭКРАН 3: РЕЗУЛЬТАТЫ */}
       {screen === 'results' && (
-        <div className="glass-container result-card fade-in">
-          <h2 className="main-title">ФИНИШ!</h2>
-          <div className="final-score">
-            <span>Твой результат:</span>
-            <div className="score-num">{score}</div>
+        <div className="pop-container result-screen fade-in">
+          <h2 className="pop-res-title">ФИНИШ!</h2>
+          <div className="pop-score-circle">
+            <span className="score-label">ТВОЙ СЧЕТ</span>
+            <span className="score-val">{score}</span>
           </div>
-          <p className="hint">Отличная работа, агент!</p>
+          <p className="pop-res-msg">ТЫ ПРОСТО ЛЕГЕНДА!</p>
           
-          <button className="start-button" onClick={() => setScreen('setup')}>
-            ИГРАТЬ СНОВА
+          <button className="pop-btn-primary" onClick={() => setScreen('setup')}>
+            ЕЩЕ РАЗОК?
           </button>
         </div>
       )}
@@ -138,90 +157,100 @@ const WhoAmIGame = () => {
   );
 };
 
-const glassStyles = `
-  .who-glass-root {
-    position: fixed; inset: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex; align-items: center; justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: white; padding: 20px;
+// // СТИЛИ: POP-ART RETRO
+const popStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@900&family=Bangers&display=swap');
+
+  .pop-root {
+    position: fixed !important; inset: 0 !important;
+    background-color: #FFD700 !important; /* Желтый */
+    background-image: radial-gradient(#000 10%, transparent 10%) !important;
+    background-size: 20px 20px !important; /* Точки поп-арта */
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    font-family: 'Unbounded', sans-serif !important; color: #000 !important; padding: 20px !important;
+    z-index: 100000 !important;
   }
 
-  .back-link {
-    position: absolute; top: env(safe-area-inset-top, 20px); left: 20px;
-    background: rgba(255,255,255,0.1); border: none; color: white;
-    padding: 8px 16px; border-radius: 20px; backdrop-filter: blur(10px);
-    z-index: 10;
+  .pop-back {
+    position: absolute !important; top: 20px !important; left: 20px !important;
+    background: #000 !important; color: #fff !important; border: none !important;
+    padding: 10px 15px !important; font-weight: 900 !important; font-size: 10px !important;
+    cursor: pointer !important; transform: skew(-10deg) !important;
   }
 
-  .glass-container {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 32px;
-    padding: 40px 24px;
-    width: 100%; max-width: 360px;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  .pop-container {
+    background: #fff !important; border: 6px solid #000 !important;
+    padding: 30px 20px !important; width: 100% !important; max-width: 380px !important;
+    box-shadow: 15px 15px 0px #000 !important; text-align: center !important;
   }
 
-  .main-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
-  .hint { opacity: 0.7; font-size: 0.9rem; margin-bottom: 32px; }
-
-  .cats-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
-  .cat-card {
-    background: rgba(255,255,255,0.1);
-    padding: 16px; border-radius: 16px;
-    font-weight: 600; font-size: 0.85rem;
-    border: 1px solid transparent; transition: 0.3s;
+  .pop-title-wrap {
+    background: #FF00FF !important; border: 4px solid #000 !important;
+    padding: 10px !important; margin-bottom: 25px !important; transform: rotate(-3deg) !important;
   }
-  .cat-card.active {
-    background: white; color: #764ba2;
-    transform: scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  }
+  .pop-title { font-family: 'Bangers', cursive !important; font-size: 4rem !important; color: #fff !important; text-shadow: 4px 4px 0 #000 !important; letter-spacing: 5px !important; margin: 0 !important; }
 
-  .start-button {
-    width: 100%; padding: 18px; border-radius: 18px;
-    border: none; background: #fff; color: #764ba2;
-    font-weight: 800; font-size: 1.1rem; cursor: pointer;
-  }
+  .pop-subtitle { font-weight: 900 !important; margin-bottom: 20px !important; font-size: 0.8rem !important; }
 
-  /* Экран результатов */
-  .final-score { margin: 20px 0; }
-  .score-num { font-size: 5rem; font-weight: 900; line-height: 1; margin-top: 10px; }
+  .pop-cats-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-bottom: 30px !important; }
+  .pop-cat-card {
+    background: #fff !important; border: 3px solid #000 !important; padding: 12px !important;
+    font-weight: 900 !important; font-size: 0.75rem !important; cursor: pointer !important;
+    transition: 0.2s !important;
+  }
+  .pop-cat-card.active { background: #00FFFF !important; transform: scale(1.05) !important; box-shadow: 5px 5px 0 #000 !important; }
+
+  .pop-btn-primary {
+    width: 100% !important; background: #FF00FF !important; color: #fff !important;
+    border: 4px solid #000 !important; padding: 15px !important; font-family: 'Bangers' !important;
+    font-size: 1.8rem !important; cursor: pointer !important; box-shadow: 8px 8px 0 #000 !important;
+  }
+  .pop-btn-primary:active { transform: translate(4px, 4px) !important; box-shadow: 0px 0px 0 #000 !important; }
 
   /* Игровой экран */
-  .play-wrapper { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+  .pop-play-area { width: 100% !important; max-width: 400px !important; display: flex !important; flex-direction: column !important; gap: 20px !important; }
   
-  .stats-row { display: flex; justify-content: space-between; }
-  .glass-pill {
-    background: rgba(255,255,255,0.15);
-    padding: 10px 20px; border-radius: 30px;
-    backdrop-filter: blur(10px); font-weight: 700;
+  .pop-top-bar { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+  .pop-stat-box {
+    background: #000 !important; color: #fff !important; padding: 8px 15px !important;
+    font-weight: 900 !important; font-size: 0.9rem !important; transform: skew(-5deg) !important;
   }
-  .timer.low { color: #ff4d4d; background: rgba(255, 77, 77, 0.2); }
+  .pop-stat-box.timer.critical { background: #FF0000 !important; animation: pulse 0.5s infinite !important; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
 
-  .character-card {
-    background: rgba(255,255,255,0.2);
-    height: 300px; border-radius: 32px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.3);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  .pop-pause-btn { background: #00FFFF !important; border: 3px solid #000 !important; width: 40px !important; height: 40px !important; font-weight: 900 !important; cursor: pointer !important; }
+
+  .pop-main-card {
+    background: #fff !important; border: 8px solid #000 !important; height: 300px !important;
+    display: flex !important; flex-direction: column !important; align-items: center !important;
+    justify-content: center !important; box-shadow: 20px 20px 0px #00FFFF !important;
+    padding: 20px !important; position: relative !important;
   }
-  .card-label { font-size: 0.8rem; font-weight: 700; opacity: 0.6; margin-bottom: 12px; }
-  .char-name { font-size: 2.2rem; font-weight: 900; text-align: center; padding: 0 20px; }
+  .pop-main-card.paused { opacity: 0.5 !important; background: #eee !important; }
+  .pop-card-hint { background: #000 !important; color: #fff !important; padding: 2px 10px !important; font-size: 0.7rem !important; margin-bottom: 20px !important; }
+  .pop-char-name { font-family: 'Bangers' !important; font-size: 3.5rem !important; text-align: center !important; line-height: 1 !important; color: #FF00FF !important; text-shadow: 3px 3px 0 #000 !important; }
 
-  .controls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-  .glass-btn {
-    padding: 20px; border-radius: 20px; border: none;
-    font-weight: 700; font-size: 1rem; color: white; backdrop-filter: blur(10px);
+  .pop-controls { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 15px !important; }
+  .pop-btn-action {
+    padding: 15px !important; border: 4px solid #000 !important; font-weight: 900 !important;
+    font-size: 0.8rem !important; cursor: pointer !important; box-shadow: 5px 5px 0 #000 !important;
   }
-  .glass-btn.skip { background: rgba(255,255,255,0.1); }
-  .glass-btn.hit { background: #4ade80; color: #1a472a; }
+  .pop-btn-action.skip { background: #FF0000 !important; color: #fff !important; }
+  .pop-btn-action.hit { background: #00FF00 !important; color: #000 !important; }
+  .pop-btn-action:active { transform: translate(3px, 3px) !important; box-shadow: 0px 0px 0 #000 !important; }
 
-  .fade-in { animation: fIn 0.5s ease; }
-  @keyframes fIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  /* Результаты */
+  .pop-score-circle {
+    width: 150px !important; height: 150px !important; background: #00FFFF !important;
+    border: 5px solid #000 !important; border-radius: 50% !important;
+    display: flex !important; flex-direction: column !important; align-items: center !important;
+    justify-content: center !important; margin: 20px auto !important; transform: rotate(5deg) !important;
+  }
+  .score-label { font-size: 0.6rem !important; font-weight: 900 !important; }
+  .score-val { font-family: 'Bangers' !important; font-size: 5rem !important; line-height: 1 !important; }
+
+  .fade-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 `;
 
 export default WhoAmIGame;
