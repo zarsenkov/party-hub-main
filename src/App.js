@@ -10,6 +10,7 @@ import WhoAmIGame from './components/WhoAmI/WhoAmIGame';
 import CityGuide from './components/CityGuide/CityGuide';
 import MafiaGame from './components/Mafia/MafiaGame';
 import LoveStory from './components/LoveStory/LoveStory';
+import Quest8 from './components/Quest8/Quest8';
 
 import './App.css';
 
@@ -80,6 +81,7 @@ export default function App() {
   if (activeGame === 'city-guide') return <CityGuide onBack={() => setActiveGame(null)} />;
   if (activeGame === 'mafia') return <MafiaGame onBack={() => setActiveGame(null)} />;
   if (activeGame === 'couples') return <LoveStory onBack={() => setActiveGame(null)} />;
+  if (activeGame === 'quest-8') return <Quest8 onBack={() => setActiveGame(null)} />;
 
   return (
     <div className="neo-wrapper">
