@@ -22,7 +22,7 @@ const GAMES = [
   { id: 'voices', className: 'quiz', title: 'ГОЛОСА В ГОЛОВЕ', icon: '👥', desc: 'Выбирайте, кто из вас вероятнее всего совершит безумный поступок.', footer: '3+ ИГРОКА', ready: true },
   { id: 'city-guide', className: 'mafia', title: 'РФ-АРХИВ', icon: '🇷🇺', desc: 'Небанальные места в городах России: бары, секретные локации, ивенты.', footer: 'ГИД', ready: true },
   { id: 'couples', className: 'couples', title: 'LOVE STORY', icon: '❤️', desc: 'Укрепляйте отношения через милые и честные задания.', footer: '2 ИГРОКА', badge: 'HOT', ready: true },
-  { id: 'mafia', className: 'mafia', title: 'МАФИЯ', icon: '🎭', desc: 'Город засыпает... Проверь свою интуицию и блеф.', footer: '6-16 ИГРОКОВ', ready: true }
+  { id: 'mafia', className: 'mafia', title: 'МАФИЯ', icon: '🎭', desc: 'Город засыпает... Проверь свою интуицию и блеф.', footer: '6-16 ИГРОКОВ', ready: true },
   { 
   id: 'quest-8', 
   className: 'one-letter', // Бирюзовый фон
