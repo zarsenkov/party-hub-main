@@ -23,6 +23,15 @@ const GAMES = [
   { id: 'city-guide', className: 'mafia', title: 'РФ-АРХИВ', icon: '🇷🇺', desc: 'Небанальные места в городах России: бары, секретные локации, ивенты.', footer: 'ГИД', ready: true },
   { id: 'couples', className: 'couples', title: 'LOVE STORY', icon: '❤️', desc: 'Укрепляйте отношения через милые и честные задания.', footer: '2 ИГРОКА', badge: 'HOT', ready: true },
   { id: 'mafia', className: 'mafia', title: 'МАФИЯ', icon: '🎭', desc: 'Город засыпает... Проверь свою интуицию и блеф.', footer: '6-16 ИГРОКОВ', ready: true }
+  { 
+  id: 'quest-8', 
+  className: 'one-letter', // Бирюзовый фон
+  title: '8 BIT LOVE', 
+  icon: '👾', 
+  desc: 'Секретный квест для самой любимой. Вход только по паролю.', 
+  footer: 'ТОЛЬКО ТВОЁ', 
+  ready: true 
+}
 ];
 
 export default function App() {
