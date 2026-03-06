@@ -1,800 +1,1009 @@
-import React, { useState, useEffect } from 'react';
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>8 BIT LOVE STORY 💕</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-// Массив вопросов с сюжетом вашей истории
-// ЗАМЕНИТЕ ссылки на реальные фото!
-const quizData = [
+    :root {
+      --pink: #ff69b4;
+      --light-pink: #ffb6c1;
+      --pale: #fff0f5;
+      --pale2: #ffe4e1;
+      --brown: #5d4037;
+      --deep-pink: #ff1493;
+      --shadow: #ffc0cb;
+      --white: #ffffff;
+      --red: #ff6b6b;
+    }
+
+    html, body, #root {
+      height: 100%;
+      width: 100%;
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(135deg, var(--pale) 0%, var(--pale2) 100%);
+      overflow-x: hidden;
+    }
+
+    body { overscroll-behavior: none; }
+
+    /* PIXEL SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--pale); }
+    ::-webkit-scrollbar-thumb { background: var(--light-pink); }
+
+    /* ANIMATIONS */
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.4) rotate(-5deg); }
+      70% { transform: scale(1.08) rotate(2deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.3); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.04); opacity: 0.9; }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+    @keyframes timerWarning {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(255,107,107,0); }
+    }
+    @keyframes confettiFall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes starPop {
+      0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+      60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 10px var(--pink); }
+      50% { text-shadow: 0 0 25px var(--pink), 0 0 50px var(--light-pink); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    @keyframes progressFill {
+      from { width: 0; }
+    }
+    @keyframes notifSlide {
+      0% { opacity: 0; transform: translate(-50%, -60%) scale(0.8); }
+      15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -40%) scale(0.9); }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ===================== ДАННЫЕ =====================
+
+const PASSWORD = "22062018"; // Дата знакомства ДДММГГГГ
+
+// Фото: замени URL на свои (Imgur, Google Photos, etc.)
+// Пример: "https://i.imgur.com/XXXXX.jpg"
+const PHOTOS = {
+  intro:  "https://i.imgur.com/placeholder1.jpg",  // ← вставь свою ссылку
+  q1:     "https://i.imgur.com/placeholder2.jpg",
+  q2:     "https://i.imgur.com/placeholder3.jpg",
+  q3:     "https://i.imgur.com/placeholder4.jpg",
+  q4:     "https://i.imgur.com/placeholder5.jpg",
+  q5:     "https://i.imgur.com/placeholder6.jpg",
+  q6:     "https://i.imgur.com/placeholder7.jpg",
+  q7:     "https://i.imgur.com/placeholder8.jpg",
+  final:  "https://i.imgur.com/placeholder9.jpg",
+};
+
+// Заглушка-градиент, пока нет реального фото
+const FALLBACK_PHOTOS = {
+  intro:  "linear-gradient(135deg,#ffb6c1,#ff69b4)",
+  q1:     "linear-gradient(135deg,#ffc0cb,#ffb6c1)",
+  q2:     "linear-gradient(135deg,#ffe4e1,#ffc0cb)",
+  q3:     "linear-gradient(135deg,#fff0f5,#ffe4e1)",
+  q4:     "linear-gradient(135deg,#ffb6c1,#ffe4e1)",
+  q5:     "linear-gradient(135deg,#ffc0cb,#fff0f5)",
+  q6:     "linear-gradient(135deg,#ffe4e1,#ffb6c1)",
+  q7:     "linear-gradient(135deg,#ff69b4,#ffc0cb)",
+  final:  "linear-gradient(135deg,#ff1493,#ff69b4)",
+};
+
+// Сюжетные карточки МЕЖДУ вопросами
+const STORY_CARDS = [
   {
-    question: "Наш самый первый день: 22 июня 2018 года. Где мы познакомились?",
-    options: ["В парке", "В универе", "На вечеринке"],
-    correct: 0, // Индекс правильного ответа (0 - первый вариант)
-    photo: "https://via.placeholder.com/300x200/ffc0cb/ffffff?text=НАША+ВСТРЕЧА"
+    emoji: "🌟",
+    title: "ПРОЛОГ",
+    text: "Сегодня особенный день — 8 марта!\nЯ спрятал для тебя маленькое приключение.\nПройди 7 уровней, и тебя ждёт сюрприз. 💕\nГотова?",
+    btnText: "ПОЕХАЛИ! ▶",
   },
   {
-    question: "Какой подарок от меня тебе запомнился больше всего?",
-    options: ["Цветы", "Украшение", "Эмоции"],
-    correct: 2, // Индекс правильного ответа (2 - третий вариант)
-    photo: "https://via.placeholder.com/300x200/ffe4e1/ffffff?text=МОЙ+ПОДАРОК"
+    emoji: "💌",
+    title: "ГЛАВА 1",
+    text: "Вспомни тот день, когда мы познакомились...\nКакими мы были тогда?\nЯ точно помню, что влюбился сразу. 🥹",
+    btnText: "ПРОДОЛЖИТЬ ▶",
   },
   {
-    question: "10 августа 2023 года — день нашей свадьбы. Какого цвета было небо?",
-    options: ["Ясно-голубое", "Закатно-розовое", "С облаками"],
-    correct: 1, // Индекс правильного ответа (1 - второй вариант)
-    photo: "https://via.placeholder.com/300x200/e6e6fa/ffffff?text=НАША+СВАДЬБА"
+    emoji: "🌸",
+    title: "ГЛАВА 2",
+    text: "А ещё — наши первые совместные прогулки.\nМы могли говорить часами ни о чём\nи было хорошо просто рядом. 🌷",
+    btnText: "ПРОДОЛЖИТЬ ▶",
   },
   {
-    question: "Что я больше всего люблю в тебе?",
-    options: ["Твой смех", "Твои глаза", "Всё целиком!"],
-    correct: 2, // Индекс правильного ответа (2 - третий вариант)
-    photo: "https://via.placeholder.com/300x200/fff0f5/ffffff?text=Я+ТЕБЯ+ЛЮБЛЮ"
-  }
+    emoji: "🎵",
+    title: "ГЛАВА 3",
+    text: "Помнишь, как мы открывали\nлюбимые песни друг другу?\nМузыка теперь навсегда наша! 🎶",
+    btnText: "ПРОДОЛЖИТЬ ▶",
+  },
+  {
+    emoji: "🍕",
+    title: "ГЛАВА 4",
+    text: "А наши совместные вечера дома...\nКогда мы готовим вместе\nи смеёмся над чем-то — это лучшее. 🏡",
+    btnText: "ПРОДОЛЖИТЬ ▶",
+  },
+  {
+    emoji: "✈️",
+    title: "ГЛАВА 5",
+    text: "Каждое наше путешествие — это история.\nДаже поездка за продуктами\nс тобой становится приключением! 🗺️",
+    btnText: "ПРОДОЛЖИТЬ ▶",
+  },
+  {
+    emoji: "🌙",
+    title: "ГЛАВА 6",
+    text: "Тихие вечера, когда мы просто\nлежим рядом и смотрим что-то.\nЭти моменты — мои любимые. 💫",
+    btnText: "ПРОДОЛЖИТЬ ▶",
+  },
+  {
+    emoji: "💍",
+    title: "ГЛАВА 7: ФИНАЛЬНЫЙ УРОВЕНЬ",
+    text: "Последний вопрос!\nОтветь правильно — и тебя\nждёт сюрприз этим вечером. 🎁",
+    btnText: "ПОСЛЕДНИЙ ВОПРОС ▶",
+  },
 ];
 
-const Quest8 = ({ onBack }) => {
-  // === СОСТОЯНИЯ ===
-  const [pass, setPass] = useState('');           // Введенный пароль
-  const [isUnlocked, setIsUnlocked] = useState(false);  // Открыт ли доступ
-  const [step, setStep] = useState(0);            // Текущий вопрос
-  const [isFinished, setIsFinished] = useState(false);   // Статус завершения
-  const [showHint, setShowHint] = useState(false);       // Показывать подсказку
-  const [hearts, setHearts] = useState([]);              // Анимация сердечек
-  const [wrongAttempts, setWrongAttempts] = useState(0); // Счетчик ошибок
+const QUESTIONS = [
+  {
+    photoKey: "q1",
+    emoji: "💑",
+    question: "Что мы делаем в первую очередь, когда оба дома и никуда не торопимся?",
+    options: [
+      "🛋️ Падаем на диван и включаем сериал",
+      "🍳 Идём что-нибудь вместе готовить",
+      "🤗 Просто обнимаемся и никуда не спешим",
+    ],
+    correct: 2,
+    hint: "💭 Помни: самые простые моменты — самые тёплые...",
+    correctText: "Конечно! Просто обняться — и весь мир становится лучше 🤍",
+    wrongText: "Попробуй ещё раз, любимая 💕",
+  },
+  {
+    photoKey: "q2",
+    emoji: "🎬",
+    question: "Какой жанр фильмов мы чаще всего выбираем вместе вечером?",
+    options: [
+      "😂 Комедии — смеяться вместе",
+      "😱 Триллеры — держаться за руки",
+      "💕 Всё равно что — главное вместе",
+    ],
+    correct: 2,
+    hint: "💭 Подумай: нам важен фильм или процесс? 😏",
+    correctText: "Именно! С тобой любой фильм становится любимым 🎬",
+    wrongText: "Не то, милая 💕 Попробуй ещё!",
+  },
+  {
+    photoKey: "q3",
+    emoji: "☕",
+    question: "Утро начинается правильно, когда рядом есть...",
+    options: [
+      "☕ Кофе и тишина",
+      "😴 Ещё 5 минут сна вместе",
+      "💋 Поцелуй и доброе утро",
+    ],
+    correct: 2,
+    hint: "💭 Кофе подождёт, сон подождёт... а вот это — нет 😊",
+    correctText: "Поцелуй — лучшее начало любого утра! 🌅",
+    wrongText: "Ты точно знаешь ответ 💕 Ещё раз!",
+  },
+  {
+    photoKey: "q4",
+    emoji: "🍽️",
+    question: "Мы едем в кафе на двоих. Что ты закажешь для нас обоих?",
+    options: [
+      "🍝 Пасту — мы её любим вместе",
+      "🍕 Пиццу на двоих — делим пополам",
+      "То, что ты хочешь, и то, что хочу я — и пробуем оба! 😋",
+    ],
+    correct: 2,
+    hint: "💭 Мы же всегда пробуем блюда друг друга 😄",
+    correctText: "Это наш любимый ритуал в кафе! Всё пробовать 😄",
+    wrongText: "Думай о нашей традиции в кафе 💕",
+  },
+  {
+    photoKey: "q5",
+    emoji: "🗺️",
+    question: "Куда мы хотим поехать вместе в этом году?",
+    options: [
+      "🏖️ На море — тепло, солнце, волны",
+      "🏔️ В горы — свежий воздух, виды",
+      "🌍 Куда угодно — лишь бы вместе!",
+    ],
+    correct: 2,
+    hint: "💭 Главное же не место, правда? 🥹",
+    correctText: "Вместе — это и есть самое важное направление! 🌍",
+    wrongText: "Вспомни, что мы всегда говорим о путешествиях 💕",
+  },
+  {
+    photoKey: "q6",
+    emoji: "🎁",
+    question: "Какой подарок от меня тебя порадует больше всего?",
+    options: [
+      "💐 Цветы и сюрприз-прогулка",
+      "💍 Что-то красивое для тебя",
+      "💕 Внимание, время вместе и забота",
+    ],
+    correct: 2,
+    hint: "💭 Самый ценный подарок нельзя купить в магазине 🛍️",
+    correctText: "Ты знаешь! Моё время и внимание — твои навсегда 💕",
+    wrongText: "Вспомни, что всегда важнее вещей 💕",
+  },
+  {
+    photoKey: "q7",
+    emoji: "💞",
+    question: "Как звучит наша история, если описать одним словом?",
+    options: [
+      "🔥 Страсть",
+      "🌟 Приключение",
+      "🏡 Дом",
+    ],
+    correct: 2,
+    hint: "💭 Там, где ты — там я дома. Всегда. 🥺",
+    correctText: "Ты — мой дом. Где бы мы ни были 🏡💕",
+    wrongText: "Самое тёплое слово на свете... попробуй ещё 💕",
+  },
+];
 
-  // Эффект для подсказки пароля
-  useEffect(() => {
-    if (!isUnlocked && pass.length === 8 && pass !== '22062018') {
-      setShowHint(true);
-      const timer = setTimeout(() => setShowHint(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [pass, isUnlocked]);
+// ===================== КОМПОНЕНТЫ =====================
 
-  // Эффект для подсказки при неправильных ответах
-  useEffect(() => {
-    if (wrongAttempts >= 2 && !isFinished && isUnlocked) {
-      const timer = setTimeout(() => {
-        alert("❤️ Подсказка: вспомни самый счастливый момент, связанный с этим вопросом! ❤️");
-        setWrongAttempts(0);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [wrongAttempts, isFinished, isUnlocked]);
+// Конфетти
+function Confetti() {
+  const colors = ['#ffb6c1','#ff69b4','#ff1493','#fff0f5','#ffc0cb','#ffe4e1','#ffffff'];
+  const pieces = Array.from({length: 60}, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    delay: Math.random() * 0.8,
+    duration: 2.5 + Math.random() * 1.5,
+    size: 6 + Math.random() * 8,
+    rotate: Math.random() > 0.5 ? 'rotate' : 'skew',
+  }));
 
-  // Функция создания сердечек
-  const createHearts = (count = 8) => {
-    const newHearts = Array.from({ length: count }, (_, i) => ({
-      id: Date.now() + i + Math.random(),
-      left: Math.random() * 100,
-      delay: Math.random() * 0.3,
-      size: 15 + Math.random() * 25
-    }));
-    setHearts([...hearts, ...newHearts]);
-    setTimeout(() => setHearts([]), 1500);
-  };
-
-  // Проверка пароля
-  const handleLogin = () => {
-    if (pass === '22062018') {
-      createHearts(12);
-      setTimeout(() => setIsUnlocked(true), 500);
-    } else {
-      alert("❤️ Не тот день, любимая. Вспомни начало нашей истории! ❤️");
-      setPass('');
-    }
-  };
-
-  // Обработка ответов
-  const handleAnswer = (index) => {
-    if (index === quizData[step].correct) {
-      createHearts(10);
-      if (step + 1 < quizData.length) {
-        setTimeout(() => setStep(step + 1), 400);
-      } else {
-        setTimeout(() => setIsFinished(true), 400);
-      }
-      setWrongAttempts(0);
-    } else {
-      alert("😘 Попробуй еще раз, родная! 😘");
-      setWrongAttempts(prev => prev + 1);
-    }
-  };
-
-  // Нажатие Enter в поле пароля
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
-  };
-
-  // 1. Экран ввода пароля
-  if (!isUnlocked) {
-    return (
-      <div className="px-root">
-        <style>{romanticPixelStyles}</style>
-        {hearts.map(heart => (
-          <div 
-            key={heart.id}
-            className="px-floating-heart"
-            style={{
-              left: `${heart.left}%`,
-              animationDelay: `${heart.delay}s`,
-              fontSize: `${heart.size}px`
-            }}
-          >
-            ❤️
-          </div>
-        ))}
-        <button className="px-back" onClick={onBack}>← НАЗАД</button>
-        <div className="px-box">
-          <div className="px-title">💕 8 BIT LOVE STORY 💕</div>
-          <div className="px-heart-animation">❤️</div>
-          <p className="px-text">
-            Введи дату нашего знакомства
-          </p>
-          <p className="px-small-text">
-            (день, когда всё началось)
-          </p>
-          <input 
-            type="password" 
-            className="px-input" 
-            value={pass} 
-            onChange={(e) => setPass(e.target.value)} 
-            onKeyPress={handleKeyPress}
-            placeholder="ДДММГГГГ"
-            maxLength="8"
-            autoFocus
-          />
-          {showHint && (
-            <div className="px-hint">
-              💭 22 июня 2018 года 💭
-            </div>
-          )}
-          <button className="px-btn" onClick={handleLogin}>
-            ❤️ НАЧАТЬ ИСТОРИЮ ❤️
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 2. Экран финала
-  if (isFinished) {
-    return (
-      <div className="px-root">
-        <style>{romanticPixelStyles}</style>
-        {hearts.map(heart => (
-          <div 
-            key={heart.id}
-            className="px-floating-heart"
-            style={{
-              left: `${heart.left}%`,
-              animationDelay: `${heart.delay}s`,
-              fontSize: `${heart.size}px`
-            }}
-          >
-            ❤️
-          </div>
-        ))}
-        <button className="px-back" onClick={onBack}>← МЕНЮ</button>
-        <div className="px-box px-final-box">
-          <div className="px-title">✨ ТЫ ПРОШЛА ВЕСЬ ПУТЬ! ✨</div>
-          <div className="px-big-heart">💝</div>
-          <p className="px-text">
-            Спасибо, что прошла этот квиз,<br />
-            как мы прошли вместе все эти годы
-          </p>
-          <p className="px-love-text">
-            Я люблю тебя больше жизни! ❤️
-          </p>
-          <div className="px-surprise">
-            <span className="px-surprise-title">🎁 СЮРПРИЗ 🎁</span>
-            <p className="px-surprise-text">
-              Сегодня в 16:00 мы едем в секретное место!<br />
-              <span className="px-small">(одевайся красиво, тебя ждёт сюрприз)</span>
-            </p>
-            <p className="px-surprise-details">
-              🍽️ Ужин при свечах<br />
-              💐 Море цветов<br />
-              ✨ И кое-что особенное...
-            </p>
-          </div>
-          <p className="px-signature">
-            Твой любимый навсегда ❤️
-          </p>
-          <button className="px-btn" onClick={onBack}>
-            ❤️ В МЕНЮ ❤️
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. Экран квиза
   return (
-    <div className="px-root">
-      <style>{romanticPixelStyles}</style>
-      {hearts.map(heart => (
-        <div 
-          key={heart.id}
-          className="px-floating-heart"
-          style={{
-            left: `${heart.left}%`,
-            animationDelay: `${heart.delay}s`,
-            fontSize: `${heart.size}px`
-          }}
-        >
-          ❤️
-        </div>
+    <div style={{position:'fixed',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:9999}}>
+      {pieces.map(p => (
+        <div key={p.id} style={{
+          position:'absolute',
+          left: p.left + 'vw',
+          top: '-20px',
+          width: p.size,
+          height: p.size,
+          backgroundColor: p.color,
+          animation: `confettiFall ${p.duration}s ${p.delay}s ease-in forwards`,
+          borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+        }} />
       ))}
-      <div className="px-header">
-        <span>❤️ ВОПРОС {step + 1}/{quizData.length} ❤️</span>
+    </div>
+  );
+}
+
+// Фото с fallback
+function QuestPhoto({ photoKey, style = {} }) {
+  const [hasError, setHasError] = useState(false);
+  const src = PHOTOS[photoKey];
+  const isPlaceholder = src.includes('placeholder');
+
+  if (isPlaceholder || hasError) {
+    return (
+      <div style={{
+        width:'100%',
+        height:'200px',
+        background: FALLBACK_PHOTOS[photoKey] || 'linear-gradient(135deg,#ffb6c1,#ff69b4)',
+        border: '3px solid var(--light-pink)',
+        display:'flex',
+        flexDirection:'column',
+        alignItems:'center',
+        justifyContent:'center',
+        marginBottom:'18px',
+        ...style,
+      }}>
+        <div style={{fontSize:'32px',marginBottom:'8px'}}>📸</div>
+        <div style={{fontSize:'6px',color:'#fff',textAlign:'center',lineHeight:1.8,padding:'0 10px'}}>
+          Вставь URL своего фото<br/>в переменную PHOTOS["{photoKey}"]
+        </div>
       </div>
-      <button className="px-back" onClick={() => {
-        if (window.confirm('Вернуться в меню? Прогресс сбросится')) {
-          onBack();
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt="quest"
+      onError={() => setHasError(true)}
+      style={{
+        width:'100%',
+        height:'200px',
+        objectFit:'cover',
+        border:'3px solid var(--light-pink)',
+        marginBottom:'18px',
+        display:'block',
+        animation:'fadeIn 0.5s ease',
+        ...style,
+      }}
+    />
+  );
+}
+
+// Уведомление
+function Notification({ message, type, visible }) {
+  if (!visible) return null;
+  return (
+    <div style={{
+      position:'fixed',
+      top:'50%',
+      left:'50%',
+      transform:'translate(-50%,-50%)',
+      background:'white',
+      border:`3px solid ${type === 'error' ? '#ff6b6b' : 'var(--light-pink)'}`,
+      padding:'16px 24px',
+      textAlign:'center',
+      zIndex:10000,
+      fontSize:'9px',
+      color: type === 'error' ? '#c2185b' : 'var(--pink)',
+      boxShadow:'6px 6px 0 var(--shadow)',
+      animation:'notifSlide 2s ease forwards',
+      maxWidth:'260px',
+      lineHeight:1.8,
+    }}>
+      {message}
+    </div>
+  );
+}
+
+// Кнопка
+function Btn({ children, onClick, style = {}, disabled = false, big = false }) {
+  const [pressed, setPressed] = useState(false);
+  return (
+    <button
+      disabled={disabled}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      onTouchStart={() => setPressed(true)}
+      onTouchEnd={() => setPressed(false)}
+      onClick={onClick}
+      style={{
+        background: disabled
+          ? '#ddd'
+          : 'linear-gradient(135deg, var(--light-pink), var(--pink))',
+        color: disabled ? '#aaa' : 'white',
+        border: `2px solid ${disabled ? '#ccc' : 'var(--deep-pink)'}`,
+        padding: big ? '16px 28px' : '12px 22px',
+        fontFamily:"'Press Start 2P', cursive",
+        fontSize: big ? '10px' : '8px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        boxShadow: pressed ? '2px 2px 0 rgba(255,20,147,0.3)' : '5px 5px 0 rgba(255,20,147,0.3)',
+        transform: pressed ? 'translate(3px,3px)' : 'translate(0,0)',
+        transition:'all 0.12s',
+        width:'100%',
+        lineHeight:1.6,
+        ...style,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Сердечки жизни
+function Hearts({ count, max = 3 }) {
+  return (
+    <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+      {Array.from({length: max}).map((_, i) => (
+        <span key={i} style={{fontSize:'14px', filter: i < count ? 'none' : 'grayscale(1) opacity(0.3)'}}>❤️</span>
+      ))}
+    </div>
+  );
+}
+
+// Таймер
+function Timer({ timeLeft, maxTime = 30 }) {
+  const pct = timeLeft / maxTime;
+  const isWarning = timeLeft <= 7;
+  const color = isWarning ? '#ff6b6b' : 'var(--pink)';
+
+  return (
+    <div style={{
+      width:'70px',
+      height:'70px',
+      border: `4px solid ${color}`,
+      borderRadius:'50%',
+      display:'flex',
+      alignItems:'center',
+      justifyContent:'center',
+      background:'var(--pale)',
+      animation: isWarning ? 'timerWarning 0.6s infinite' : 'pulse 1.5s infinite',
+      flexShrink: 0,
+    }}>
+      <span style={{fontSize:'22px', color, fontWeight:'bold'}}>{timeLeft}</span>
+    </div>
+  );
+}
+
+// ===================== ЭКРАНЫ =====================
+
+// ЭКРАН ВХОДА
+function LoginScreen({ onSuccess }) {
+  const [value, setValue] = useState('');
+  const [shake, setShake] = useState(false);
+  const [notif, setNotif] = useState(null);
+
+  const check = () => {
+    if (value === PASSWORD) {
+      setNotif({msg:'✨ С 8 марта, любимая! ✨', type:'success'});
+      setTimeout(onSuccess, 900);
+    } else {
+      setShake(true);
+      setNotif({msg:'Не та дата 💔\nПодсказка: когда мы познакомились?', type:'error'});
+      setValue('');
+      setTimeout(() => setShake(false), 500);
+      setTimeout(() => setNotif(null), 2200);
+    }
+  };
+
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', justifyContent:'center',
+      minHeight:'100vh', padding:'20px',
+    }}>
+      {notif && <Notification message={notif.msg} type={notif.type} visible />}
+      <div style={{
+        background:'white',
+        border:'4px solid var(--light-pink)',
+        padding:'36px 28px',
+        maxWidth:'360px',
+        width:'100%',
+        textAlign:'center',
+        boxShadow:'8px 8px 0 var(--shadow)',
+        animation:'popIn 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+      }}>
+        <div style={{fontSize:'32px', marginBottom:'12px', animation:'heartbeat 1.2s infinite'}}>💕</div>
+        <div style={{
+          fontSize:'13px',
+          color:'var(--pink)',
+          marginBottom:'8px',
+          textShadow:'2px 2px 0 var(--light-pink)',
+          letterSpacing:'2px',
+          lineHeight:1.6,
+        }}>
+          8 BIT<br/>LOVE STORY
+        </div>
+        <div style={{
+          fontSize:'7px',
+          color:'var(--brown)',
+          marginBottom:'28px',
+          lineHeight:2,
+        }}>
+          Специально для тебя<br/>
+          в честь 8 марта 🌷<br/><br/>
+          Введи дату нашего знакомства<br/>
+          (ДДММГГГГ)
+        </div>
+
+        <input
+          type="password"
+          inputMode="numeric"
+          maxLength={8}
+          value={value}
+          onChange={e => setValue(e.target.value.replace(/\D/,'').slice(0,8))}
+          onKeyDown={e => e.key === 'Enter' && check()}
+          placeholder="ДДММГГГГ"
+          style={{
+            width:'100%',
+            border:'2px solid var(--light-pink)',
+            padding:'13px',
+            textAlign:'center',
+            fontFamily:"'Press Start 2P', cursive",
+            fontSize:'11px',
+            color:'var(--pink)',
+            background:'var(--pale)',
+            marginBottom:'18px',
+            letterSpacing:'3px',
+            animation: shake ? 'shake 0.4s ease' : 'none',
+            outline:'none',
+          }}
+        />
+
+        <Btn onClick={check} big>▶ START GAME</Btn>
+
+        <div style={{
+          marginTop:'24px',
+          fontSize:'6px',
+          color:'var(--light-pink)',
+          lineHeight:2,
+        }}>
+          ★ 7 уровней ★ ~10 минут ★<br/>
+          ★ сюрприз в конце ★
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// СЮЖЕТНАЯ КАРТОЧКА
+function StoryCard({ card, onNext, isFirst }) {
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', justifyContent:'center',
+      minHeight:'100vh', padding:'20px',
+    }}>
+      <div style={{
+        background:'white',
+        border:'4px solid var(--light-pink)',
+        padding:'36px 28px',
+        maxWidth:'380px',
+        width:'100%',
+        textAlign:'center',
+        boxShadow:'8px 8px 0 var(--shadow)',
+        animation:'popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+      }}>
+        <div style={{fontSize:'40px', marginBottom:'16px', animation:'bounce 1s infinite'}}>{card.emoji}</div>
+        <div style={{
+          fontSize:'10px',
+          color:'var(--pink)',
+          marginBottom:'20px',
+          letterSpacing:'2px',
+          textShadow:'1px 1px 0 var(--light-pink)',
+        }}>
+          {card.title}
+        </div>
+        <div style={{
+          fontSize:'8px',
+          color:'var(--brown)',
+          lineHeight:2.2,
+          marginBottom:'30px',
+          whiteSpace:'pre-line',
+        }}>
+          {card.text}
+        </div>
+        <Btn onClick={onNext} big>{card.btnText}</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ЭКРАН ВОПРОСА
+function QuizScreen({ questionIndex, totalQ, onAnswer, score, hearts }) {
+  const [timeLeft, setTimeLeft] = useState(25);
+  const [hintUsed, setHintUsed] = useState(false);
+  const [answered, setAnswered] = useState(null); // null | 'correct' | 'wrong'
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [notif, setNotif] = useState(null);
+  const timerRef = useRef(null);
+  const q = QUESTIONS[questionIndex];
+
+  // Сброс при смене вопроса
+  useEffect(() => {
+    setTimeLeft(25);
+    setHintUsed(false);
+    setAnswered(null);
+    setSelectedIdx(null);
+  }, [questionIndex]);
+
+  // Таймер
+  useEffect(() => {
+    if (answered) { clearInterval(timerRef.current); return; }
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          // Время вышло = неправильно
+          showNotif('⏰ Время вышло! Попробуй ещё раз 💕', 'error');
+          return 0;
         }
-      }}>← МЕНЮ</button>
-      
-      <div className="px-box px-quiz-box">
-        <div className="px-img-container">
-          <img 
-            src={quizData[step].photo} 
-            alt={`Наше воспоминание ${step + 1}`} 
-            className="px-img" 
-          />
-          <div className="px-img-overlay">
-            <span>❤️</span>
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [questionIndex, answered]);
+
+  const showNotif = (msg, type) => {
+    setNotif({msg, type});
+    setTimeout(() => setNotif(null), 2200);
+  };
+
+  const handleSelect = (idx) => {
+    if (answered === 'correct' || selectedIdx !== null) return;
+    setSelectedIdx(idx);
+
+    if (idx === q.correct) {
+      setAnswered('correct');
+      clearInterval(timerRef.current);
+      showNotif('✨ ' + q.correctText, 'success');
+      setTimeout(() => onAnswer(true, 25 + Math.round(timeLeft / 25 * 10)), 1200);
+    } else {
+      showNotif(q.wrongText, 'error');
+      setTimeout(() => setSelectedIdx(null), 900);
+      onAnswer(false, 0);
+      setTimeLeft(25); // сброс таймера
+    }
+  };
+
+  const progress = ((questionIndex) / totalQ) * 100;
+
+  const optionStyle = (idx) => {
+    let bg = 'var(--pale)';
+    let border = '2px solid var(--light-pink)';
+    let color = 'var(--brown)';
+
+    if (selectedIdx === idx) {
+      if (idx === q.correct) { bg = '#d4edda'; border = '2px solid #28a745'; color = '#155724'; }
+      else { bg = '#f8d7da'; border = '2px solid #dc3545'; color = '#721c24'; }
+    }
+
+    return {
+      background: bg,
+      border,
+      padding:'14px 12px',
+      fontFamily:"'Press Start 2P', cursive",
+      fontSize:'7px',
+      color,
+      cursor: (answered === 'correct' || selectedIdx !== null) ? 'not-allowed' : 'pointer',
+      transition:'all 0.2s',
+      textAlign:'left',
+      lineHeight:1.8,
+      width:'100%',
+      display:'block',
+    };
+  };
+
+  return (
+    <div style={{
+      display:'flex', alignItems:'flex-start', justifyContent:'center',
+      minHeight:'100vh', padding:'16px',
+    }}>
+      {notif && <Notification message={notif.msg} type={notif.type} visible />}
+
+      <div style={{
+        background:'white',
+        border:'4px solid var(--light-pink)',
+        padding:'22px 20px',
+        maxWidth:'420px',
+        width:'100%',
+        boxShadow:'8px 8px 0 var(--shadow)',
+        animation:'slideUp 0.5s ease',
+        marginTop:'8px',
+        marginBottom:'8px',
+      }}>
+        {/* Шапка */}
+        <div style={{
+          display:'flex',
+          justifyContent:'space-between',
+          alignItems:'center',
+          marginBottom:'14px',
+          fontSize:'7px',
+          color:'var(--pink)',
+        }}>
+          <Hearts count={hearts} />
+          <span>УРОВЕНЬ {questionIndex+1}/{totalQ}</span>
+          <span>⭐ {score}</span>
+        </div>
+
+        {/* Прогресс */}
+        <div style={{
+          background:'var(--pale)',
+          border:'2px solid var(--light-pink)',
+          height:'14px',
+          marginBottom:'14px',
+          overflow:'hidden',
+          position:'relative',
+        }}>
+          <div style={{
+            height:'100%',
+            background:'linear-gradient(90deg, var(--light-pink), var(--pink))',
+            width: progress + '%',
+            transition:'width 0.6s ease',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+          }}>
+            <span style={{fontSize:'6px',color:'white'}}>{Math.round(progress)}%</span>
           </div>
         </div>
-        
-        <p className="px-question">{quizData[step].question}</p>
-        
-        <div className="px-options">
-          {quizData[step].options.map((opt, i) => (
-            <button 
-              key={i} 
-              className="px-btn-opt"
-              onClick={() => handleAnswer(i)}
+
+        {/* Таймер + вопрос */}
+        <div style={{display:'flex', alignItems:'center', gap:'14px', marginBottom:'14px'}}>
+          <Timer timeLeft={timeLeft} maxTime={25} />
+          <div style={{fontSize:'9px', color:'var(--pink)'}}>{q.emoji}</div>
+          <div style={{
+            fontSize:'8px',
+            color:'var(--brown)',
+            lineHeight:1.9,
+            flex:1,
+          }}>
+            {q.question}
+          </div>
+        </div>
+
+        {/* Фото */}
+        <QuestPhoto photoKey={q.photoKey} />
+
+        {/* Варианты */}
+        <div style={{display:'flex', flexDirection:'column', gap:'10px', marginBottom:'16px'}}>
+          {q.options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => handleSelect(i)}
+              style={optionStyle(i)}
             >
-              <span className="px-opt-letter">
-                {String.fromCharCode(65 + i)}.
-              </span>
               {opt}
             </button>
           ))}
         </div>
-        
-        <div className="px-progress">
-          <div 
-            className="px-progress-bar" 
-            style={{ width: `${((step + 1) / quizData.length) * 100}%` }}
-          >
-            <span className="px-progress-text">
-              {Math.round(((step + 1) / quizData.length) * 100)}%
-            </span>
-          </div>
+
+        {/* Подсказка */}
+        <div style={{borderTop:'2px solid var(--pale2)', paddingTop:'12px'}}>
+          {!hintUsed ? (
+            <button
+              onClick={() => setHintUsed(true)}
+              style={{
+                width:'100%',
+                background:'var(--pale)',
+                border:'2px solid var(--light-pink)',
+                padding:'10px',
+                fontFamily:"'Press Start 2P', cursive",
+                fontSize:'7px',
+                color:'var(--pink)',
+                cursor:'pointer',
+              }}
+            >
+              💭 ПОДСКАЗКА (-5 очков)
+            </button>
+          ) : (
+            <div style={{
+              background:'var(--pale2)',
+              border:'2px dashed var(--pink)',
+              padding:'10px',
+              fontSize:'7px',
+              color:'var(--deep-pink)',
+              lineHeight:1.9,
+              animation:'fadeIn 0.3s ease',
+            }}>
+              {q.hint}
+            </div>
+          )}
         </div>
-        
-        <p className="px-hint-text">
-          💭 Выбери правильный ответ, любимая
-        </p>
       </div>
     </div>
   );
-};
+}
 
-// === РОМАНТИЧНЫЙ ПИКСЕЛЬНЫЙ ДИЗАЙН ===
-const romanticPixelStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-  
-  .px-root { 
-    position: fixed !important; 
-    inset: 0 !important; 
-    background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%) !important; 
-    font-family: 'Press Start 2P', cursive !important; 
-    display: flex !important; 
-    align-items: center !important; 
-    justify-content: center !important; 
-    z-index: 200000 !important; 
-    padding: 20px !important; 
-    color: #5d4037 !important; 
-    overflow: hidden !important;
-  }
-  
-  .px-box { 
-    background: rgba(255, 255, 255, 0.95) !important; 
-    border: 4px solid #ffb6c1 !important; 
-    padding: 30px 20px !important; 
-    max-width: 500px !important; 
-    width: 90% !important;
-    text-align: center !important; 
-    box-shadow: 8px 8px 0px #ffc0cb, 0 10px 20px rgba(0,0,0,0.1) !important; 
-    position: relative !important;
-    z-index: 10 !important;
-    animation: px-appear 0.5s ease-out !important;
-  }
-  
-  @keyframes px-appear {
-    from { 
-      opacity: 0; 
-      transform: scale(0.9) translateY(20px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: scale(1) translateY(0); 
-    }
-  }
-  
-  .px-title { 
-    font-size: clamp(10px, 3vw, 14px) !important; 
-    color: #ff69b4 !important; 
-    margin-bottom: 20px !important; 
-    text-shadow: 2px 2px 0px #ffc0cb !important;
-    line-height: 1.5 !important;
-  }
-  
-  .px-text { 
-    font-size: clamp(7px, 2vw, 8px) !important; 
-    margin-bottom: 15px !important; 
-    line-height: 1.8 !important; 
-  }
-  
-  .px-small-text {
-    font-size: 6px !important;
-    color: #ff69b4 !important;
-    margin-bottom: 15px !important;
-  }
-  
-  .px-question { 
-    font-size: clamp(8px, 2.5vw, 10px) !important; 
-    margin: 20px 0 !important; 
-    line-height: 1.8 !important; 
-    color: #5d4037 !important;
-    min-height: 60px !important;
-    padding: 0 10px !important;
-  }
-  
-  .px-input { 
-    width: 200px !important; 
-    max-width: 80% !important;
-    border: 3px solid #ffb6c1 !important; 
-    padding: 12px !important; 
-    margin: 15px auto !important; 
-    text-align: center !important; 
-    font-family: inherit !important; 
-    font-size: clamp(8px, 2vw, 10px) !important;
-    display: block !important;
-    transition: all 0.3s !important;
-    background: white !important;
-  }
-  
-  .px-input:focus {
-    outline: none !important;
-    border-color: #ff69b4 !important;
-    box-shadow: 0 0 10px #ffb6c1 !important;
-    transform: scale(1.02) !important;
-  }
-  
-  .px-input::placeholder {
-    color: #ffb6c1 !important;
-    font-size: 6px !important;
-  }
-  
-  .px-btn { 
-    background: #ffb6c1 !important; 
-    color: white !important; 
-    border: none !important; 
-    padding: 12px 24px !important; 
-    cursor: pointer !important; 
-    font-family: inherit !important;
-    font-size: clamp(7px, 2vw, 8px) !important;
-    transition: all 0.3s !important;
-    border: 2px solid transparent !important;
-    position: relative !important;
-    overflow: hidden !important;
-  }
-  
-  .px-btn:hover {
-    background: #ff69b4 !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 5px 15px rgba(255,105,180,0.4) !important;
-  }
-  
-  .px-btn:active {
-    transform: translateY(0) !important;
-  }
-  
-  .px-btn::after {
-    content: "";
-    position: absolute !important;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.5);
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s;
-  }
-  
-  .px-btn:hover::after {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .px-btn-opt { 
-    width: 100% !important; 
-    background: #fff5f7 !important; 
-    border: 3px solid #ffb6c1 !important; 
-    margin: 8px 0 !important; 
-    padding: 15px 10px !important; 
-    cursor: pointer !important; 
-    font-size: clamp(7px, 2vw, 8px) !important; 
-    color: #5d4037 !important; 
-    font-family: inherit !important;
-    transition: all 0.3s !important;
-    position: relative !important;
-    overflow: hidden !important;
-    text-align: left !important;
-    padding-left: 35px !important;
-  }
-  
-  .px-opt-letter {
-    position: absolute !important;
-    left: 12px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    color: #ff69b4 !important;
-    font-weight: bold !important;
-    font-size: 10px !important;
-  }
-  
-  .px-btn-opt:hover {
-    background: #ffe4e1 !important;
-    transform: translateX(5px) !important;
-    border-color: #ff69b4 !important;
-  }
-  
-  .px-btn-opt::before {
-    content: "❤️";
-    position: absolute !important;
-    right: -20px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    opacity: 0 !important;
-    transition: all 0.3s !important;
-    font-size: 12px !important;
-  }
-  
-  .px-btn-opt:hover::before {
-    right: 15px !important;
-    opacity: 1 !important;
-  }
-  
-  .px-btn-opt:active {
-    transform: scale(0.98) translateX(5px) !important;
-  }
-  
-  .px-surprise { 
-    background: #fff0f5 !important; 
-    border: 3px dashed #ff69b4 !important; 
-    padding: 20px !important; 
-    font-size: clamp(7px, 2vw, 8px) !important; 
-    margin: 25px 0 !important; 
-    line-height: 2 !important;
-    animation: px-pulse 2s infinite !important;
-    border-radius: 10px !important;
-  }
-  
-  @keyframes px-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-  }
-  
-  .px-surprise-title {
-    display: block !important;
-    font-size: clamp(9px, 2.5vw, 12px) !important;
-    color: #ff69b4 !important;
-    margin-bottom: 15px !important;
-    font-weight: bold !important;
-  }
-  
-  .px-surprise-text {
-    margin-bottom: 15px !important;
-    line-height: 1.8 !important;
-  }
-  
-  .px-surprise-details {
-    background: white !important;
-    padding: 15px !important;
-    border-radius: 8px !important;
-    font-size: clamp(6px, 1.8vw, 7px) !important;
-    color: #ff69b4 !important;
-    line-height: 2 !important;
-  }
-  
-  .px-header { 
-    position: absolute !important; 
-    top: 20px !important; 
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    font-size: clamp(7px, 2vw, 8px) !important; 
-    color: #ff69b4 !important;
-    background: white !important;
-    padding: 10px 20px !important;
-    border: 3px solid #ffb6c1 !important;
-    box-shadow: 4px 4px 0 #ffc0cb !important;
-    z-index: 20 !important;
-    white-space: nowrap !important;
-  }
-  
-  .px-img-container {
-    position: relative !important;
-    width: 100% !important;
-    margin-bottom: 20px !important;
-    overflow: hidden !important;
-    border: 4px solid #ffb6c1 !important;
-    box-shadow: 4px 4px 0 #ffc0cb !important;
-  }
-  
-  .px-img { 
-    width: 100% !important; 
-    height: auto !important; 
-    display: block !important;
-    transition: all 0.5s !important;
-  }
-  
-  .px-img:hover {
-    transform: scale(1.05) !important;
-  }
-  
-  .px-img-overlay {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background: linear-gradient(45deg, rgba(255,182,193,0.2), rgba(255,105,180,0.2)) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s !important;
-    pointer-events: none !important;
-  }
-  
-  .px-img-container:hover .px-img-overlay {
-    opacity: 1 !important;
-  }
-  
-  .px-img-overlay span {
-    font-size: 40px !important;
-    animation: px-heartbeat 1s infinite !important;
-  }
-  
-  .px-back { 
-    position: absolute !important; 
-    top: 20px !important; 
-    left: 20px !important; 
-    background: white !important; 
-    border: 3px solid #ffb6c1 !important; 
-    color: #ff69b4 !important; 
-    padding: 8px 16px !important; 
-    font-family: 'Press Start 2P' !important; 
-    font-size: clamp(6px, 1.8vw, 7px) !important; 
-    cursor: pointer !important;
-    z-index: 20 !important;
-    transition: all 0.3s !important;
-    box-shadow: 2px 2px 0 #ffc0cb !important;
-  }
-  
-  .px-back:hover {
-    background: #ffb6c1 !important;
-    color: white !important;
-    transform: translateX(-2px) !important;
-  }
-  
-  .px-back:active {
-    transform: translateX(0) !important;
-  }
-  
-  .px-heart-animation {
-    font-size: clamp(30px, 8vw, 40px) !important;
-    animation: px-heartbeat 1.5s ease-in-out infinite !important;
-    margin: 10px 0 !important;
-  }
-  
-  @keyframes px-heartbeat {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.1); }
-    50% { transform: scale(1); }
-    75% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
-  
-  .px-floating-heart {
-    position: absolute !important;
-    bottom: -20px !important;
-    animation: px-float 1.5s ease-out forwards !important;
-    pointer-events: none !important;
-    z-index: 5 !important;
-    text-shadow: 0 0 10px rgba(255,105,180,0.5) !important;
-  }
-  
-  @keyframes px-float {
-    0% { 
-      transform: translateY(0) rotate(0deg) scale(1); 
-      opacity: 1; 
-    }
-    100% { 
-      transform: translateY(-100vh) rotate(360deg) scale(0); 
-      opacity: 0; 
-    }
-  }
-  
-  .px-hint {
-    font-size: 7px !important;
-    color: #ff69b4 !important;
-    margin: 10px 0 20px !important;
-    animation: px-fadeIn 0.3s !important;
-    background: #fff0f5 !important;
-    padding: 10px !important;
-    border: 2px dashed #ffb6c1 !important;
-  }
-  
-  @keyframes px-fadeIn {
-    from { 
-      opacity: 0; 
-      transform: translateY(-10px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
-  }
-  
-  .px-progress {
-    width: 100% !important;
-    height: 20px !important;
-    background: #ffe4e1 !important;
-    margin: 25px 0 15px !important;
-    border-radius: 10px !important;
-    overflow: hidden !important;
-    border: 2px solid #ffb6c1 !important;
-    position: relative !important;
-  }
-  
-  .px-progress-bar {
-    height: 100% !important;
-    background: linear-gradient(90deg, #ffb6c1, #ff69b4) !important;
-    transition: width 0.5s ease !important;
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-  }
-  
-  .px-progress-text {
-    color: white !important;
-    font-size: 7px !important;
-    padding: 0 8px !important;
-    text-shadow: 1px 1px 0 #00000033 !important;
-  }
-  
-  .px-hint-text {
-    font-size: 6px !important;
-    color: #ff69b4 !important;
-    margin-top: 10px !important;
-    opacity: 0.8 !important;
-  }
-  
-  .px-big-heart {
-    font-size: clamp(40px, 10vw, 60px) !important;
-    margin: 20px 0 !important;
-    animation: px-spin 4s linear infinite !important;
-    display: inline-block !important;
-  }
-  
-  @keyframes px-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
-  .px-love-text {
-    font-size: clamp(8px, 2.2vw, 10px) !important;
-    color: #ff69b4 !important;
-    margin: 20px 0 !important;
-    line-height: 1.8 !important;
-  }
-  
-  .px-signature {
-    font-size: 8px !important;
-    color: #ff69b4 !important;
-    margin: 20px 0 10px !important;
-    font-style: italic !important;
-  }
-  
-  .px-small {
-    font-size: 5px !important;
-    opacity: 0.8 !important;
-    display: block !important;
-    margin-top: 5px !important;
-  }
-  
-  .px-quiz-box {
-    max-width: 550px !important;
-    width: 95% !important;
-    padding: 25px !important;
-  }
-  
-  .px-final-box {
-    max-width: 500px !important;
-  }
-  
-  /* Адаптивность для мобильных */
-  @media (max-width: 480px) {
-    .px-box { 
-      padding: 20px 15px !important; 
-    }
-    
-    .px-title { 
-      font-size: 10px !important; 
-    }
-    
-    .px-question { 
-      font-size: 8px !important; 
-      min-height: 50px !important;
-    }
-    
-    .px-btn-opt { 
-      padding: 12px 8px 12px 30px !important; 
-      font-size: 7px !important;
-    }
-    
-    .px-opt-letter {
-      left: 8px !important;
-      font-size: 8px !important;
-    }
-    
-    .px-back {
-      padding: 6px 12px !important;
-    }
-    
-    .px-header {
-      padding: 8px 16px !important;
-    }
-    
-    .px-surprise-details {
-      padding: 10px !important;
-    }
-  }
-  
-  /* Для очень маленьких экранов */
-  @media (max-width: 320px) {
-    .px-box {
-      padding: 15px 10px !important;
-    }
-    
-    .px-btn-opt {
-      padding: 10px 8px 10px 25px !important;
-    }
-    
-    .px-title {
-      font-size: 8px !important;
-    }
-  }
-  
-  /* Запрет выделения текста */
-  .px-root * {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-  }
-  
-  /* Разрешаем ввод в инпуте */
-  .px-input {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-  }
-`;
+// ФИНАЛЬНЫЙ ЭКРАН
+function FinalScreen({ score, totalQ, onRestart }) {
+  const maxScore = totalQ * 35;
+  const pct = Math.round((score / maxScore) * 100);
 
-export default Quest8;
+  let rating, ratingEmoji;
+  if (pct >= 85) { rating = 'ИДЕАЛЬНАЯ ПАРА!'; ratingEmoji = '💎'; }
+  else if (pct >= 65) { rating = 'ЗНАЕШЬ МЕНЯ ХОРОШО!'; ratingEmoji = '❤️'; }
+  else if (pct >= 45) { rating = 'МЫ УЗНАЁМ ДРУГ ДРУГА!'; ratingEmoji = '💕'; }
+  else { rating = 'ЛЮБОВЬ — ЭТО ПУТЬ!'; ratingEmoji = '🌱'; }
+
+  return (
+    <div style={{
+      display:'flex', alignItems:'flex-start', justifyContent:'center',
+      minHeight:'100vh', padding:'20px',
+    }}>
+      <Confetti />
+      <div style={{
+        background:'white',
+        border:'4px solid var(--light-pink)',
+        padding:'32px 24px',
+        maxWidth:'400px',
+        width:'100%',
+        textAlign:'center',
+        boxShadow:'8px 8px 0 var(--shadow)',
+        animation:'popIn 0.7s cubic-bezier(0.34,1.56,0.64,1)',
+        marginTop:'8px',
+        marginBottom:'8px',
+      }}>
+        <div style={{fontSize:'36px', marginBottom:'10px', animation:'bounce 0.8s infinite'}}>🎊</div>
+
+        <div style={{
+          fontSize:'11px',
+          color:'var(--pink)',
+          marginBottom:'6px',
+          textShadow:'2px 2px 0 var(--light-pink)',
+          animation:'glow 2s infinite',
+        }}>
+          LEVEL COMPLETE!
+        </div>
+        <div style={{fontSize:'8px', color:'var(--brown)', marginBottom:'20px'}}>
+          Ты прошла игру! 💕
+        </div>
+
+        {/* Фото финальное */}
+        <QuestPhoto photoKey="final" />
+
+        {/* Счёт */}
+        <div style={{
+          background:'var(--pale)',
+          border:'2px solid var(--light-pink)',
+          padding:'16px',
+          marginBottom:'14px',
+          borderRadius:'4px',
+        }}>
+          <div style={{fontSize:'7px', color:'var(--brown)', marginBottom:'8px'}}>ТВОЙ РЕЗУЛЬТАТ:</div>
+          <div style={{fontSize:'20px', color:'var(--pink)', fontWeight:'bold', animation:'starPop 0.5s ease'}}>{score} очков</div>
+        </div>
+
+        {/* Рейтинг */}
+        <div style={{
+          background:'linear-gradient(135deg,var(--pale),var(--pale2))',
+          border:'3px solid var(--light-pink)',
+          padding:'14px',
+          marginBottom:'20px',
+          fontSize:'9px',
+          color:'var(--pink)',
+          lineHeight:1.8,
+        }}>
+          {ratingEmoji} {rating}
+        </div>
+
+        {/* Сюрприз */}
+        <div style={{
+          background:'linear-gradient(135deg,var(--pale),var(--pale2))',
+          border:'3px dashed var(--deep-pink)',
+          padding:'20px',
+          marginBottom:'24px',
+          fontSize:'8px',
+          color:'var(--deep-pink)',
+          lineHeight:2.2,
+          animation:'pulse 1.5s infinite',
+          fontWeight:'bold',
+        }}>
+          🎁 СЮРПРИЗ СЕГОДНЯ! 🎁<br/><br/>
+          В 16:00 мы едем в<br/>
+          секретное место 🌹<br/><br/>
+          Будь готова! ❤️<br/><br/>
+          Я люблю тебя больше всего<br/>на свете 💕
+        </div>
+
+        <div style={{fontSize:'22px', marginBottom:'20px', animation:'heartbeat 0.8s infinite'}}>
+          💕 💕 💕
+        </div>
+
+        <Btn onClick={onRestart}>↺ СЫГРАТЬ СНОВА</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ===================== ГЛАВНЫЙ КОМПОНЕНТ =====================
+
+export default function App() {
+  const [phase, setPhase] = useState('login');
+  // login → story → quiz → story → quiz → ... → final
+  const [storyIdx, setStoryIdx] = useState(0);  // какую story показываем
+  const [questionIdx, setQuestionIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [hearts, setHearts] = useState(3);
+
+  const totalQ = QUESTIONS.length;
+
+  const handleLogin = () => {
+    setPhase('story');
+    setStoryIdx(0);
+  };
+
+  const handleStoryNext = () => {
+    // Story cards: 0=пролог, 1=глава1, 2=глава2 ... 7=глава7
+    // Quiz:        storyIdx - 1 = questionIdx
+    // После пролога (storyIdx=0) → quiz[0]
+    // После story[1] → quiz[1], и т.д.
+    const qIdx = storyIdx === 0 ? 0 : storyIdx - 1;
+    setQuestionIdx(qIdx);
+    setPhase('quiz');
+  };
+
+  const handleAnswer = (correct, points) => {
+    if (correct) {
+      setScore(s => s + points);
+      const nextQ = questionIdx + 1;
+      if (nextQ >= totalQ) {
+        // Все вопросы пройдены → финал
+        setTimeout(() => setPhase('final'), 400);
+      } else {
+        // Показываем следующую сюжетную карточку
+        // story[nextQ + 1] = "Глава N" перед question[nextQ]
+        setStoryIdx(nextQ + 1);
+        setTimeout(() => setPhase('story'), 400);
+      }
+    } else {
+      setHearts(h => Math.max(0, h - 1));
+    }
+  };
+
+  return (
+    <div style={{minHeight:'100vh'}}>
+      {phase === 'login' && (
+        <LoginScreen onSuccess={handleLogin} />
+      )}
+      {phase === 'story' && (
+        <StoryCard
+          card={STORY_CARDS[storyIdx]}
+          onNext={handleStoryNext}
+        />
+      )}
+      {phase === 'quiz' && (
+        <QuizScreen
+          questionIndex={questionIdx}
+          totalQ={totalQ}
+          onAnswer={handleAnswer}
+          score={score}
+          hearts={hearts}
+        />
+      )}
+      {phase === 'final' && (
+        <FinalScreen
+          score={score}
+          totalQ={totalQ}
+          onRestart={() => {
+            setPhase('login');
+            setScore(0);
+            setHearts(3);
+            setStoryIdx(0);
+            setQuestionIdx(0);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
