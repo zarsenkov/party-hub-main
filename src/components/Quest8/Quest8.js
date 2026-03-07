@@ -262,7 +262,7 @@ const Quest8 = ({ onBack }) => {
         <div className="login-screen">
           <button className="btn" style={{position: 'absolute', top: '10px', left: '10px', padding: '5px'}} onClick={onBack}>ESC</button>
           <div className="title">8 BIT<br/>LOVE STORY</div>
-          <div className="subtitle">Введи дату нашего знакомства<br/>(ДДММГГГГ)</div>
+          <div className="subtitle">Введи дату, когда мы начали встречаться<br/>(ДДММГГГГ)</div>
           <div className="input-group">
             <input 
               type="password" 
@@ -344,7 +344,7 @@ const Quest8 = ({ onBack }) => {
         <div className="heart-animation">💕 💕 💕</div>
 
         <div className="surprise-box">
-          ВАЖНО:<br/>В 16:00 мы едем в<br/>секретное место 🌹<br/>Будь готова! ❤️
+          ВАЖНО:<br/>К 16:00 мы едем в<br/>секретное место 🌹<br/>Будь готова заранее! ❤️
         </div>
         <button className="btn" style={{width: '100%'}} onClick={onBack}>В МЕНЮ</button>
       </div>
